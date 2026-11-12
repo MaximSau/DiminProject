@@ -1,0 +1,115 @@
+{{define "content"}}
+<div class="exercise-detail-page">
+  <div style="margin-bottom: 14px;">
+    <a href="/workouts?day={{.Extra.DayIndex}}" class="link small">← Назад к списку тренировки</a>
+  </div>
+
+  <div class="card ex-main-card">
+    <div class="card-tag-row">
+      <span class="badge">{{levelLabel .Extra.Exercise.Level}}</span>
+      <span class="small muted">{{equipLabel .Extra.Exercise.Equipment}}</span>
+    </div>
+    <h1>{{.Extra.Exercise.Name}}</h1>
+
+    <div class="meta" style="margin: 10px 0;">
+      <span>Целевые мышцы: {{range $i, $m := .Extra.Exercise.Muscles}}{{if $i}}, {{end}}{{$m}}{{end}}</span>
+      <span>Тип: {{.Extra.Exercise.Kind}}</span>
+    </div>
+
+    <!-- ВИДЕО ТЕХНИКИ / ЧЕСТНЫЙ СТАТУС ВИДЕОМАТЕРИАЛОВ -->
+    <div class="video-section">
+      {{if .Extra.Exercise.Video}}
+        <div class="video-container">
+          <a href="{{.Extra.Exercise.Video}}" target="_blank" rel="noopener noreferrer" class="video-link-card">
+            <span class="play-icon-wrap" style="color: var(--accent); display: inline-flex; align-items: center;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </span>
+            <div>
+              <strong>Смотреть проверенное обучающее видео</strong>
+              <span class="small muted">Откроется в новой вкладке из проверенного источника</span>
+            </div>
+          </a>
+        </div>
+      {{else}}
+        <div class="video-notice">
+          <div>
+            <strong>Видеоролик временно недоступен в офлайн-каталоге</strong>
+            <p class="small muted" style="margin: 4px 0 0;">
+              Мы не создаём фиктивные ссылки. Ниже представлена подробная пошаговая текстовая инструкция с правилами безопасности.
+            </p>
+          </div>
+        </div>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- ПРЕДУПРЕЖДЕНИЕ О БЕЗОПАСНОСТИ -->
+  <div class="warn" style="margin-bottom: 16px;">
+    <strong>Главное правило безопасности:</strong> немедленно остановитесь при возникновении острой, режущей боли или головокружения. Здоровая нагрузка — это умеренное мышечное усилие, а не боль в суставах!
+  </div>
+
+  <div class="grid-2col">
+    <div>
+      <!-- ИСХОДНОЕ ПОЛОЖЕНИЕ -->
+      <div class="card">
+        <h3>Исходное положение</h3>
+        <p>{{.Extra.Exercise.Start}}</p>
+      </div>
+
+      <!-- ПОШАГОВАЯ ИНСТРУКЦИЯ -->
+      <div class="card">
+        <h3>Пошаговая техника выполнения</h3>
+        <ol class="steps-list">
+          {{range .Extra.Exercise.Steps}}
+            <li class="step-item">{{.}}</li>
+          {{end}}
+        </ol>
+      </div>
+
+      <!-- ДЫХАНИЕ И ТЕМП -->
+      <div class="card">
+        <h3>Дыхание и темп</h3>
+        <p><strong>Дыхание:</strong> {{.Extra.Exercise.Breathing}}</p>
+        <p><strong>Темп:</strong> {{.Extra.Exercise.Tempo}}</p>
+      </div>
+    </div>
+
+    <div>
+      <!-- ЧАСТЫЕ ОШИБКИ -->
+      <div class="card">
+        <h3>Частые ошибки</h3>
+        <ul class="mistakes-list">
+          {{range .Extra.Exercise.Mistakes}}
+            <li>{{.}}</li>
+          {{end}}
+        </ul>
+      </div>
+
+      <!-- БЕЗОПАСНОСТЬ -->
+      <div class="card">
+        <h3>Правила безопасности</h3>
+        <p>{{.Extra.Exercise.Safety}}</p>
+      </div>
+
+      <!-- ВАРИАНТЫ (УПРОЩЁННЫЙ И УСЛОЖНЁННЫЙ) -->
+      <div class="card">
+        <h3>Варианты масштабирования нагрузки</h3>
+        
+        <div class="scale-box easier">
+          <span class="scale-label">Для новичка (упрощённый):</span>
+          <p>{{.Extra.Exercise.Easier}}</p>
+        </div>
+
+        <div class="scale-box harder" style="margin-top: 10px;">
+          <span class="scale-label">Усложнённый вариант:</span>
+          <p>{{.Extra.Exercise.Harder}}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin: 20px 0;">
+    <a href="/workouts?day={{.Extra.DayIndex}}" class="btn" style="max-width: 280px;">← Вернуться к тренировке</a>
+  </div>
+</div>
+{{end}}

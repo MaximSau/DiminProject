@@ -1,0 +1,185 @@
+{{define "content"}}
+<div class="dashboard">
+  <!-- Приветствие и цель -->
+  <div class="dash-header card">
+    <div class="dash-welcome">
+      <span class="muted small">Сегодня {{weekdayName .TodayIdx}}</span>
+      <h1>{{if .User.Profile.Name}}Привет, {{.User.Profile.Name}}!{{else}}Привет!{{end}}</h1>
+    </div>
+    <div class="dash-goal-box">
+      <div class="goal-pill">
+        <div class="goal-pill-content">
+          <strong>Цель: {{goalLabel .User.Profile.Goal}}</strong>
+          <span class="small muted">{{paceLabel .User.Profile.Pace}}</span>
+        </div>
+      </div>
+      <div class="dash-quick-btns">
+        <a href="/plan/export" target="_blank" class="btn ghost btn-sm" title="Открыть чистую версию для печати или сохранения в PDF">Экспорт плана</a>
+        <a href="/profile" class="btn ghost btn-sm">Изменить план</a>
+        <a href="/chat" class="btn ghost btn-sm">Чат с ИИ</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Предупреждение о демонстрационном источнике каталога -->
+  <div class="plan-disclaimer">
+    План сформирован на основе каталога упражнений и нутрициологии. Рекомендации носят ознакомительный характер и не заменяют медицинскую консультацию.
+  </div>
+
+  <div class="dash-grid">
+    <!-- ЛЕВАЯ КОЛОНКА (ДЕСКТОП): ТРЕНИРОВКА ДНЯ И ПРОГРЕССИЯ -->
+    <div class="dash-col">
+      {{with .Extra.TodayWorkout}}
+        <div class="card workout-card">
+          <div class="card-tag-row">
+            <span class="badge">{{if .Rest}}День восстановления{{else}}Ближайшая тренировка{{end}}</span>
+            {{if not .Rest}}<span class="small muted">~{{.Minutes}} минут</span>{{end}}
+          </div>
+          <h2>{{.Title}}</h2>
+          <p class="workout-focus"><strong>Фокус:</strong> {{.Focus}}</p>
+          <p class="small">{{.Notes}}</p>
+
+          {{if not .Rest}}
+            <div class="today-ex-preview">
+              {{range .Exercises}}
+                <div class="ex-mini-item">
+                  <span class="ex-mini-name">{{.Name}}</span>
+                  <span class="small muted">{{.Sets}} × {{.Reps}}</span>
+                </div>
+              {{end}}
+            </div>
+            <div style="margin-top: 14px;">
+              <a href="/workouts?day={{$.TodayIdx}}" class="btn">Начать тренировку</a>
+            </div>
+          {{else}}
+            <div style="margin-top: 12px;">
+              <a href="/workouts" class="btn secondary">Посмотреть расписание недели</a>
+            </div>
+          {{end}}
+        </div>
+      {{end}}
+
+      <!-- КРАТКИЙ ПРОГРЕСС -->
+      <div class="card">
+        <div class="card-tag-row">
+          <span class="badge">Ваш прогресс</span>
+          <a href="/progress" class="link small">Подробнее →</a>
+        </div>
+        <h2>Текущие показатели</h2>
+
+        <div class="stat">
+          <div class="box">
+            <div class="v">{{.Extra.CompletedCount}}</div>
+            <div class="l">Тренировок выполнено</div>
+          </div>
+          <div class="box">
+            <div class="v">{{if .Extra.LastWeight}}{{.Extra.LastWeight}} кг{{else}}—{{end}}</div>
+            <div class="l">Текущий вес</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <a href="/progress" class="btn secondary">Открыть трекер и ИМТ</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА (ДЕСКТОП): ВОДА, ПИТАНИЕ И РЕЖИМ -->
+    <div class="dash-col">
+      <!-- ИНТЕРАКТИВНЫЙ ТРЕКЕР ВОДЫ -->
+      <div class="card water-widget-card" id="water-section">
+        <div class="card-tag-row">
+          <span class="badge">Водный баланс</span>
+          <span id="water-percent-val" class="badge" style="background: rgba(37,99,235,0.12); color: #2563eb;">{{waterPercent .User}}%</span>
+        </div>
+        <h2>Выпито за сегодня</h2>
+        <div class="water-stat-row">
+          <div class="water-numbers">
+            <span class="water-current" id="water-current-val">{{waterToday .User}}</span>
+            <span class="water-divider">/</span>
+            <span class="water-target" id="water-target-val">{{waterTarget .User.Profile}}</span>
+            <span class="water-unit">мл</span>
+          </div>
+          <span class="small muted">норма по формуле веса</span>
+        </div>
+
+        <div class="water-progress-track">
+          <div id="water-progress-bar" class="water-progress-fill" style="width: {{waterPercent .User}}%;"></div>
+        </div>
+
+        <div class="water-actions-row">
+          <button type="button" class="btn water-btn" onclick="changeWaterAjax(250, event)">+250 мл</button>
+          <button type="button" class="btn water-btn" onclick="changeWaterAjax(500, event)">+500 мл</button>
+          <button type="button" class="btn ghost water-btn-sm" onclick="changeWaterAjax(-250, event)" title="Уменьшить">-250 мл</button>
+        </div>
+      </div>
+
+      <!-- РАЦИОН ДНЯ С AJAX ЧЕКБОКСАМИ -->
+      {{with .Extra.TodayMeals}}
+        <div class="card" id="meals-section">
+          <div class="card-tag-row">
+            <span class="badge">Питание на сегодня</span>
+            <a href="/nutrition?day={{$.TodayIdx}}" class="link small">Все блюда недели →</a>
+          </div>
+          <h2>Рацион дня</h2>
+          <p class="small muted">Отмечайте приёмы пищи без перезагрузки экрана:</p>
+
+          <div class="meal-check-list">
+            {{range .Meals}}
+              <form action="/nutrition/toggle" method="POST" class="meal-dash-item" onsubmit="toggleMealAjax(this, event)">
+                <input type="hidden" name="day" value="{{$.TodayIdx}}">
+                <input type="hidden" name="meal_id" value="{{.MealID}}">
+                <input type="hidden" name="return" value="dashboard">
+                <label class="meal-check-label">
+                  <input type="checkbox" onchange="toggleMealAjax(this.form, event)" {{if isMealEaten $.User.Progress.Meals $.TodayIdx .MealID}}checked{{end}}>
+                  <span class="meal-check-text {{if isMealEaten $.User.Progress.Meals $.TodayIdx .MealID}}done{{end}}">
+                    <strong>{{.Name}}</strong>
+                    <span class="small muted">~{{.Kcal}} ккал</span>
+                  </span>
+                </label>
+              </form>
+            {{end}}
+          </div>
+        </div>
+      {{end}}
+
+      <!-- РЕЖИМ И НАПОМИНАНИЯ -->
+      <div class="card">
+        <div class="card-tag-row">
+          <span class="badge">Режим и напоминания</span>
+          <a href="/profile#reminders" class="link small">Настроить →</a>
+        </div>
+        <h2>Полезные привычки</h2>
+        
+        <div class="routine-grid">
+          <div class="routine-item">
+            <div class="routine-content">
+              <strong>Водный баланс</strong>
+              <span class="small muted">{{$.User.Plan.Routine.Water}}</span>
+            </div>
+          </div>
+          <div class="routine-item">
+            <div class="routine-content">
+              <strong>Сон и восстановление</strong>
+              <span class="small muted">{{$.User.Plan.Routine.Sleep}}</span>
+            </div>
+          </div>
+        </div>
+
+        {{if $.User.Reminders}}
+          <div class="reminders-summary">
+            <strong>Активные напоминания:</strong>
+            <div class="meta" style="margin-top: 8px;">
+              {{range $.User.Reminders}}
+                {{if .Enabled}}
+                  <span>{{.Time}} — {{.Title}}</span>
+                {{end}}
+              {{end}}
+            </div>
+          </div>
+        {{end}}
+      </div>
+    </div>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,143 @@
+{{define "content"}}
+<div class="nutrition-page">
+  <!-- Вкладки дней недели -->
+  <div class="day-tabs">
+    {{range $idx, $day := .User.Plan.Meals}}
+      <a href="/nutrition?day={{$idx}}" class="day-tab {{if eq $.SelectedDay $idx}}active{{end}} {{if eq $.TodayIdx $idx}}today{{end}}">
+        <span class="day-tab-num">{{if eq $idx 0}}Пн{{else if eq $idx 1}}Вт{{else if eq $idx 2}}Ср{{else if eq $idx 3}}Чт{{else if eq $idx 4}}Пт{{else if eq $idx 5}}Сб{{else}}Вс{{end}}</span>
+        <span class="day-tab-status">•</span>
+      </a>
+    {{end}}
+  </div>
+
+  <!-- ОРИЕНТИРОВОЧНЫЕ КАЛОРИИ И БЖУ -->
+  <div class="card nutrition-summary-card">
+    <div class="card-tag-row">
+      <span class="badge">План питания на день</span>
+      <span class="small muted">{{weekdayName .SelectedDay}}</span>
+    </div>
+    
+    {{if .User.Plan.KcalTarget}}
+      <h2>Целевые ориентиры</h2>
+      <div class="macro-grid">
+        <div class="macro-box">
+          <span class="macro-val">{{.User.Plan.KcalTarget}}</span>
+          <span class="macro-lbl">ккал / день</span>
+        </div>
+        <div class="macro-box">
+          <span class="macro-val">{{.User.Plan.ProteinG}} г</span>
+          <span class="macro-lbl">Белки</span>
+        </div>
+        <div class="macro-box">
+          <span class="macro-val">{{.User.Plan.FatG}} г</span>
+          <span class="macro-lbl">Жиры</span>
+        </div>
+        <div class="macro-box">
+          <span class="macro-val">{{.User.Plan.CarbsG}} г</span>
+          <span class="macro-lbl">Углеводы</span>
+        </div>
+      </div>
+      <p class="small muted" style="margin-top: 10px;">
+        {{.User.Plan.CalcNote}}
+      </p>
+    {{else}}
+      <div class="warn">
+        {{.User.Profile.BodyHint}} Точные цифры калорийности не рассчитываются без этих данных, но вы можете следовать сбалансированному меню ниже.
+      </div>
+    {{end}}
+  </div>
+
+  <!-- СПИСОК ПРИЁМОВ ПИЩИ В ВИДЕ АДАПТИВНОЙ СЕТКИ КАРТОЧЕК -->
+  <div class="meals-grid">
+    {{range $i, $m := .Extra.CurrentMeals.Meals}}
+      <div class="card meal-card {{if isMealEaten $.User.Progress.Meals $.SelectedDay $m.MealID}}eaten{{end}}" id="meal-{{$m.MealID}}">
+        <div class="meal-header">
+          <div>
+            <span class="badge meal-slot">
+              {{if eq $m.Slot "breakfast"}}Завтрак{{else if eq $m.Slot "lunch"}}Обед{{else if eq $m.Slot "dinner"}}Ужин{{else}}Перекус{{end}}
+            </span>
+            <h3 class="meal-title">{{$m.Name}}</h3>
+          </div>
+          <span class="meal-kcal">~{{$m.Kcal}} ккал</span>
+        </div>
+
+        <div class="meta" style="margin: 8px 0;">
+          <span>Б: {{$m.ProteinG}} г</span>
+          <span>Ж: {{$m.FatG}} г</span>
+          <span>У: {{$m.CarbsG}} г</span>
+        </div>
+
+        <div class="meal-details">
+          {{if $m.Portion}}
+            <div class="meal-section">
+              <strong>Порция:</strong>
+              <span class="small">{{$m.Portion}}</span>
+            </div>
+          {{end}}
+
+          {{if $m.Ingredients}}
+            <div class="meal-section" style="margin-top: 6px;">
+              <strong>Ингредиенты:</strong>
+              <ul class="ing-list">
+                {{range $m.Ingredients}}
+                  <li>{{.}}</li>
+                {{end}}
+              </ul>
+            </div>
+          {{end}}
+
+          {{if $m.Prep}}
+            <div class="meal-section" style="margin-top: 6px;">
+              <strong>Способ приготовления:</strong>
+              <p class="small" style="margin: 2px 0;">{{$m.Prep}}</p>
+            </div>
+          {{end}}
+
+          {{if $m.Swaps}}
+            <div class="meal-section" style="margin-top: 8px;">
+              <strong>Доступные замены продуктов:</strong>
+              <div class="meta" style="margin-top: 4px;">
+                {{range $m.Swaps}}
+                  <span class="swap-tag">Замена: {{.}}</span>
+                {{end}}
+              </div>
+            </div>
+          {{end}}
+        </div>
+
+        <div class="meal-actions" style="margin-top: 14px;">
+          <form action="/nutrition/toggle" method="POST" style="flex: 1;" onsubmit="toggleMealAjax(this, event)">
+            <input type="hidden" name="day" value="{{$.SelectedDay}}">
+            <input type="hidden" name="meal_id" value="{{$m.MealID}}">
+            <button type="submit" class="btn {{if isMealEaten $.User.Progress.Meals $.SelectedDay $m.MealID}}ghost{{end}}">
+              {{if isMealEaten $.User.Progress.Meals $.SelectedDay $m.MealID}}
+                Отмечено (отменить)
+              {{else}}
+                Отметить съеденным
+              {{end}}
+            </button>
+          </form>
+
+          <form action="/nutrition/swap" method="POST">
+            <input type="hidden" name="day" value="{{$.SelectedDay}}">
+            <input type="hidden" name="meal_id" value="{{$m.MealID}}">
+            <button type="submit" class="btn secondary" title="Заменить на другое подходящее блюдо">
+              Заменить блюдо
+            </button>
+          </form>
+        </div>
+      </div>
+    {{end}}
+  </div>
+
+  <div class="card info-card" style="margin-top: 14px;">
+    <h3>Хотите скорректировать рацион?</h3>
+    <p class="small muted">
+      Вы можете написать фитнес-помощнику в чате, чтобы подобрать замену продуктам или спросить рецепт приготовления.
+    </p>
+    <div style="max-width: 320px;">
+      <a href="/chat" class="btn ghost">Спросить помощника о замене продуктов</a>
+    </div>
+  </div>
+</div>
+{{end}}

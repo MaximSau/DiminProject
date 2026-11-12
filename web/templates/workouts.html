@@ -1,0 +1,304 @@
+{{define "content"}}
+<div class="workouts-page">
+  <!-- Вкладки дней недели -->
+  <div class="day-tabs">
+    {{range $idx, $day := .User.Plan.Days}}
+      <a href="/workouts?day={{$idx}}" class="day-tab {{if eq $.SelectedDay $idx}}active{{end}} {{if eq $.TodayIdx $idx}}today{{end}}">
+        <span class="day-tab-num">{{if eq $idx 0}}Пн{{else if eq $idx 1}}Вт{{else if eq $idx 2}}Ср{{else if eq $idx 3}}Чт{{else if eq $idx 4}}Пт{{else if eq $idx 5}}Сб{{else}}Вс{{end}}</span>
+        <span class="day-tab-status">
+          {{if $day.Rest}}
+            —
+          {{else if isSessionCompleted $.User.Progress.Sessions $idx}}
+            ✓
+          {{else}}
+            •
+          {{end}}
+        </span>
+      </a>
+    {{end}}
+  </div>
+
+  <div class="card workout-day-header">
+    <div class="card-tag-row">
+      <span class="badge">{{if .Extra.CurrentDay.Rest}}День восстановления{{else}}Тренировка{{end}}</span>
+      {{if not .Extra.CurrentDay.Rest}}<span class="small muted">~{{.Extra.CurrentDay.Minutes}} минут</span>{{end}}
+    </div>
+    <h2>{{.Extra.CurrentDay.Title}}</h2>
+    <p class="workout-focus"><strong>Фокус:</strong> {{.Extra.CurrentDay.Focus}}</p>
+    <p class="small muted">{{.Extra.CurrentDay.Notes}}</p>
+
+    {{if and (not .Extra.CurrentDay.Rest) .Extra.IsCompleted}}
+      <div class="workout-done-badge">
+        Тренировка успешно выполнена
+      </div>
+    {{end}}
+  </div>
+
+  {{if .Extra.CurrentDay.Rest}}
+    <div class="card rest-day-card" style="text-align: center; padding: 36px 20px;">
+      <h2>Время для восстановления</h2>
+      <p style="max-width: 600px; margin: 0 auto 20px;">
+        Мышцы укрепляются и растут во время отдыха, а не на самой тренировке. Дни отдыха необходимы для связок и центральной нервной системы.
+      </p>
+      <div class="recovery-tips card" style="max-width: 500px; margin: 0 auto; text-align: left;">
+        <strong>Рекомендации на сегодня:</strong>
+        <ul style="margin: 8px 0 0 18px; padding: 0;">
+          <li>20–30 минут неспешной прогулки на свежем воздухе</li>
+          <li>Достаточное количество чистой воды</li>
+          <li>7–8 часов крепкого сна</li>
+        </ul>
+      </div>
+    </div>
+  {{else}}
+    <!-- СПИСОК УПРАЖНЕНИЙ (АДАПТИВНАЯ СЕТКА НА ПК) -->
+    <div class="exercises-grid">
+      {{range $i, $ex := .Extra.CurrentDay.Exercises}}
+        <div class="card exercise-card">
+          <div class="ex-header">
+            <div>
+              <span class="ex-number">#{{add $i 1}}</span>
+              <h3 class="ex-title">{{$ex.Name}}</h3>
+            </div>
+            <span class="badge {{if eq $ex.Level "beginner"}}level-bg{{end}}">{{levelLabel $ex.Level}}</span>
+          </div>
+
+          <div class="meta" style="margin: 8px 0;">
+            <span>Целевые зоны: {{range $mIdx, $m := $ex.Muscles}}{{if $mIdx}}, {{end}}{{$m}}{{end}}</span>
+            <span>Инвентарь: {{equipLabel $ex.Equipment}}</span>
+          </div>
+
+          <div class="ex-stats-row">
+            <div class="ex-stat-item">
+              <span class="ex-stat-val">{{$ex.Sets}}</span>
+              <span class="ex-stat-lbl">подхода</span>
+            </div>
+            <div class="ex-stat-item">
+              <span class="ex-stat-val">{{if $ex.DurationSec}}{{$ex.DurationSec}} сек{{else}}{{$ex.Reps}}{{end}}</span>
+              <span class="ex-stat-lbl">повторений</span>
+            </div>
+            <div class="ex-stat-item">
+              <span class="ex-stat-val">{{$ex.RestSec}} с</span>
+              <span class="ex-stat-lbl">отдых</span>
+            </div>
+          </div>
+
+          <div class="row" style="margin-top: 14px; gap: 8px;">
+            <a href="/exercise?id={{$ex.ExerciseID}}&day={{$.SelectedDay}}" class="btn secondary btn-sm" style="flex: 1; text-align: center;">
+              Техника
+            </a>
+            <button type="button" class="btn btn-sm timer-trigger-btn" onclick="openRestTimer('{{$ex.Name}}', {{$ex.RestSec}})" style="flex: 1;">
+              Отдых ({{$ex.RestSec}}с)
+            </button>
+            <form action="/workouts/swap" method="POST" style="margin: 0;">
+              <input type="hidden" name="day" value="{{$.SelectedDay}}">
+              <input type="hidden" name="exercise_id" value="{{$ex.ExerciseID}}">
+              <button type="submit" class="btn ghost btn-sm" title="Заменить упражнение" aria-label="Заменить упражнение">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg>
+              </button>
+            </form>
+          </div>
+        </div>
+      {{end}}
+    </div>
+
+    <div class="grid-2col" style="margin-top: 14px;">
+      <!-- КНОПКА ЗАВЕРШЕНИЯ ТРЕНИРОВКИ -->
+      <div class="card complete-card">
+        <h3>Завершили тренировку?</h3>
+        <p class="small">Отметьте занятие, чтобы отслеживать регулярность без осуждения и давления:</p>
+        
+        <form action="/workouts/complete" method="POST">
+          <input type="hidden" name="day" value="{{.SelectedDay}}">
+          
+          <div class="field">
+            <label for="energy">Уровень энергии после занятия (1–5):</label>
+            <select id="energy" name="energy">
+              <option value="5">5 из 5 — Полон сил и бодрости</option>
+              <option value="4" selected>4 из 5 — Приятная мышечная усталость</option>
+              <option value="3">3 из 5 — Нормально, в меру тяжело</option>
+              <option value="2">2 из 5 — Было тяжело</option>
+              <option value="1">1 из 5 — Сильное утомление</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="feeling">Заметка о самочувствии (необязательно):</label>
+            <input type="text" id="feeling" name="feeling" maxlength="150" placeholder="Например: техника далась легко, пульс спокойный">
+          </div>
+
+          <button type="submit" class="btn">
+            Отметить тренировку выполненной
+          </button>
+        </form>
+      </div>
+
+      <div class="card info-card">
+        <h3>Рекомендация по прогрессии</h3>
+        <p class="small muted" style="line-height: 1.6;">{{.User.Plan.Progression}}</p>
+      </div>
+    </div>
+  {{end}}
+</div>
+
+<!-- ИНТЕРАКТИВНЫЙ МОДАЛЬНЫЙ ТАЙМЕР ОТДЫХА -->
+<div id="rest-timer-modal" class="timer-modal-backdrop" style="display: none;">
+  <div class="timer-modal-box card">
+    <div class="timer-modal-header">
+      <div>
+        <span class="badge">Таймер отдыха</span>
+        <h3 id="timer-exercise-name" style="margin: 4px 0 0;">Отдых между подходами</h3>
+      </div>
+      <button type="button" class="btn-icon" onclick="closeRestTimer()" aria-label="Закрыть">✕</button>
+    </div>
+
+    <div class="timer-display-wrap">
+      <div class="timer-digits" id="timer-display">00:45</div>
+      <span class="timer-sublabel" id="timer-status-label">Время на восстановление дыхания</span>
+    </div>
+
+    <div class="timer-quick-presets">
+      <button type="button" class="btn ghost btn-sm" onclick="setTimerSec(30)">30 с</button>
+      <button type="button" class="btn ghost btn-sm" onclick="setTimerSec(45)">45 с</button>
+      <button type="button" class="btn ghost btn-sm" onclick="setTimerSec(60)">60 с</button>
+      <button type="button" class="btn ghost btn-sm" onclick="setTimerSec(90)">90 с</button>
+    </div>
+
+    <div class="timer-controls-row">
+      <button type="button" class="btn secondary" onclick="addTimerSec(15)">+15 сек</button>
+      <button type="button" class="btn" id="timer-toggle-btn" onclick="toggleTimer()">Пауза</button>
+      <button type="button" class="btn ghost" onclick="resetTimer()">Сброс</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let timerInterval = null;
+  let timerRemaining = 45;
+  let timerDefault = 45;
+  let timerIsRunning = false;
+
+  function playChime() {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+      const notes = [523.25, 659.25, 783.99, 1046.50];
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+        gain.gain.setValueAtTime(0.2, now + idx * 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + idx * 0.12);
+        osc.stop(now + idx * 0.12 + 0.35);
+      });
+    } catch(e) {
+      console.debug('Chime error', e);
+    }
+  }
+
+  function formatTimerDigits(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return (m < 10 ? '0' + m : m) + ':' + (s < 10 ? '0' + s : s);
+  }
+
+  function updateTimerUI() {
+    const disp = document.getElementById('timer-display');
+    const statusLbl = document.getElementById('timer-status-label');
+    const toggleBtn = document.getElementById('timer-toggle-btn');
+    if (disp) disp.textContent = formatTimerDigits(timerRemaining);
+    if (toggleBtn) toggleBtn.textContent = timerIsRunning ? 'Пауза' : 'Старт';
+    if (statusLbl) {
+      if (timerRemaining === 0) {
+        statusLbl.textContent = 'Отдых завершён. Готовы к следующему подходу';
+      } else if (timerIsRunning) {
+        statusLbl.textContent = 'Восстанавливайте дыхание и пейте воду...';
+      } else {
+        statusLbl.textContent = 'На паузе';
+      }
+    }
+  }
+
+  function tick() {
+    if (timerRemaining > 0) {
+      timerRemaining--;
+      updateTimerUI();
+      if (timerRemaining === 0) {
+        pauseTimer();
+        playChime();
+        if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+      }
+    }
+  }
+
+  function startTimer() {
+    if (timerInterval) clearInterval(timerInterval);
+    timerIsRunning = true;
+    updateTimerUI();
+    timerInterval = setInterval(tick, 1000);
+  }
+
+  function pauseTimer() {
+    timerIsRunning = false;
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+    updateTimerUI();
+  }
+
+  function toggleTimer() {
+    if (timerIsRunning) {
+      pauseTimer();
+    } else {
+      if (timerRemaining <= 0) timerRemaining = timerDefault;
+      startTimer();
+    }
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    timerRemaining = timerDefault;
+    updateTimerUI();
+  }
+
+  function setTimerSec(sec) {
+    pauseTimer();
+    timerDefault = sec;
+    timerRemaining = sec;
+    updateTimerUI();
+    startTimer();
+  }
+
+  function addTimerSec(sec) {
+    timerRemaining += sec;
+    updateTimerUI();
+  }
+
+  function openRestTimer(exerciseName, sec) {
+    const modal = document.getElementById('rest-timer-modal');
+    const nameEl = document.getElementById('timer-exercise-name');
+    if (nameEl) nameEl.textContent = exerciseName || 'Отдых между подходами';
+    const s = parseInt(sec, 10) || 45;
+    timerDefault = s;
+    timerRemaining = s;
+    if (modal) modal.style.display = 'flex';
+    updateTimerUI();
+    startTimer();
+  }
+
+  function closeRestTimer() {
+    pauseTimer();
+    const modal = document.getElementById('rest-timer-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  // Закрытие по клавише Escape
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeRestTimer();
+  });
+</script>
+{{end}}

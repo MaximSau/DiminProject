@@ -1,0 +1,246 @@
+{{define "content"}}
+<div class="profile-page">
+  <div class="card">
+    <div class="card-tag-row">
+      <span class="badge">Настройки</span>
+      <span class="small muted">Код профиля: <strong>{{.User.Profile.Code}}</strong></span>
+    </div>
+    <h1>Ваш профиль и план</h1>
+    <p class="small muted">
+      Вы можете в любой момент изменить цель, уровень подготовки, расписание или пищевые предпочтения и пересоздать персональный план.
+    </p>
+
+    <div class="profile-sync-box">
+      <strong>Код восстановления:</strong> <code>{{.User.Profile.Code}}</code>
+      <p class="small muted" style="margin: 4px 0 8px;">
+        Сохраните этот 8-значный код, чтобы открыть ваш план на другом компьютере, смартфоне или в другом браузере:
+      </p>
+      <form action="/profile/switch" method="POST" class="row" style="max-width: 480px;">
+        <input type="text" name="code" placeholder="Введите код другого профиля" maxlength="8" style="text-transform: uppercase;">
+        <button type="submit" class="btn secondary" style="width: auto;">Войти по коду</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="grid-2col">
+    <div>
+      <!-- ПОКАЗАТЕЛИ ТЕЛОСЛОЖЕНИЯ И ИМТ -->
+      {{$bmi := userBMI .User.Profile}}
+      <div class="card">
+        <div class="card-tag-row">
+          <span class="badge">ИМТ и форма</span>
+          <span class="badge {{$bmi.status}}">{{$bmi.label}}</span>
+        </div>
+        <h2>Индекс массы тела: {{printf "%.1f" $bmi.value}}</h2>
+        <p class="small muted">
+          Для роста {{.User.Profile.HeightCm}} см рекомендуемый ВОЗ диапазон массы: <strong>{{printf "%.1f" $bmi.minW}} – {{printf "%.1f" $bmi.maxW}} кг</strong>.
+        </p>
+      </div>
+
+      <!-- БЫСТРАЯ СМЕНА ЦЕЛИ -->
+      <div class="card">
+        <h2>Текущая цель: {{goalLabel .User.Profile.Goal}}</h2>
+        <p class="small muted">Хотите переключить фокус программы?</p>
+        
+        <form action="/plan/change-goal" method="POST" class="row">
+          {{if eq .User.Profile.Goal "lose"}}
+            <input type="hidden" name="goal" value="gain">
+            <button type="submit" class="btn secondary">Переключить на «Набор массы»</button>
+          {{else}}
+            <input type="hidden" name="goal" value="lose">
+            <button type="submit" class="btn secondary">Переключить на «Снижение веса»</button>
+          {{end}}
+        </form>
+      </div>
+
+      <!-- НАСТРОЙКА НАПОМИНАНИЙ -->
+      <div class="card" id="reminders">
+        <h2>Режим и напоминания</h2>
+        <p class="small muted">
+          Настройте время для выработки полезных привычек. Мы уважаем ваши границы и не отправляем спам:
+        </p>
+
+        <form action="/reminders/update" method="POST">
+          {{range .User.Reminders}}
+            <div class="reminder-edit-row">
+              <label class="check" style="margin: 0; flex: 1;">
+                <input type="checkbox" name="enabled_{{.ID}}" value="1" {{if .Enabled}}checked{{end}}>
+                <div>
+                  <strong>{{.Title}}</strong>
+                  <span class="small muted" style="display: block;">{{.Note}}</span>
+                </div>
+              </label>
+              <div style="width: 110px;">
+                <input type="time" name="time_{{.ID}}" value="{{.Time}}" style="padding: 6px 8px; font-size: 14px;">
+              </div>
+            </div>
+          {{end}}
+
+          <button type="submit" class="btn secondary" style="margin-top: 14px;">
+            Сохранить напоминания
+          </button>
+        </form>
+      </div>
+
+      <!-- ПЕРЕСОЗДАНИЕ ПЛАНА -->
+      <div class="card">
+        <h2>Пересоздать план</h2>
+        <p class="small muted">
+          Если вы изменили цели, инвентарь или расписание, пересоздайте персональный план:
+        </p>
+        <form action="/plan/recreate" method="POST">
+          <button type="submit" class="btn">Сгенерировать новый план по анкете</button>
+        </form>
+      </div>
+
+      <!-- ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ И СБРОС -->
+      <div class="card">
+        <h3>Управление данными приложения</h3>
+        <div class="row" style="margin-top: 10px;">
+          <form action="/demo/seed" method="POST" style="flex: 1;">
+            <button type="submit" class="btn secondary">Загрузить демо-данные</button>
+          </form>
+          <form action="/demo/reset" method="POST" style="flex: 1;" onsubmit="return confirm('Вы уверены, что хотите сбросить профиль и начать заново?');">
+            <button type="submit" class="btn ghost" style="color: #dc2626; border-color: #dc2626;">Сбросить всё</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- РЕДАКТИРОВАНИЕ АНКЕТЫ -->
+    <div class="card">
+      <h2>Редактирование анкеты</h2>
+      
+      <form action="/profile" method="POST">
+        <div class="field">
+          <label for="name">Ваше имя (необязательно)</label>
+          <input type="text" id="name" name="name" maxlength="50" value="{{.User.Profile.Name}}">
+        </div>
+
+        <div class="row">
+          <div class="field" style="flex: 1;">
+            <label for="age">Возраст (лет)</label>
+            <input type="number" id="age" name="age" min="14" max="100" maxlength="3" data-maxlength="3" value="{{.User.Profile.Age}}" required>
+            <span class="hint">От 14 до 100</span>
+          </div>
+          <div class="field" style="flex: 1;">
+            <label for="gender">Пол</label>
+            <select id="gender" name="gender">
+              <option value="unspecified" {{if eq .User.Profile.Gender "unspecified"}}selected{{end}}>Не указан</option>
+              <option value="male" {{if eq .User.Profile.Gender "male"}}selected{{end}}>Мужской</option>
+              <option value="female" {{if eq .User.Profile.Gender "female"}}selected{{end}}>Женский</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field" style="flex: 1;">
+            <label for="height_cm">Рост (см)</label>
+            <input type="number" id="height_cm" name="height_cm" min="100" max="250" maxlength="3" data-maxlength="3" value="{{.User.Profile.HeightCm}}" required>
+            <span class="hint">От 100 до 250</span>
+          </div>
+          <div class="field" style="flex: 1;">
+            <label for="weight_kg">Текущий вес (кг)</label>
+            <input type="number" step="0.1" id="weight_kg" name="weight_kg" min="30" max="300" maxlength="5" data-maxlength="5" value="{{.User.Profile.WeightKg}}" required>
+            <span class="hint">От 30 до 300</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="goal">Цель</label>
+          <select id="goal" name="goal">
+            <option value="lose" {{if eq .User.Profile.Goal "lose"}}selected{{end}}>Похудение (снижение жировой массы)</option>
+            <option value="gain" {{if eq .User.Profile.Goal "gain"}}selected{{end}}>Набор веса (рост мышечной массы)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="pace">Темп изменений</label>
+          <select id="pace" name="pace">
+            <option value="safe" {{if eq .User.Profile.Pace "safe"}}selected{{end}}>Безопасный (рекомендуемый)</option>
+            <option value="moderate" {{if eq .User.Profile.Pace "moderate"}}selected{{end}}>Умеренный</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="fitness_level">Уровень физической подготовки</label>
+          <select id="fitness_level" name="fitness_level">
+            <option value="beginner" {{if eq .User.Profile.FitnessLevel "beginner"}}selected{{end}}>Новичок</option>
+            <option value="intermediate" {{if eq .User.Profile.FitnessLevel "intermediate"}}selected{{end}}>Средний</option>
+            <option value="advanced" {{if eq .User.Profile.FitnessLevel "advanced"}}selected{{end}}>Продвинутый</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="field" style="flex: 1;">
+            <label for="workouts_per_week">Тренировок в неделю</label>
+            <select id="workouts_per_week" name="workouts_per_week">
+              <option value="2" {{if eq .User.Profile.WorkoutsPerWeek 2}}selected{{end}}>2 раза в неделю</option>
+              <option value="3" {{if eq .User.Profile.WorkoutsPerWeek 3}}selected{{end}}>3 раза в неделю (рекомендуется)</option>
+              <option value="4" {{if eq .User.Profile.WorkoutsPerWeek 4}}selected{{end}}>4 раза в неделю</option>
+              <option value="5" {{if eq .User.Profile.WorkoutsPerWeek 5}}selected{{end}}>5 раз в неделю</option>
+            </select>
+          </div>
+          <div class="field" style="flex: 1;">
+            <label for="duration_min">Длительность тренировки</label>
+            <select id="duration_min" name="duration_min">
+              <option value="30" {{if eq .User.Profile.DurationMin 30}}selected{{end}}>30 минут</option>
+              <option value="45" {{if eq .User.Profile.DurationMin 45}}selected{{end}}>45 минут</option>
+              <option value="60" {{if eq .User.Profile.DurationMin 60}}selected{{end}}>60 минут</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="equipment">Доступный инвентарь</label>
+          <select id="equipment" name="equipment">
+            <option value="none" {{if eq .User.Profile.Equipment "none"}}selected{{end}}>Без оборудования (собственный вес)</option>
+            <option value="home" {{if eq .User.Profile.Equipment "home"}}selected{{end}}>Домашний инвентарь (гантели, коврик, резинки)</option>
+            <option value="gym" {{if eq .User.Profile.Equipment "gym"}}selected{{end}}>Полноценный спортзал</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="field" style="flex: 1;">
+            <label for="preferred_time">Время тренировок</label>
+            <select id="preferred_time" name="preferred_time">
+              <option value="morning" {{if eq .User.Profile.PreferredTime "morning"}}selected{{end}}>Утро</option>
+              <option value="day" {{if eq .User.Profile.PreferredTime "day"}}selected{{end}}>День</option>
+              <option value="evening" {{if eq .User.Profile.PreferredTime "evening"}}selected{{end}}>Вечер</option>
+            </select>
+          </div>
+          <div class="field" style="flex: 1;">
+            <label for="activity_level">Активность в течение дня</label>
+            <select id="activity_level" name="activity_level">
+              <option value="sedentary" {{if eq .User.Profile.ActivityLevel "sedentary"}}selected{{end}}>Сидячая (офис, учёба)</option>
+              <option value="moderate" {{if eq .User.Profile.ActivityLevel "moderate"}}selected{{end}}>Умеренная (прогулки, дела)</option>
+              <option value="high" {{if eq .User.Profile.ActivityLevel "high"}}selected{{end}}>Высокая (активная работа)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="diet_preference">Тип питания</label>
+          <select id="diet_preference" name="diet_preference">
+            <option value="standard" {{if eq .User.Profile.DietPreference "standard"}}selected{{end}}>Обычное (без ограничений)</option>
+            <option value="pescatarian" {{if eq .User.Profile.DietPreference "pescatarian"}}selected{{end}}>Пескетарианство (рыба, без мяса)</option>
+            <option value="vegetarian" {{if eq .User.Profile.DietPreference "vegetarian"}}selected{{end}}>Вегетарианство</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="allergies">Аллергии</label>
+          <input type="text" id="allergies" name="allergies" maxlength="300" value="{{.User.Profile.Allergies}}">
+        </div>
+
+        <div class="field">
+          <label for="avoid_foods">Исключить продукты</label>
+          <input type="text" id="avoid_foods" name="avoid_foods" maxlength="300" value="{{.User.Profile.AvoidFoods}}">
+        </div>
+
+        <button type="submit" class="btn">Сохранить изменения анкеты</button>
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}

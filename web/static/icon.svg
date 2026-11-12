@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#141416" />
+      <stop offset="100%" stop-color="#050505" />
+    </linearGradient>
+    <filter id="whiteGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#ffffff" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" stroke="#262626" stroke-width="4" />
+  <path d="M 96 256 L 192 256 L 224 160 L 288 352 L 320 256 L 416 256"
+        fill="none"
+        stroke="#ffffff"
+        stroke-width="36"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        filter="url(#whiteGlow)" />
+  <circle cx="288" cy="352" r="16" fill="#ffffff" />
+  <circle cx="224" cy="160" r="16" fill="#ffffff" />
+</svg>

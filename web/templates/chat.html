@@ -1,0 +1,107 @@
+{{define "content"}}
+<div class="chat-page">
+  <div class="card chat-header-card">
+    <div class="chat-header-top">
+      <div>
+        <h1>Чат с фитнес-помощником</h1>
+        <span class="badge {{if eq .AI.mode "provider"}}provider{{else}}demo{{end}}">
+          {{.AI.label}}
+        </span>
+      </div>
+      {{if .User.Chat}}
+        <form action="/chat/clear" method="POST">
+          <button type="submit" class="btn-clear" title="Очистить историю чата">Очистить</button>
+        </form>
+      {{end}}
+    </div>
+    <p class="small muted" style="margin-top: 8px;">
+      {{.AI.note}}
+    </p>
+  </div>
+
+  <!-- БЫСТРЫЕ ПОДСКАЗКИ (ЧИПСЫ) -->
+  <div class="quick-prompts-bar">
+    <span class="small muted" style="display: block; margin-bottom: 6px;">Частые вопросы:</span>
+    <div class="chips-scroll">
+      <button type="button" class="chip" onclick="sendPrompt('Объясни мой план простыми словами')">
+        Объясни план
+      </button>
+      <button type="button" class="chip" onclick="sendPrompt('Я пропустил вчерашнюю тренировку, что делать?')">
+        Пропустил тренировку
+      </button>
+      <button type="button" class="chip" onclick="sendPrompt('Как заменить упражнение, если оно слишком тяжёлое?')">
+        Заменить упражнение
+      </button>
+      <button type="button" class="chip" onclick="sendPrompt('Чем заменить курицу или творог в рационе?')">
+        Замена продуктов
+      </button>
+      <button type="button" class="chip" onclick="sendPrompt('Сколько воды мне нужно пить в течение дня?')">
+        Норма воды
+      </button>
+      <button type="button" class="chip safety-chip" onclick="sendPrompt('У меня разболелось колено при приседаниях')">
+        Тест безопасности (боль)
+      </button>
+    </div>
+  </div>
+
+  <!-- ОКНО ДИАЛОГА -->
+  <div class="chat-window">
+    {{if not .User.Chat}}
+      <div class="chat-welcome card" style="text-align: center; padding: 36px 20px;">
+        <h2>Здравствуйте! Чем могу помочь?</h2>
+        <p class="small muted" style="max-width: 550px; margin: 0 auto;">
+          Вы можете спросить меня о правильной технике любого упражнения, посоветоваться о замене продуктов в рационе, узнать, как поступить при пропуске занятия, или попросить объяснить логику вашего персонального плана.
+        </p>
+      </div>
+    {{end}}
+
+    <div class="chat-messages" id="chatMessages">
+      {{range .User.Chat}}
+        <div class="msg {{.Role}} {{if eq .Kind "safety"}}msg-safety{{end}}">
+          <div class="msg-text">{{.Text}}</div>
+          <div class="msg-meta">
+            <span class="msg-time">{{formatDate .At}}</span>
+            {{if eq .Role "assistant"}}
+              <span class="kind">
+                {{if eq .Kind "safety"}}Предупреждение безопасности{{else if eq .Kind "provider"}}ИИ ответ (API){{else}}Демо-ассистент{{end}}
+              </span>
+            {{end}}
+          </div>
+          {{if .Suggestions}}
+            <div class="msg-suggestions">
+              {{range .Suggestions}}
+                <button type="button" class="suggestion-btn" onclick="sendPrompt('{{.}}')">{{.}}</button>
+              {{end}}
+            </div>
+          {{end}}
+        </div>
+      {{end}}
+    </div>
+  </div>
+
+  <!-- ФОРМА ОТПРАВКИ -->
+  <div class="chat-input-sticky">
+    <div class="container-inner">
+      <form action="/chat" method="POST" class="chat-form" id="chatForm">
+        <input type="text" name="message" id="chatInput" placeholder="Спросите о тренировке, питании или расписании..." maxlength="300" required autocomplete="off">
+        <button type="submit" class="btn-send" title="Отправить сообщение">Отправить</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function sendPrompt(text) {
+    const input = document.getElementById('chatInput');
+    input.value = text;
+    document.getElementById('chatForm').submit();
+  }
+  // Автоскролл чата вниз
+  window.addEventListener('DOMContentLoaded', () => {
+    const chatMsg = document.getElementById('chatMessages');
+    if (chatMsg) {
+      window.scrollTo(0, document.body.scrollHeight);
+    }
+  });
+</script>
+{{end}}

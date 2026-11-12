@@ -1,0 +1,139 @@
+{{define "content"}}
+<div class="catalog-page">
+  <div class="card catalog-header">
+    <div class="card-tag-row">
+      <span class="badge">База знаний PulseFit</span>
+      <span class="small muted">Справочник каталога</span>
+    </div>
+    <h1>Библиотека упражнений и питания</h1>
+    <p class="small muted">
+      Изучайте проверенную технику упражнений и рецепты сбалансированных блюд с фильтрацией по мышечным группам и типам питания.
+    </p>
+
+    <!-- ЖИВОЙ ПОИСК -->
+    <div class="catalog-search-box" style="margin-top: 14px;">
+      <input type="text" id="catalogSearch" placeholder="Быстрый поиск упражнения или блюда..." oninput="filterCatalog()" autocomplete="off">
+    </div>
+
+    <!-- ТАБЫ РАЗДЕЛОВ -->
+    <div class="catalog-tabs" style="margin-top: 12px;">
+      <button type="button" class="tab-btn active" onclick="switchCatalogTab('all', this)">Все ({{add (len .Extra.Exercises) (len .Extra.Meals)}})</button>
+      <button type="button" class="tab-btn" onclick="switchCatalogTab('exercises', this)">Упражнения ({{len .Extra.Exercises}})</button>
+      <button type="button" class="tab-btn" onclick="switchCatalogTab('meals', this)">Питание ({{len .Extra.Meals}})</button>
+    </div>
+
+    <!-- ЧИПСЫ ФИЛЬТРОВ -->
+    <div class="chips-scroll" style="margin-top: 10px;">
+      <button type="button" class="chip active-filter" onclick="applyTagFilter('', this)">Все теги</button>
+      <button type="button" class="chip" onclick="applyTagFilter('ноги', this)">Ноги / Ягодицы</button>
+      <button type="button" class="chip" onclick="applyTagFilter('грудь', this)">Грудь</button>
+      <button type="button" class="chip" onclick="applyTagFilter('спина', this)">Спина</button>
+      <button type="button" class="chip" onclick="applyTagFilter('пресс', this)">Пресс / Кор</button>
+      <button type="button" class="chip" onclick="applyTagFilter('руки', this)">Плечи / Руки</button>
+      <button type="button" class="chip" onclick="applyTagFilter('none', this)">Без инвентаря</button>
+      <button type="button" class="chip" onclick="applyTagFilter('gym', this)">Тренажёры</button>
+      <button type="button" class="chip" onclick="applyTagFilter('vegetarian', this)">Вегетарианство</button>
+    </div>
+  </div>
+
+  <!-- СПИСОК ЭЛЕМЕНТОВ В АДАПТИВНОЙ СЕТКЕ -->
+  <div class="catalog-grid" id="catalogGrid">
+    <!-- УПРАЖНЕНИЯ -->
+    {{range .Extra.Exercises}}
+      <div class="card catalog-item" data-type="exercises" data-title="{{.Name}}" data-tags="{{range .Muscles}}{{.}} {{end}} {{.Equipment}} {{.Kind}} {{.Level}}">
+        <div class="card-tag-row">
+          <span class="badge level-bg">{{levelLabel .Level}}</span>
+          <span class="small muted">{{equipLabel .Equipment}}</span>
+        </div>
+        <h3>{{.Name}}</h3>
+        <p class="small muted">
+          Мышцы: {{range $i, $m := .Muscles}}{{if $i}}, {{end}}{{$m}}{{end}}
+        </p>
+        <div class="meta" style="margin: 8px 0;">
+          <span>{{.Sets}} подх. × {{if .DurationSec}}{{.DurationSec}} с{{else}}{{.Reps}}{{end}}</span>
+          <span>Отдых: {{.RestSec}} с</span>
+        </div>
+        <p class="small" style="margin-top: 8px;">{{.Start}}</p>
+        <div style="margin-top: 12px;">
+          <a href="/exercise?id={{.ID}}" class="btn secondary btn-sm">Пошаговая техника</a>
+        </div>
+      </div>
+    {{end}}
+
+    <!-- БЛЮДА -->
+    {{range .Extra.Meals}}
+      <div class="card catalog-item" data-type="meals" data-title="{{.Name}}" data-tags="{{.Slot}} {{range .Tags}}{{.}} {{end}} {{range .Ingredients}}{{.}} {{end}}">
+        <div class="card-tag-row">
+          <span class="badge meal-slot">
+            {{if eq .Slot "breakfast"}}Завтрак{{else if eq .Slot "lunch"}}Обед{{else if eq .Slot "dinner"}}Ужин{{else}}Перекус{{end}}
+          </span>
+          <span class="meal-kcal">~{{.Kcal}} ккал</span>
+        </div>
+        <h3>{{.Name}}</h3>
+        <div class="meta" style="margin: 6px 0;">
+          <span>Б: {{.ProteinG}}г</span>
+          <span>Ж: {{.FatG}}г</span>
+          <span>У: {{.CarbsG}}г</span>
+        </div>
+        <p class="small"><strong>Порция:</strong> {{.Portion}}</p>
+        {{if .Ingredients}}
+          <p class="small muted" style="margin-top: 4px;">
+            Состав: {{range $i, $ing := .Ingredients}}{{if $i}}, {{end}}{{$ing}}{{end}}
+          </p>
+        {{end}}
+      </div>
+    {{end}}
+  </div>
+
+  <div id="catalogEmpty" class="empty muted" style="display: none; padding: 40px 10px;">
+    По вашему запросу ничего не найдено. Попробуйте изменить формулировку или сбросить фильтры.
+  </div>
+</div>
+
+<script>
+  let currentTab = 'all';
+  let currentTag = '';
+
+  function switchCatalogTab(tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.catalog-tabs .tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    filterCatalog();
+  }
+
+  function applyTagFilter(tag, btn) {
+    currentTag = tag.toLowerCase();
+    document.querySelectorAll('.chips-scroll .chip').forEach(b => b.classList.remove('active-filter'));
+    if (btn) btn.classList.add('active-filter');
+    filterCatalog();
+  }
+
+  function filterCatalog() {
+    const q = document.getElementById('catalogSearch').value.toLowerCase().trim();
+    const items = document.querySelectorAll('.catalog-item');
+    let visibleCount = 0;
+
+    items.forEach(item => {
+      const type = item.dataset.type;
+      const title = (item.dataset.title || '').toLowerCase();
+      const tags = (item.dataset.tags || '').toLowerCase();
+
+      const matchesTab = (currentTab === 'all' || currentTab === type);
+      const matchesSearch = !q || title.includes(q) || tags.includes(q);
+      const matchesTag = !currentTag || tags.includes(currentTag) || title.includes(currentTag);
+
+      if (matchesTab && matchesSearch && matchesTag) {
+        item.style.display = '';
+        visibleCount++;
+      } else {
+        item.style.display = 'none';
+      }
+    });
+
+    const empty = document.getElementById('catalogEmpty');
+    if (empty) {
+      empty.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
+  }
+</script>
+{{end}}

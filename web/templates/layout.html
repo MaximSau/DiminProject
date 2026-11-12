@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PulseFit — Персональный фитнес и питание</title>
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#08080a">
+  <link rel="stylesheet" href="/static/app.css">
+  <script>
+    // Поддержка темы (по умолчанию темный монохромный Whoop/Gymshark стиль)
+    (function() {
+      const theme = localStorage.getItem('pulsefit_theme') || 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+    })();
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('pulsefit_theme', next);
+    }
+
+    // Регистрация Service Worker для PWA (работа офлайн и установка)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => console.debug('SW reg failed', err));
+      });
+    }
+
+    // Сохранение и восстановление позиции скролла при перезагрузках
+    window.addEventListener('beforeunload', () => {
+      sessionStorage.setItem('pulsefit_scroll_pos', window.scrollY);
+    });
+    window.addEventListener('DOMContentLoaded', () => {
+      const savedPos = sessionStorage.getItem('pulsefit_scroll_pos');
+      if (savedPos !== null && !window.location.hash) {
+        window.scrollTo({ top: parseInt(savedPos, 10), behavior: 'instant' });
+      }
+
+      // Ограничения на числовые поля на фронтенде
+      document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (['e', 'E', '+', '-'].includes(e.key)) {
+            e.preventDefault();
+          }
+        });
+
+        input.addEventListener('input', function() {
+          const maxLen = this.getAttribute('maxlength') || this.dataset.maxlength;
+          if (maxLen && this.value.length > parseInt(maxLen, 10)) {
+            this.value = this.value.slice(0, parseInt(maxLen, 10));
+          }
+
+          const maxVal = parseFloat(this.getAttribute('max'));
+          const minVal = parseFloat(this.getAttribute('min'));
+          const val = parseFloat(this.value);
+
+          if (!isNaN(val) && !isNaN(maxVal) && val > maxVal) {
+            this.value = maxVal;
+          }
+        });
+      });
+    });
+
+    // Функция AJAX-переключения приёма пищи без прокрутки страницы
+    async function toggleMealAjax(form, event) {
+      if (event) event.preventDefault();
+      const formData = new FormData(form);
+      const card = form.closest('.meal-card') || form.closest('.meal-dash-item');
+      const checkbox = form.querySelector('input[type="checkbox"]');
+      const textSpan = form.querySelector('.meal-check-text');
+      const button = form.querySelector('button[type="submit"]');
+
+      try {
+        const resp = await fetch('/nutrition/toggle', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+          }
+        });
+        const data = await resp.json();
+        if (data && data.ok) {
+          if (checkbox) checkbox.checked = data.eaten;
+          if (card) {
+            if (data.eaten) {
+              card.classList.add('eaten');
+            } else {
+              card.classList.remove('eaten');
+            }
+          }
+          if (textSpan) {
+            if (data.eaten) {
+              textSpan.classList.add('done');
+            } else {
+              textSpan.classList.remove('done');
+            }
+          }
+          if (button) {
+            if (data.eaten) {
+              button.classList.add('ghost');
+              button.textContent = 'Отмечено (отменить)';
+            } else {
+              button.classList.remove('ghost');
+              button.textContent = 'Отметить съеденным';
+            }
+          }
+        }
+      } catch (err) {
+        form.submit();
+      }
+    }
+
+    // Функция быстрого добавления воды без перезагрузки
+    async function changeWaterAjax(delta, event) {
+      if (event) event.preventDefault();
+      try {
+        const formData = new FormData();
+        formData.append('delta', delta);
+        formData.append('ajax', '1');
+        const resp = await fetch('/water/add', {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+          }
+        });
+        const data = await resp.json();
+        if (data && data.ok) {
+          const curEl = document.getElementById('water-current-val');
+          const pctEl = document.getElementById('water-percent-val');
+          const barEl = document.getElementById('water-progress-bar');
+          if (curEl) curEl.textContent = data.current;
+          if (pctEl) pctEl.textContent = data.percent + '%';
+          if (barEl) barEl.style.width = data.percent + '%';
+        }
+      } catch (err) {
+        console.error('Water update failed', err);
+      }
+    }
+  </script>
+</head>
+<body>
+  <div class="app-layout">
+    <!-- ВЕРХНЯЯ ШАПКА С ДЕСКТОП-НАВИГАЦИЕЙ -->
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="topbar-left">
+          <a href="/" class="brand">
+            <span class="brand-logo" aria-hidden="true">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </span>
+            <span class="brand-text">PulseFit</span>
+          </a>
+          {{if and .User .User.Profile.Onboarded}}
+            <span class="badge {{if eq .User.Profile.Goal "gain"}}gain{{else}}lose{{end}}">
+              {{goalLabel .User.Profile.Goal}}
+            </span>
+          {{else}}
+            <span class="sub">Персональный фитнес</span>
+          {{end}}
+        </div>
+
+        <!-- ДЕСКТОПНОЕ МЕНЮ (НА ПК) -->
+        {{if and .User .User.Profile.Onboarded}}
+          <nav class="desktop-nav">
+            <a href="/dashboard" class="desktop-nav-link {{if eq .ActiveTab "dashboard"}}active{{end}}">
+              <svg class="nav-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              <span>Главная</span>
+            </a>
+            <a href="/workouts" class="desktop-nav-link {{if eq .ActiveTab "workouts"}}active{{end}}">
+              <svg class="nav-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+              <span>Тренировки</span>
+            </a>
+            <a href="/nutrition" class="desktop-nav-link {{if eq .ActiveTab "nutrition"}}active{{end}}">
+              <svg class="nav-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+              <span>Питание</span>
+            </a>
+            <a href="/progress" class="desktop-nav-link {{if eq .ActiveTab "progress"}}active{{end}}">
+              <svg class="nav-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+              <span>Прогресс</span>
+            </a>
+            <a href="/catalog" class="desktop-nav-link {{if eq .ActiveTab "catalog"}}active{{end}}">
+              <svg class="nav-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              <span>База знаний</span>
+            </a>
+            <a href="/profile" class="desktop-nav-link {{if eq .ActiveTab "profile"}}active{{end}}">
+              <svg class="nav-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <span>Профиль</span>
+            </a>
+          </nav>
+        {{end}}
+
+        <div class="topbar-actions">
+          <button type="button" class="btn-icon" onclick="toggleTheme()" title="Переключить тему" aria-label="Тема">
+            <svg class="theme-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          {{if and .User .User.Profile.Onboarded}}
+            <a href="/chat" class="chat-link {{if eq .ActiveTab "chat"}}active{{end}}" title="Спросить ИИ">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              <span class="chat-link-text">Ассистент</span>
+            </a>
+          {{end}}
+        </div>
+      </div>
+    </header>
+
+    {{if .Notice}}
+      <div class="alert-notice">
+        <div class="container-inner">
+          <span>{{.Notice}}</span>
+        </div>
+      </div>
+    {{end}}
+
+    {{if .Error}}
+      <div class="alert-error">
+        <div class="container-inner">
+          <span>{{.Error}}</span>
+        </div>
+      </div>
+    {{end}}
+
+    <!-- ОСНОВНАЯ ЧАСТЬ СТРАНИЦЫ -->
+    <main class="main-content">
+      <div class="container-inner">
+        {{template "content" .}}
+      </div>
+    </main>
+
+    <!-- МОБИЛЬНАЯ НИЖНЯЯ ПАНЕЛЬ (СКРЫТА НА ПК) -->
+    {{if and .User .User.Profile.Onboarded}}
+      <nav class="mobile-nav">
+        <a href="/dashboard" class="nav-item {{if eq .ActiveTab "dashboard"}}active{{end}}">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </span>
+          <span class="nav-label">Главная</span>
+        </a>
+        <a href="/workouts" class="nav-item {{if eq .ActiveTab "workouts"}}active{{end}}">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+          </span>
+          <span class="nav-label">Тренинг</span>
+        </a>
+        <a href="/nutrition" class="nav-item {{if eq .ActiveTab "nutrition"}}active{{end}}">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          </span>
+          <span class="nav-label">Питание</span>
+        </a>
+        <a href="/catalog" class="nav-item {{if eq .ActiveTab "catalog"}}active{{end}}">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </span>
+          <span class="nav-label">База</span>
+        </a>
+        <a href="/progress" class="nav-item {{if eq .ActiveTab "progress"}}active{{end}}">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+          </span>
+          <span class="nav-label">Прогресс</span>
+        </a>
+        <a href="/profile" class="nav-item {{if eq .ActiveTab "profile"}}active{{end}}">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <span class="nav-label">Профиль</span>
+        </a>
+      </nav>
+    {{end}}
+  </div>
+</body>
+</html>

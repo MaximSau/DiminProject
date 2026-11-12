@@ -1,0 +1,36 @@
+# Бинарники
+/pulsefit
+/bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# База данных и локальные данные
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Отчёты о покрытии тестами и логи
+coverage.out
+coverage.html
+*.log
+
+# Локальные переменные окружения и куки
+.env
+cookies.txt
+*.tmp
+
+# AI-агенты и скиллы
+.agents/
+skills/
+
+# IDE и OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~

@@ -1,0 +1,43 @@
+{{define "content"}}
+<div class="medical-warning-page" style="max-width: 720px; margin: 0 auto;">
+  <div class="card warn" style="margin-top: 10px; padding: 24px;">
+    <h2>Внимание: рекомендуем консультацию специалиста</h2>
+    <p>
+      В анкете вы указали ограничения по здоровью (травмы, хронические заболевания или восстановительный период).
+    </p>
+    <p>
+      Безопасность вашего здоровья — наш главный приоритет. В таких случаях самостоятельное начало тренировок без согласования со специалистом может привести к осложнениям или травмам.
+    </p>
+    <div style="margin: 16px 0; padding: 16px; background: var(--card); border-radius: 12px; border: 1px solid var(--border);">
+      <strong>Что мы рекомендуем сделать:</strong>
+      <ol style="margin: 10px 0 0 20px; padding: 0; line-height: 1.6;">
+        <li>Обратитесь к лечащему врачу, травматологу или специалисту ЛФК.</li>
+        <li>Уточните, какие виды физической активности вам разрешены (ходьба, лёгкая гимнастика, плавание).</li>
+        <li>Спросите, каких движений (осевые нагрузки, прыжки, глубокие приседания) следует избегать.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="card" style="padding: 24px;">
+    <h3>Уточнить данные или скорректировать анкету</h3>
+    <p class="small muted">
+      Если вы случайно отметили ограничение или хотите изменить параметры:
+    </p>
+    <div style="max-width: 380px;">
+      <a href="/onboarding" class="btn">Вернуться к анкете и изменить ответы</a>
+    </div>
+
+    <div style="margin-top: 24px; border-top: 1px solid var(--border); padding-top: 18px;">
+      <p class="small muted">
+        Если вы уже проконсультировались с врачом и врач одобрил лёгкую оздоровительную активность, вы можете ознакомиться со щадящим планом:
+      </p>
+      <form action="/medical-warning" method="POST" style="max-width: 440px;">
+        <input type="hidden" name="proceed_anyway" value="1">
+        <button type="submit" class="btn secondary">
+          Я проконсультировался с врачом и хочу продолжить
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{{end}}

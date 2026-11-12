@@ -1,0 +1,148 @@
+{{define "content"}}
+<div class="export-page">
+  <div class="no-print card" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;">
+    <div>
+      <h2>Экспорт персональной программы</h2>
+      <p class="small muted" style="margin: 0;">Готовая страница для сохранения в PDF или печати на бумаге для тренера/врача.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button type="button" class="btn" style="width: auto; padding: 10px 18px;" onclick="window.print()">Распечатать / Сохранить в PDF</button>
+      <a href="/dashboard" class="btn secondary" style="width: auto; padding: 10px 16px;">← Назад в приложение</a>
+    </div>
+  </div>
+
+  <div class="printable-document card">
+    <div class="print-header">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--accent); padding-bottom: 14px;">
+        <div>
+          <h1 style="margin: 0; color: var(--accent); font-size: 26px;">PulseFit — Персональная программа</h1>
+          <p class="small muted" style="margin: 4px 0 0;">Дата формирования: {{formatDate .User.Plan.CreatedAt}} | Версия плана: #{{.User.Plan.Version}}</p>
+        </div>
+        <div style="text-align: right;">
+          <strong style="font-size: 16px;">{{if .User.Profile.Name}}{{.User.Profile.Name}}{{else}}Пользователь{{end}}</strong>
+          <span class="small muted" style="display: block;">Код профиля: {{.User.Profile.Code}}</span>
+        </div>
+      </div>
+
+      <!-- СВОДКА ПАРАМЕТРОВ -->
+      <div class="print-summary-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0; padding: 12px; background: var(--bg); border-radius: 10px;">
+        <div>
+          <span class="small muted">Цель программы:</span>
+          <strong style="display: block;">{{goalLabel .User.Profile.Goal}}</strong>
+        </div>
+        <div>
+          <span class="small muted">Уровень подготовки:</span>
+          <strong style="display: block;">{{levelLabel .User.Profile.Level}}</strong>
+        </div>
+        <div>
+          <span class="small muted">Оборудование:</span>
+          <strong style="display: block;">{{equipLabel .User.Profile.Equipment}}</strong>
+        </div>
+        <div>
+          <span class="small muted">Частота и время:</span>
+          <strong style="display: block;">{{.User.Profile.WorkoutsPerWeek}} р/нед, {{.User.Profile.SessionMinutes}} мин</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- ТРЕНИРОВОЧНЫЙ ПЛАН НА НЕДЕЛЮ -->
+    <div class="print-section" style="margin-top: 20px;">
+      <h2 style="font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">1. Тренировочный план на неделю</h2>
+      
+      {{range $idx, $day := .User.Plan.Days}}
+        <div class="print-day-block" style="margin: 14px 0; padding: 12px; border: 1px solid var(--border); border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <strong style="font-size: 16px;">{{weekdayName $idx}} — {{$day.Title}}</strong>
+            <span class="small muted">{{if $day.Rest}}Восстановление{{else}}~{{$day.Minutes}} минут | Фокус: {{$day.Focus}}{{end}}</span>
+          </div>
+
+          {{if $day.Notes}}<p class="small muted" style="margin: 4px 0 8px;">{{$day.Notes}}</p>{{end}}
+
+          {{if not $day.Rest}}
+            <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
+              <thead>
+                <tr style="text-align: left; background: var(--bg); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 6px 8px;">#</th>
+                  <th style="padding: 6px 8px;">Упражнение</th>
+                  <th style="padding: 6px 8px;">Мышцы</th>
+                  <th style="padding: 6px 8px;">Сеты × Повторы</th>
+                  <th style="padding: 6px 8px;">Отдых</th>
+                </tr>
+              </thead>
+              <tbody>
+                {{range $exIdx, $ex := $day.Exercises}}
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 6px 8px;">{{add $exIdx 1}}</td>
+                    <td style="padding: 6px 8px; font-weight: 600;">{{$ex.Name}}</td>
+                    <td style="padding: 6px 8px; color: var(--muted);">{{range $mIdx, $m := $ex.Muscles}}{{if $mIdx}}, {{end}}{{$m}}{{end}}</td>
+                    <td style="padding: 6px 8px;">{{$ex.Sets}} × {{if $ex.DurationSec}}{{$ex.DurationSec}} с{{else}}{{$ex.Reps}}{{end}}</td>
+                    <td style="padding: 6px 8px;">{{$ex.RestSec}} с</td>
+                  </tr>
+                {{end}}
+              </tbody>
+            </table>
+          {{end}}
+        </div>
+      {{end}}
+    </div>
+
+    <!-- ПЛАН ПИТАНИЯ -->
+    <div class="print-section" style="margin-top: 24px;">
+      <h2 style="font-size: 20px; border-bottom: 1px solid var(--border); padding-bottom: 6px;">2. План питания и БЖУ</h2>
+      <p class="small muted" style="margin: 6px 0 10px;">
+        Ориентировочная калорийность: <strong>{{.User.Plan.KcalTarget}} ккал</strong> | Белки: <strong>{{.User.Plan.ProteinG}} г</strong> | Жиры: <strong>{{.User.Plan.FatG}} г</strong> | Углеводы: <strong>{{.User.Plan.CarbsG}} г</strong>
+      </p>
+
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px;">
+        <thead>
+          <tr style="text-align: left; background: var(--bg); border-bottom: 1px solid var(--border);">
+            <th style="padding: 6px 8px;">День</th>
+            <th style="padding: 6px 8px;">Приём пищи</th>
+            <th style="padding: 6px 8px;">Блюдо</th>
+            <th style="padding: 6px 8px;">Порция</th>
+            <th style="padding: 6px 8px;">Ккал</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range $dayIdx, $dayMeals := .User.Plan.Meals}}
+            {{range $dayMeals.Meals}}
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 6px 8px; font-weight: 600;">{{weekdayName $dayIdx}}</td>
+                <td style="padding: 6px 8px; color: var(--muted);">{{.Slot}}</td>
+                <td style="padding: 6px 8px;">{{.Name}}</td>
+                <td style="padding: 6px 8px;">{{.Portion}}</td>
+                <td style="padding: 6px 8px;">~{{.Kcal}}</td>
+              </tr>
+            {{end}}
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- МЕДИЦИНСКИЙ ДИСКЛЕЙМЕР -->
+    <div class="print-disclaimer" style="margin-top: 24px; padding: 12px 14px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; color: var(--muted); line-height: 1.45;">
+      <strong>Медицинское уведомление:</strong> Рекомендации приложения PulseFit не являются врачебным предписанием. При возникновении острой боли, неприятных ощущений в суставах или ухудшении самочувствия немедленно остановите нагрузку и проконсультируйтесь с лечащим врачом или профильным специалистом.
+    </div>
+  </div>
+</div>
+
+<style>
+  @media print {
+    .no-print, .topbar, .mobile-nav, .desktop-nav, .alert-notice, .alert-error {
+      display: none !important;
+    }
+    body {
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+    .card {
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+    }
+    .printable-document {
+      border: none !important;
+    }
+  }
+</style>
+{{end}}

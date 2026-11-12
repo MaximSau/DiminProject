@@ -1,0 +1,266 @@
+{{define "content"}}
+<div class="onboarding-container">
+  <div class="hero card" style="text-align: center; padding: 24px 20px;">
+    <h1>Персональный план тренировок и питания</h1>
+    <p class="hero-desc" style="max-width: 650px; margin: 0 auto;">
+      Привет! Я помогу составить понятный и комфортный план для тренировок дома или в спортзале без изнурительных диет и опасных перегрузок.
+    </p>
+    
+    <div class="demo-seed-card" style="margin-top: 18px;">
+      <div class="demo-seed-info">
+        <strong>Быстрый запуск для демонстрации:</strong> хотите сразу открыть готовый профиль с заполненными тренировками, питанием и графиком?
+      </div>
+      <form action="/demo/seed" method="POST" style="margin-top: 10px;">
+        <button type="submit" class="btn secondary">Запустить демонстрационный сценарий</button>
+      </form>
+    </div>
+  </div>
+
+  <form action="/onboarding" method="POST" class="form-questionnaire" id="onboardForm">
+    <div class="grid-2col">
+      <!-- БЛОК 1: ВЫБОР ЦЕЛИ -->
+      <div class="card">
+        <h2>1. Выберите вашу цель</h2>
+        <p class="small">Цель можно в любой момент изменить в настройках.</p>
+        
+        <div class="goal-grid">
+          <label class="goal-card">
+            <input type="radio" name="goal" value="lose" {{if or (eq .User.Profile.Goal "lose") (eq .User.Profile.Goal "")}}checked{{end}}>
+            <div class="goal-card-body">
+              <span class="goal-icon-wrap" style="color: var(--accent); margin-bottom: 6px; display: inline-flex;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9c0-4.97-4.03-9-9-9z"/><path d="M12 7v5l3 3"/></svg>
+              </span>
+              <span class="goal-title">Хочу похудеть</span>
+              <span class="goal-sub">Снижение жировой массы и подтянутое тело без голодания</span>
+            </div>
+          </label>
+
+          <label class="goal-card">
+            <input type="radio" name="goal" value="gain" {{if eq .User.Profile.Goal "gain"}}checked{{end}}>
+            <div class="goal-card-body">
+              <span class="goal-icon-wrap" style="color: var(--accent); margin-bottom: 6px; display: inline-flex;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 5v14M18 5v14M2 9v6M22 9v6M6 12h12"/></svg>
+              </span>
+              <span class="goal-title">Хочу набрать вес</span>
+              <span class="goal-sub">Качественный набор мышечной массы и увеличение силы</span>
+            </div>
+          </label>
+        </div>
+
+        <div class="field" style="margin-top: 16px;">
+          <label for="pace">Желаемый темп изменений</label>
+          <select name="pace" id="pace">
+            <option value="gentle" {{if eq .User.Profile.Pace "gentle"}}selected{{end}}>Спокойный и мягкий (~10% дефицит/профицит) — рекомендуется</option>
+            <option value="moderate" {{if or (eq .User.Profile.Pace "moderate") (eq .User.Profile.Pace "")}}selected{{end}}>Умеренный (~15% дефицит/профицит)</option>
+            <option value="steady" {{if eq .User.Profile.Pace "steady"}}selected{{end}}>Активный (~20% дефицит/профицит)</option>
+          </select>
+          <span class="hint">Мы не обещаем экстремально быстрых результатов: безопасные изменения происходят постепенно.</span>
+        </div>
+      </div>
+
+      <!-- БЛОК 2: ФИЗИЧЕСКИЕ ДАННЫЕ (НЕОБЯЗАТЕЛЬНЫЕ С ВАЛИДАЦИЕЙ) -->
+      <div class="card">
+        <h2>2. Параметры тела <span class="badge">Необязательно</span></h2>
+        <p class="small">
+          Нужны только для ориентировочного расчёта калорий и нормы воды по формуле Миффлина — Сан Жеора. Можно пропустить и заполнить позже.
+        </p>
+
+        <div class="field">
+          <label for="name">Ваше имя или псевдоним</label>
+          <input type="text" id="name" name="name" maxlength="50" placeholder="Например, Алексей" value="{{.User.Profile.Name}}">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="age">Возраст (лет)</label>
+            <input type="number" id="age" name="age" min="14" max="100" maxlength="3" data-maxlength="3" placeholder="25" value="{{if .User.Profile.Age}}{{.User.Profile.Age}}{{end}}">
+            <span class="hint">От 14 до 100 лет (макс. 3 цифры)</span>
+          </div>
+          <div class="field">
+            <label for="sex">Пол</label>
+            <select id="sex" name="sex">
+              <option value="" {{if eq .User.Profile.Sex ""}}selected{{end}}>Не указывать</option>
+              <option value="female" {{if eq .User.Profile.Sex "female"}}selected{{end}}>Женский</option>
+              <option value="male" {{if eq .User.Profile.Sex "male"}}selected{{end}}>Мужской</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="height_cm">Рост (см)</label>
+            <input type="number" step="0.5" id="height_cm" name="height_cm" min="100" max="250" maxlength="3" data-maxlength="3" placeholder="175" value="{{if .User.Profile.HeightCm}}{{.User.Profile.HeightCm}}{{end}}">
+            <span class="hint">От 100 до 250 см (макс. 3 цифры)</span>
+          </div>
+          <div class="field">
+            <label for="weight_kg">Вес (кг)</label>
+            <input type="number" step="0.1" id="weight_kg" name="weight_kg" min="30" max="300" maxlength="5" data-maxlength="5" placeholder="70" value="{{if .User.Profile.WeightKg}}{{.User.Profile.WeightKg}}{{end}}">
+            <span class="hint">От 30 до 300 кг</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2col">
+      <!-- БЛОК 3: ТРЕНИРОВОЧНЫЙ ОПЫТ И РАСПИСАНИЕ -->
+      <div class="card">
+        <h2>3. Опыт и расписание</h2>
+        
+        <div class="field">
+          <label for="level">Уровень физической подготовки</label>
+          <select id="level" name="level">
+            <option value="beginner" {{if or (eq .User.Profile.Level "beginner") (eq .User.Profile.Level "")}}selected{{end}}>Новичок (нет опыта или долгий перерыв)</option>
+            <option value="intermediate" {{if eq .User.Profile.Level "intermediate"}}selected{{end}}>Средний (занимаюсь 3–6 месяцев)</option>
+            <option value="advanced" {{if eq .User.Profile.Level "advanced"}}selected{{end}}>Продвинутый (регулярный опыт от 1 года)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="equipment">Доступное оборудование</label>
+          <select id="equipment" name="equipment">
+            <option value="none" {{if or (eq .User.Profile.Equipment "none") (eq .User.Profile.Equipment "")}}selected{{end}}>Без оборудования (тренировки с весом тела)</option>
+            <option value="home" {{if eq .User.Profile.Equipment "home"}}selected{{end}}>Домашний инвентарь (гантели, коврик, фитнес-резинки)</option>
+            <option value="gym" {{if eq .User.Profile.Equipment "gym"}}selected{{end}}>Полноценный спортзал (тренажёры, штанги, гантели)</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="workouts_per_week">Занятий в неделю</label>
+            <select id="workouts_per_week" name="workouts_per_week">
+              <option value="2" {{if eq .User.Profile.WorkoutsPerWeek 2}}selected{{end}}>2 тренировки</option>
+              <option value="3" {{if or (eq .User.Profile.WorkoutsPerWeek 3) (eq .User.Profile.WorkoutsPerWeek 0)}}selected{{end}}>3 тренировки (рекомендуется)</option>
+              <option value="4" {{if eq .User.Profile.WorkoutsPerWeek 4}}selected{{end}}>4 тренировки</option>
+              <option value="5" {{if eq .User.Profile.WorkoutsPerWeek 5}}selected{{end}}>5 тренировок</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="session_minutes">Длительность (мин)</label>
+            <select id="session_minutes" name="session_minutes">
+              <option value="25" {{if eq .User.Profile.SessionMinutes 25}}selected{{end}}>25 минут (быстро)</option>
+              <option value="35" {{if or (eq .User.Profile.SessionMinutes 35) (eq .User.Profile.SessionMinutes 0)}}selected{{end}}>35 минут (оптимально)</option>
+              <option value="50" {{if eq .User.Profile.SessionMinutes 50}}selected{{end}}>50 минут (полная)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="preferred_time">Время тренировок</label>
+            <select id="preferred_time" name="preferred_time">
+              <option value="any" {{if or (eq .User.Profile.PreferredTime "any") (eq .User.Profile.PreferredTime "")}}selected{{end}}>Без разницы</option>
+              <option value="morning" {{if eq .User.Profile.PreferredTime "morning"}}selected{{end}}>Утро</option>
+              <option value="day" {{if eq .User.Profile.PreferredTime "day"}}selected{{end}}>День</option>
+              <option value="evening" {{if eq .User.Profile.PreferredTime "evening"}}selected{{end}}>Вечер</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="activity_level">Активность в течение дня</label>
+            <select id="activity_level" name="activity_level">
+              <option value="low" {{if or (eq .User.Profile.ActivityLevel "low") (eq .User.Profile.ActivityLevel "")}}selected{{end}}>Низкая (сидячая работа)</option>
+              <option value="medium" {{if eq .User.Profile.ActivityLevel "medium"}}selected{{end}}>Средняя (ходьба, домашние дела)</option>
+              <option value="high" {{if eq .User.Profile.ActivityLevel "high"}}selected{{end}}>Высокая (физический труд)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- БЛОК 4: ПИТАНИЕ И ОГРАНИЧЕНИЯ -->
+      <div class="card">
+        <h2>4. Питание и ограничения</h2>
+        <p class="small">Укажите ваши предпочтения, чтобы план питания содержал только подходящие блюда.</p>
+
+        <label class="field-title">Диетические предпочтения:</label>
+        <div class="checkbox-group">
+          <label class="check-pill">
+            <input type="checkbox" name="diet_preferences" value="vegetarian" {{if containsStr .User.Profile.DietPreferences "vegetarian"}}checked{{end}}>
+            <span>Вегетарианство</span>
+          </label>
+          <label class="check-pill">
+            <input type="checkbox" name="diet_preferences" value="vegan" {{if containsStr .User.Profile.DietPreferences "vegan"}}checked{{end}}>
+            <span>Веганство</span>
+          </label>
+          <label class="check-pill">
+            <input type="checkbox" name="diet_preferences" value="lactose-free" {{if containsStr .User.Profile.DietPreferences "lactose-free"}}checked{{end}}>
+            <span>Без лактозы</span>
+          </label>
+          <label class="check-pill">
+            <input type="checkbox" name="diet_preferences" value="gluten-free" {{if containsStr .User.Profile.DietPreferences "gluten-free"}}checked{{end}}>
+            <span>Без глютена</span>
+          </label>
+        </div>
+
+        <div class="field" style="margin-top: 12px;">
+          <label for="avoid_foods">Аллергии и продукты, которые вы не едите</label>
+          <textarea id="avoid_foods" name="avoid_foods" maxlength="300" placeholder="Например: арахис, морепродукты, грибы, мёд" rows="2">{{.User.Profile.AvoidFoods}}</textarea>
+          <span class="hint">Блюда с этими ингредиентами будут автоматически исключены из каталога.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- БЛОК 5: ЗДОРОВЬЕ И ПРОТИВОПОКАЗАНИЯ -->
+    <div class="card warning-card">
+      <h2>5. Здоровье и безопасность</h2>
+      <p class="small">
+        Физическая нагрузка должна быть безопасной. Отметьте, есть ли у вас какие-либо противопоказания или ограничения:
+      </p>
+
+      <div class="health-options-grid">
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="none" {{if containsStr .User.Profile.HealthFlags "none"}}checked{{end}}>
+          <span><strong>Ограничений нет</strong> — чувствую себя хорошо, готов к нагрузкам</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="injury" {{if containsStr .User.Profile.HealthFlags "injury"}}checked{{end}}>
+          <span>Травмы суставов, позвоночника или связок</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="chronic" {{if containsStr .User.Profile.HealthFlags "chronic"}}checked{{end}}>
+          <span>Хронические заболевания в стадии обострения</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="heart" {{if containsStr .User.Profile.HealthFlags "heart"}}checked{{end}}>
+          <span>Заболевания сердечно-сосудистой системы / гипертония</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="pregnancy" {{if containsStr .User.Profile.HealthFlags "pregnancy"}}checked{{end}}>
+          <span>Беременность или послеродовой период</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="surgery" {{if containsStr .User.Profile.HealthFlags "surgery"}}checked{{end}}>
+          <span>Недавние хирургические операции</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" name="health_flags" value="other" {{if containsStr .User.Profile.HealthFlags "other"}}checked{{end}}>
+          <span>Другие ограничения (укажите в поле ниже)</span>
+        </label>
+      </div>
+
+      <div class="field" style="margin-top: 10px;">
+        <label for="health_notes">Дополнительные комментарии по здоровью</label>
+        <input type="text" id="health_notes" name="health_notes" maxlength="250" placeholder="Например, иногда тянет поясницу при наклонах" value="{{.User.Profile.HealthNotes}}">
+      </div>
+
+      <div class="warn" style="margin-top: 14px;">
+        При указании серьёзных противопоказаний система не сформирует стандартный план тренировок и порекомендует согласовать нагрузку с врачом.
+      </div>
+    </div>
+
+    <!-- СОГЛАСИЕ -->
+    <div class="card" style="text-align: center;">
+      <label class="check" style="justify-content: center; max-width: 650px; margin: 0 auto;">
+        <input type="checkbox" name="consent" value="1" required checked>
+        <span>
+          Я даю согласие на обработку указанных параметров исключительно для расчёта тренировочного плана и питания. Данные сохраняются в локальной базе и не передаются третьим лицам.
+        </span>
+      </label>
+
+      <div style="max-width: 420px; margin: 16px auto 0;">
+        <button type="submit" class="btn">
+          Сформировать мой персональный план
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+{{end}}
