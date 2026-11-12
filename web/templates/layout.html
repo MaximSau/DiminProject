@@ -113,7 +113,7 @@
       }
     }
 
-    // Функция быстрого добавления воды без перезагрузки
+    // Функция быстрого добавления воды с микро-анимацией и тактильным откликом
     async function changeWaterAjax(delta, event) {
       if (event) event.preventDefault();
       try {
@@ -133,9 +133,22 @@
           const curEl = document.getElementById('water-current-val');
           const pctEl = document.getElementById('water-percent-val');
           const barEl = document.getElementById('water-progress-bar');
-          if (curEl) curEl.textContent = data.current;
+          if (curEl) {
+            curEl.textContent = data.current;
+            curEl.classList.remove('num-bump');
+            void curEl.offsetWidth;
+            curEl.classList.add('num-bump');
+          }
           if (pctEl) pctEl.textContent = data.percent + '%';
-          if (barEl) barEl.style.width = data.percent + '%';
+          if (barEl) {
+            barEl.style.width = data.percent + '%';
+            barEl.classList.remove('pulse');
+            void barEl.offsetWidth;
+            barEl.classList.add('pulse');
+          }
+          if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate(18);
+          }
         }
       } catch (err) {
         console.error('Water update failed', err);
