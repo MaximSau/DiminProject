@@ -1,4 +1,4 @@
-package app
+package models
 
 import (
 	"math"
@@ -6,9 +6,6 @@ import (
 )
 
 // Nutrition — ориентировочные суточные ориентиры по калориям и БЖУ.
-//
-// Значения приблизительные: они не заменяют консультацию специалиста
-// и не являются медицинским предписанием.
 type Nutrition struct {
 	Kcal     int
 	ProteinG int
@@ -18,10 +15,6 @@ type Nutrition struct {
 
 // EstimateNutrition считает BMR по Миффлину — Сан Жеору, умножает на
 // коэффициент активности и добавляет безопасную поправку под цель.
-//
-// Функция вызывается только если Profile.HasBodyData() == true;
-// иначе она вернёт нулевые значения, а вызывающий код обязан показать
-// BodyHint() вместо цифр.
 func EstimateNutrition(p Profile) Nutrition {
 	if !p.HasBodyData() {
 		return Nutrition{}
@@ -62,7 +55,6 @@ func EstimateNutrition(p Profile) Nutrition {
 	}
 
 	// Нижняя граница: не ниже базального обмена, и не ниже 1200/1500 ккал
-	// в зависимости от пола — это защита от опасно низкой калорийности.
 	floor := 1200.0
 	if p.Sex == "male" {
 		floor = 1500.0

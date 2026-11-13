@@ -5,6 +5,8 @@ skills/
 /data/
 !internal/app/data/
 !internal/app/data/**
+!internal/service/data/
+!internal/service/data/**
 *.db
 *.db-journal
 *.db-wal

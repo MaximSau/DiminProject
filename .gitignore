@@ -17,6 +17,8 @@
 # Разрешаем встроенные каталоги данных приложения
 !internal/app/data/
 !internal/app/data/**
+!internal/service/data/
+!internal/service/data/**
 
 # Отчёты о покрытии тестами и логи
 coverage.out
