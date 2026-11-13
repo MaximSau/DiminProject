@@ -832,3 +832,78 @@ func TestProfilePageRenderAndPost(t *testing.T) {
 		t.Errorf("expected profile page to contain updated name 'Алексей'")
 	}
 }
+
+func TestWorkoutsAndNutritionAllDays(t *testing.T) {
+	appInstance, tmpDir := setupTestApp(t)
+	defer os.RemoveAll(tmpDir)
+	defer appInstance.Close()
+
+	srv := httptest.NewServer(appInstance.Handler())
+	defer srv.Close()
+
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{Jar: jar}
+
+	// 1. Seed demo user so plan and exercises exist
+	seedResp, err := client.Post(srv.URL+"/demo/seed", "application/x-www-form-urlencoded", nil)
+	if err != nil {
+		t.Fatalf("POST /demo/seed failed: %v", err)
+	}
+	seedResp.Body.Close()
+
+	// 2. Test all 7 days for /workouts (including day=4 which previously crashed)
+	for d := 0; d < 7; d++ {
+		url := fmt.Sprintf("%s/workouts?day=%d", srv.URL, d)
+		resp, err := client.Get(url)
+		if err != nil {
+			t.Fatalf("GET %s failed: %v", url, err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected 200 OK for %s, got %d. Body: %s", url, resp.StatusCode, string(body))
+		}
+	}
+
+	// 3. Test out-of-bounds days for /workouts
+	for _, badDay := range []int{-1, 7, 999} {
+		url := fmt.Sprintf("%s/workouts?day=%d", srv.URL, badDay)
+		resp, err := client.Get(url)
+		if err != nil {
+			t.Fatalf("GET %s failed: %v", url, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected 200 OK for out-of-bounds %s, got %d", url, resp.StatusCode)
+		}
+	}
+
+	// 4. Test all 7 days for /nutrition
+	for d := 0; d < 7; d++ {
+		url := fmt.Sprintf("%s/nutrition?day=%d", srv.URL, d)
+		resp, err := client.Get(url)
+		if err != nil {
+			t.Fatalf("GET %s failed: %v", url, err)
+		}
+		body, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected 200 OK for %s, got %d. Body: %s", url, resp.StatusCode, string(body))
+		}
+	}
+
+	// 5. Test out-of-bounds days for /nutrition
+	for _, badDay := range []int{-1, 7, 999} {
+		url := fmt.Sprintf("%s/nutrition?day=%d", srv.URL, badDay)
+		resp, err := client.Get(url)
+		if err != nil {
+			t.Fatalf("GET %s failed: %v", url, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Errorf("expected 200 OK for out-of-bounds %s, got %d", url, resp.StatusCode)
+		}
+	}
+}

@@ -43,7 +43,7 @@
   --warning-border: rgba(255, 255, 255, 0.22);
   --warning-text: #f4f4f5;
 
-  --danger-bg: rgba(239, 68, 68, 0.2512);
+  --danger-bg: rgba(239, 68, 68, 0.15);
   --danger-border: rgba(239, 68, 68, 0.35);
   --danger-text: #f87171;
 
@@ -52,13 +52,13 @@
   --water-soft: rgba(255, 255, 255, 0.08);
   --water-glow: rgba(255, 255, 255, 0.25);
 
-  --gain-accent: #4f46e5ffffff;
+  --gain-accent: #ffffff;
   --gain-soft: rgba(255, 255, 255, 0.08);
 
   /* Тени и глубина */
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.5);
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--border);
-  --shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.098), 0 0 0 1px rgba(255, 255, 255, 0.20);
+  --shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.20);
   --shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.9);
 
   /* Скругления */
@@ -84,13 +84,13 @@
   --text-secondary: #52525b;
   --muted: #71717a;
 
-  --accent: #3b82f609090b;
+  --accent: #09090b;
   --accent-contrast: #ffffff;
-  --accent-hover: #60a5fa27272a;
-  --accent-soft: rgba(599, 1309, 24611, 0.1406);
-  --accent-gradient-start: #3b82f618181b;
-  --accent-gradient-end: #2563eb09090b;
-  --accent-glow: rgba(599, 1309, 24611, 0.3815);
+  --accent-hover: #27272a;
+  --accent-soft: rgba(0, 0, 0, 0.06);
+  --accent-gradient-start: #18181b;
+  --accent-gradient-end: #09090b;
+  --accent-glow: rgba(0, 0, 0, 0.15);
 
   --border: #e4e4e7;
   --border-light: #f4f4f5;
@@ -129,6 +129,30 @@
    ========================================================================= */
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+  font-family: inherit;
+  font-size: 14px;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+button:focus-visible,
+input[type="button"]:focus-visible,
+input[type="submit"]:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
 }
 
 html {
@@ -486,7 +510,11 @@ body {
 /* =========================================================================
    КНОПКИ (BUTTONS) — STARK HIGH CONTRAST
    ========================================================================= */
-.btn {
+button.btn,
+.btn,
+input[type="submit"].btn,
+form button:not([class]),
+form input[type="submit"]:not([class]) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -509,16 +537,25 @@ body {
   box-shadow: 0 4px 16px var(--accent-glow);
   transition: all var(--transition-fast);
   user-select: none;
+  box-sizing: border-box;
 }
 
-.btn:hover {
+button.btn:hover,
+.btn:hover,
+input[type="submit"].btn:hover,
+form button:not([class]):hover,
+form input[type="submit"]:not([class]):hover {
   background: var(--accent-hover);
   color: var(--accent-contrast);
   box-shadow: 0 6px 20px var(--accent-glow);
   transform: translateY(-1px);
 }
 
-.btn:active {
+button.btn:active,
+.btn:active,
+input[type="submit"].btn:active,
+form button:not([class]):active,
+form input[type="submit"]:not([class]):active {
   transform: scale(0.98);
 }
 
@@ -1443,25 +1480,6 @@ body {
   overflow-x: auto;
 }
 
-.tab-btn {
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--text-secondary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.tab-btn.active {
-  background: var(--accent);
-  color: #ffffff;
-  border-color: var(--accent);
-}
-
-.chips-scroll {
 .catalog-tabs {
   display: flex;
   gap: 8px;
@@ -1476,33 +1494,37 @@ body {
   background: var(--card);
   color: var(--text-secondary);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
   transition: all var(--transition-fast);
 }
 
+.tab-btn:hover {
+  background: var(--card-hover);
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
 .tab-btn.active {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  border-color: var(--accent);
 }
 
 .chips-scroll {
   display: flex;
   gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px6px;
+  padding-bottom: 6px;
   -webkit-overflow-scrolling: touch;
 }
 
 .active-filter {
   background: var(--accent) !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
-  color: #000000 !important;
-  border-color: #ffffff !important;
+  color: var(--accent-contrast) !important;
+  border-color: var(--accent) !important;
 }
 
 .catalog-grid {
@@ -1927,42 +1949,70 @@ a.link:hover { color: #e4e4e7; }
    ДЕМО-КНОПКА И БЛОК БЫСТРОГО СТАРТА (DEMO SEED CTA)
    ========================================================================= */
 .btn-demo-topbar {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.20);
-  border-radius: var(--radius-full);
-  padding: 6px 13px;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  white-space: nowrap;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 7px !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.28) !important;
+  border-radius: var(--radius-full) !important;
+  padding: 7px 15px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.02em !important;
+  cursor: pointer !important;
+  transition: all var(--transition-fast) !important;
+  white-space: nowrap !important;
+  text-transform: none !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35) !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
 .btn-demo-topbar svg {
-  color: #ffffff;
+  color: #ffffff !important;
+  fill: currentColor !important;
+  flex-shrink: 0;
   transition: transform var(--transition-fast);
 }
 
 .btn-demo-topbar:hover {
-  background: #ffffff;
-  color: #000000;
-  border-color: #ffffff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.25);
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3) !important;
 }
 
 .btn-demo-topbar:hover svg {
-  color: #000000;
+  color: #000000 !important;
+  fill: #000000 !important;
   transform: scale(1.15);
 }
 
 .btn-demo-topbar:active {
-  transform: scale(0.96);
+  transform: scale(0.96) !important;
+}
+
+[data-theme="light"] .btn-demo-topbar {
+  background: #09090b !important;
+  color: #ffffff !important;
+  border-color: #09090b !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+[data-theme="light"] .btn-demo-topbar:hover {
+  background: #27272a !important;
+  color: #ffffff !important;
+  border-color: #27272a !important;
+}
+
+[data-theme="light"] .btn-demo-topbar svg {
+  color: #ffffff !important;
+  fill: currentColor !important;
 }
 
 .demo-hero-cta {

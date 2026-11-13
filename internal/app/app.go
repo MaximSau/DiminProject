@@ -384,7 +384,7 @@ func (a *App) handleManifest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleServiceWorker(w http.ResponseWriter, r *http.Request) {
-	sw := `const CACHE_NAME = 'pulsefit-v2-nocache';
+	sw := `const CACHE_NAME = 'pulsefit-v2.1-nocache';
 const STATIC_ASSETS = [
   '/static/app.css',
   '/manifest.json'
@@ -783,7 +783,10 @@ func (a *App) handleWorkouts(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var curDay PlanDay
-	if dayIdx < len(u.Plan.Days) {
+	if len(u.Plan.Days) > 0 {
+		if dayIdx < 0 || dayIdx >= len(u.Plan.Days) {
+			dayIdx = 0
+		}
 		curDay = u.Plan.Days[dayIdx]
 	}
 
@@ -961,7 +964,10 @@ func (a *App) handleNutrition(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var curMeals MealDay
-	if dayIdx < len(u.Plan.Meals) {
+	if len(u.Plan.Meals) > 0 {
+		if dayIdx < 0 || dayIdx >= len(u.Plan.Meals) {
+			dayIdx = 0
+		}
 		curMeals = u.Plan.Meals[dayIdx]
 	}
 
