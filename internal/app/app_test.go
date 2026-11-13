@@ -231,64 +231,6 @@ func TestCatalogSwapAndSearch(t *testing.T) {
 	}
 }
 
-func TestAIReplyScenarios(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "pulsefit_test_*")
-	if err != nil {
-		t.Fatalf("temp dir failed: %v", err)
-	}
-	defer os.RemoveAll(tmpDir)
-
-	cat, err := LoadCatalog()
-	if err != nil {
-		t.Fatalf("LoadCatalog failed: %v", err)
-	}
-	st, err := OpenStore(tmpDir + "/store.db")
-	if err != nil {
-		t.Fatalf("OpenStore failed: %v", err)
-	}
-	defer st.Close()
-
-	a := &App{
-		store:   st,
-		catalog: cat,
-	}
-
-	u := &User{
-		Profile: Profile{
-			Name: "Иван",
-			Goal: GoalLose,
-		},
-	}
-
-	repPain := a.Reply(u, "У меня заболело колено при приседаниях")
-	if repPain.Kind != "safety" {
-		t.Errorf("ожидался safety kind при боли, получено %s", repPain.Kind)
-	}
-	if !strings.Contains(repPain.Text, "остановите") {
-		t.Errorf("ожидалась рекомендация остановиться при боли")
-	}
-
-	repDiet := a.Reply(u, "Хочу экстремальное голодание на воде")
-	if repDiet.Kind != "safety" {
-		t.Errorf("ожидался safety kind при экстремальной диете, получено %s", repDiet.Kind)
-	}
-
-	repMissed := a.Reply(u, "Я пропустил вчера тренировку")
-	if !strings.Contains(repMissed.Text, "Ничего страшного") {
-		t.Errorf("ожидался поддерживающий тон без осуждения при пропуске тренировки")
-	}
-
-	repEx := a.Reply(u, "Как мне заменить упражнение?")
-	if !strings.Contains(repEx.Text, "заменить") {
-		t.Errorf("ожидалась подсказка по замене упражнений")
-	}
-
-	repExplain := a.Reply(u, "Объясни мой план простыми словами")
-	if !strings.Contains(repExplain.Text, "план") {
-		t.Errorf("ожидалось объяснение плана")
-	}
-}
-
 func TestSQLitePersistence(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "pulsefit_sqlite_*")
 	if err != nil {
@@ -533,14 +475,13 @@ func TestHTTPRoutesAndFlow(t *testing.T) {
 	}
 	resp.Body.Close()
 
-	// 12. POST /chat
-	chatForm := url.Values{"message": {"Привет! Как мне правильно делать разминку?"}}
-	resp, err = client.PostForm(ts.URL+"/chat", chatForm)
+	// 12. GET /chat -> redirects to /catalog (База знаний и FAQ)
+	resp, err = client.Get(ts.URL+"/chat")
 	if err != nil {
-		t.Fatalf("POST /chat failed: %v", err)
+		t.Fatalf("GET /chat failed: %v", err)
 	}
 	if resp.StatusCode != http.StatusOK {
-		t.Errorf("expected 200 following redirect for /chat, got %d", resp.StatusCode)
+		t.Errorf("expected 200 following redirect to /catalog for /chat, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
 }

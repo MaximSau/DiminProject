@@ -183,7 +183,6 @@ func (a *App) initTemplates() error {
 		"exercise_detail",
 		"nutrition",
 		"progress",
-		"chat",
 		"profile",
 		"catalog",
 		"plan_export",
@@ -350,8 +349,9 @@ func (a *App) setupRoutes() {
 	a.mux.HandleFunc("/water/add", a.handleWaterAdd)
 	a.mux.HandleFunc("/catalog", a.handleCatalog)
 	a.mux.HandleFunc("/plan/export", a.handlePlanExport)
-	a.mux.HandleFunc("/chat", a.handleChat)
-	a.mux.HandleFunc("/chat/clear", a.handleChatClear)
+	a.mux.HandleFunc("/chat", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/catalog", http.StatusMovedPermanently)
+	})
 	a.mux.HandleFunc("/profile", a.handleProfile)
 	a.mux.HandleFunc("/profile/switch", a.handleProfileSwitch)
 	a.mux.HandleFunc("/reminders/update", a.handleRemindersUpdate)
@@ -449,8 +449,7 @@ func (a *App) handleOnboarding(w http.ResponseWriter, r *http.Request) {
 		a.render(w, "onboarding", PageData{
 			ActiveTab: "profile",
 			User:      u,
-			AI:        a.AIInfo(),
-		})
+					})
 		return
 	}
 
@@ -469,8 +468,7 @@ func (a *App) handleOnboarding(w http.ResponseWriter, r *http.Request) {
 		a.render(w, "onboarding", PageData{
 			ActiveTab: "profile",
 			User:      u,
-			AI:        a.AIInfo(),
-			Error:     "Для формирования плана необходимо дать согласие на использование сведений для расчёта.",
+						Error:     "Для формирования плана необходимо дать согласие на использование сведений для расчёта.",
 		})
 		return
 	}
@@ -568,8 +566,7 @@ func (a *App) handleOnboarding(w http.ResponseWriter, r *http.Request) {
 		a.render(w, "onboarding", PageData{
 			ActiveTab: "profile",
 			User:      u,
-			AI:        a.AIInfo(),
-			Error:     "Не удалось составить план под указанные параметры. Пожалуйста, проверьте введённые данные.",
+						Error:     "Не удалось составить план под указанные параметры. Пожалуйста, проверьте введённые данные.",
 		})
 		return
 	}
@@ -614,8 +611,7 @@ func (a *App) handleMedicalWarning(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "medical_warning", PageData{
 		ActiveTab: "profile",
 		User:      u,
-		AI:        a.AIInfo(),
-	})
+			})
 }
 
 func (a *App) handleDashboard(w http.ResponseWriter, r *http.Request) {
@@ -674,8 +670,7 @@ func (a *App) handleDashboard(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "dashboard", PageData{
 		ActiveTab: "dashboard",
 		User:      u,
-		AI:        a.AIInfo(),
-		TodayIdx:  todayIdx,
+				TodayIdx:  todayIdx,
 		Notice:    r.URL.Query().Get("notice"),
 		Extra: dashExtra{
 			TodayWorkout:   todayWorkout,
@@ -753,8 +748,7 @@ func (a *App) handleCatalog(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "catalog", PageData{
 		ActiveTab: "catalog",
 		User:      u,
-		AI:        a.AIInfo(),
-		Extra: catExtra{
+				Extra: catExtra{
 			Exercises: a.catalog.Exercises,
 			Meals:     a.catalog.Meals,
 		},
@@ -770,8 +764,7 @@ func (a *App) handlePlanExport(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "plan_export", PageData{
 		ActiveTab: "workouts",
 		User:      u,
-		AI:        a.AIInfo(),
-	})
+			})
 }
 
 func (a *App) handleWorkouts(w http.ResponseWriter, r *http.Request) {
@@ -809,8 +802,7 @@ func (a *App) handleWorkouts(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "workouts", PageData{
 		ActiveTab:   "workouts",
 		User:        u,
-		AI:          a.AIInfo(),
-		SelectedDay: dayIdx,
+				SelectedDay: dayIdx,
 		TodayIdx:    TodayIndex(),
 		Notice:      r.URL.Query().Get("notice"),
 		Extra: workoutsExtra{
@@ -945,8 +937,7 @@ func (a *App) handleExerciseDetail(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "exercise_detail", PageData{
 		ActiveTab:   "workouts",
 		User:        u,
-		AI:          a.AIInfo(),
-		SelectedDay: dayIdx,
+				SelectedDay: dayIdx,
 		Extra: exExtra{
 			Exercise: ex,
 			DayIndex: dayIdx,
@@ -980,8 +971,7 @@ func (a *App) handleNutrition(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "nutrition", PageData{
 		ActiveTab:   "nutrition",
 		User:        u,
-		AI:          a.AIInfo(),
-		SelectedDay: dayIdx,
+				SelectedDay: dayIdx,
 		TodayIdx:    TodayIndex(),
 		Notice:      r.URL.Query().Get("notice"),
 		Extra: nutrExtra{
@@ -1119,8 +1109,7 @@ func (a *App) handleProgress(w http.ResponseWriter, r *http.Request) {
 	a.render(w, "progress", PageData{
 		ActiveTab:   "progress",
 		User:        u,
-		AI:          a.AIInfo(),
-		Notice:      r.URL.Query().Get("notice"),
+				Notice:      r.URL.Query().Get("notice"),
 		WeightChart: template.HTML(chartSVG),
 	})
 }
@@ -1204,68 +1193,7 @@ func (a *App) handleProgressCheckin(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/progress?notice=Чек-ин+самочувствия+сохранён!", http.StatusSeeOther)
 }
 
-func (a *App) handleChat(w http.ResponseWriter, r *http.Request) {
-	u := a.getOrCreateUser(w, r)
-	if u == nil {
-		http.Error(w, "Ошибка сессии", http.StatusInternalServerError)
-		return
-	}
 
-	if r.Method == http.MethodGet {
-		a.render(w, "chat", PageData{
-			ActiveTab: "chat",
-			User:      u,
-			AI:        a.AIInfo(),
-		})
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
-
-	msg := strings.TrimSpace(r.FormValue("message"))
-	if msg == "" {
-		http.Redirect(w, r, "/chat", http.StatusSeeOther)
-		return
-	}
-
-	// Добавляем сообщение пользователя
-	u.Chat = append(u.Chat, ChatMessage{
-		ID:   fmt.Sprintf("msg-%d", time.Now().UnixNano()),
-		Role: "user",
-		Text: msg,
-		At:   time.Now(),
-	})
-
-	// Ответ ассистента
-	reply := a.Reply(u, msg)
-	u.Chat = append(u.Chat, ChatMessage{
-		ID:          fmt.Sprintf("msg-%d", time.Now().UnixNano()+1),
-		Role:        "assistant",
-		Text:        reply.Text,
-		At:          time.Now(),
-		Kind:        reply.Kind,
-		Suggestions: reply.Suggestions,
-	})
-
-	_ = a.store.Save(u)
-	http.Redirect(w, r, "/chat", http.StatusSeeOther)
-}
-
-func (a *App) handleChatClear(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Метод не поддерживается", http.StatusMethodNotAllowed)
-		return
-	}
-	u := a.getOrCreateUser(w, r)
-	if u != nil {
-		u.Chat = nil
-		_ = a.store.Save(u)
-	}
-	http.Redirect(w, r, "/chat", http.StatusSeeOther)
-}
 
 func (a *App) handleProfile(w http.ResponseWriter, r *http.Request) {
 	u := a.getOrCreateUser(w, r)
@@ -1278,8 +1206,7 @@ func (a *App) handleProfile(w http.ResponseWriter, r *http.Request) {
 		a.render(w, "profile", PageData{
 			ActiveTab: "profile",
 			User:      u,
-			AI:        a.AIInfo(),
-			Notice:    r.URL.Query().Get("notice"),
+						Notice:    r.URL.Query().Get("notice"),
 		})
 		return
 	}
@@ -1522,22 +1449,7 @@ func (a *App) handleDemoSeed(w http.ResponseWriter, r *http.Request) {
 	}
 	u.Progress.Water[now.Format("2006-01-02")] = 1750
 
-	u.Chat = []ChatMessage{
-		{
-			ID:   "seed-1",
-			Role: "user",
-			Text: "Привет! Объясни простыми словами, почему тренировок всего три в неделю?",
-			At:   now.Add(-2 * time.Hour),
-		},
-		{
-			ID:          "seed-2",
-			Role:        "assistant",
-			Text:        "Привет, Алексей! Три тренировки в неделю с интервалом в 1 день — это «золотой стандарт» для новичка. Мышцы и связки укрепляются не во время упражнений, а во время отдыха. Такой график позволяет восстановиться без переутомления и делает фитнес устойчивой привычкой на долгие месяцы.",
-			At:          now.Add(-2 * time.Hour).Add(time.Minute),
-			Kind:        "demo",
-			Suggestions: []string{"Какая тренировка сегодня?", "Сколько воды пить в день?"},
-		},
-	}
+
 
 	_ = a.store.Save(u)
 	http.Redirect(w, r, "/dashboard?notice=Загружен+демонстрационный+сценарий+с+заполненным+прогрессом!", http.StatusSeeOther)

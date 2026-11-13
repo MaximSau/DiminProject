@@ -10,6 +10,5 @@ services:
     environment:
       - PULSEFIT_ADDR=0.0.0.0:8099
       - PULSEFIT_DATA=/data
-      - PULSEFIT_AI_KEY=${PULSEFIT_AI_KEY:-}
     volumes:
       - ./data:/data
