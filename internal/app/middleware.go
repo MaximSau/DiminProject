@@ -65,14 +65,10 @@ func (a *App) Middleware(next http.Handler) http.Handler {
 		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
 		w.Header().Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self';")
 
-		// 3. Управление HTTP-кэшированием статики и динамических страниц
-		if strings.HasPrefix(r.URL.Path, "/static/") {
-			w.Header().Set("Cache-Control", "public, max-age=86400, immutable")
-		} else if r.URL.Path == "/sw.js" {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		} else if r.Method == http.MethodGet {
-			w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
-		}
+		// 3. Управление HTTP-кэшированием (без агрессивного кэширования для мгновенного применения правок)
+		w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
 
 		// 4. Ограничиваем размер тела запроса (1 MB max) для защиты от DOS
 		if r.Body != nil && (r.Method == http.MethodPost || r.Method == http.MethodPut || r.Method == http.MethodPatch) {

@@ -384,7 +384,7 @@ func (a *App) handleManifest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleServiceWorker(w http.ResponseWriter, r *http.Request) {
-	sw := `const CACHE_NAME = 'pulsefit-v1';
+	sw := `const CACHE_NAME = 'pulsefit-v2-nocache';
 const STATIC_ASSETS = [
   '/static/app.css',
   '/manifest.json'
@@ -405,9 +405,10 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // Network first: всегда запрашивать актуальный контент
   if (e.request.url.includes('/static/')) {
     e.respondWith(
-      caches.match(e.request).then((res) => res || fetch(e.request))
+      fetch(e.request).catch(() => caches.match(e.request))
     );
   }
 });
