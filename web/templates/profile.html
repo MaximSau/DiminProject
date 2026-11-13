@@ -120,15 +120,15 @@
         <div class="row">
           <div class="field" style="flex: 1;">
             <label for="age">Возраст (лет)</label>
-            <input type="number" id="age" name="age" min="14" max="100" maxlength="3" data-maxlength="3" value="{{.User.Profile.Age}}" required>
+            <input type="number" id="age" name="age" min="14" max="100" maxlength="3" data-maxlength="3" value="{{if .User.Profile.Age}}{{.User.Profile.Age}}{{end}}" required>
             <span class="hint">От 14 до 100</span>
           </div>
           <div class="field" style="flex: 1;">
-            <label for="gender">Пол</label>
-            <select id="gender" name="gender">
-              <option value="unspecified" {{if eq .User.Profile.Gender "unspecified"}}selected{{end}}>Не указан</option>
-              <option value="male" {{if eq .User.Profile.Gender "male"}}selected{{end}}>Мужской</option>
-              <option value="female" {{if eq .User.Profile.Gender "female"}}selected{{end}}>Женский</option>
+            <label for="sex">Пол</label>
+            <select id="sex" name="sex">
+              <option value="" {{if eq .User.Profile.Sex ""}}selected{{end}}>Не указан</option>
+              <option value="male" {{if eq .User.Profile.Sex "male"}}selected{{end}}>Мужской</option>
+              <option value="female" {{if eq .User.Profile.Sex "female"}}selected{{end}}>Женский</option>
             </select>
           </div>
         </div>
@@ -136,12 +136,12 @@
         <div class="row">
           <div class="field" style="flex: 1;">
             <label for="height_cm">Рост (см)</label>
-            <input type="number" id="height_cm" name="height_cm" min="100" max="250" maxlength="3" data-maxlength="3" value="{{.User.Profile.HeightCm}}" required>
+            <input type="number" id="height_cm" name="height_cm" min="100" max="250" maxlength="3" data-maxlength="3" value="{{if .User.Profile.HeightCm}}{{.User.Profile.HeightCm}}{{end}}" required>
             <span class="hint">От 100 до 250</span>
           </div>
           <div class="field" style="flex: 1;">
             <label for="weight_kg">Текущий вес (кг)</label>
-            <input type="number" step="0.1" id="weight_kg" name="weight_kg" min="30" max="300" maxlength="5" data-maxlength="5" value="{{.User.Profile.WeightKg}}" required>
+            <input type="number" step="0.1" id="weight_kg" name="weight_kg" min="30" max="300" maxlength="5" data-maxlength="5" value="{{if .User.Profile.WeightKg}}{{.User.Profile.WeightKg}}{{end}}" required>
             <span class="hint">От 30 до 300</span>
           </div>
         </div>
@@ -157,17 +157,18 @@
         <div class="field">
           <label for="pace">Темп изменений</label>
           <select id="pace" name="pace">
-            <option value="safe" {{if eq .User.Profile.Pace "safe"}}selected{{end}}>Безопасный (рекомендуемый)</option>
-            <option value="moderate" {{if eq .User.Profile.Pace "moderate"}}selected{{end}}>Умеренный</option>
+            <option value="gentle" {{if eq .User.Profile.Pace "gentle"}}selected{{end}}>Спокойный (~10% калорийного сдвига)</option>
+            <option value="moderate" {{if or (eq .User.Profile.Pace "moderate") (eq .User.Profile.Pace "")}}selected{{end}}>Умеренный (~15% сдвига, рекомендуемый)</option>
+            <option value="steady" {{if eq .User.Profile.Pace "steady"}}selected{{end}}>Активный (~20% сдвига)</option>
           </select>
         </div>
 
         <div class="field">
-          <label for="fitness_level">Уровень физической подготовки</label>
-          <select id="fitness_level" name="fitness_level">
-            <option value="beginner" {{if eq .User.Profile.FitnessLevel "beginner"}}selected{{end}}>Новичок</option>
-            <option value="intermediate" {{if eq .User.Profile.FitnessLevel "intermediate"}}selected{{end}}>Средний</option>
-            <option value="advanced" {{if eq .User.Profile.FitnessLevel "advanced"}}selected{{end}}>Продвинутый</option>
+          <label for="level">Уровень физической подготовки</label>
+          <select id="level" name="level">
+            <option value="beginner" {{if or (eq .User.Profile.Level "beginner") (eq .User.Profile.Level "")}}selected{{end}}>Новичок (нет опыта или перерыв)</option>
+            <option value="intermediate" {{if eq .User.Profile.Level "intermediate"}}selected{{end}}>Средний (регулярный опыт)</option>
+            <option value="advanced" {{if eq .User.Profile.Level "advanced"}}selected{{end}}>Продвинутый (высокие нагрузки)</option>
           </select>
         </div>
 
@@ -176,17 +177,17 @@
             <label for="workouts_per_week">Тренировок в неделю</label>
             <select id="workouts_per_week" name="workouts_per_week">
               <option value="2" {{if eq .User.Profile.WorkoutsPerWeek 2}}selected{{end}}>2 раза в неделю</option>
-              <option value="3" {{if eq .User.Profile.WorkoutsPerWeek 3}}selected{{end}}>3 раза в неделю (рекомендуется)</option>
+              <option value="3" {{if or (eq .User.Profile.WorkoutsPerWeek 3) (eq .User.Profile.WorkoutsPerWeek 0)}}selected{{end}}>3 раза в неделю (рекомендуется)</option>
               <option value="4" {{if eq .User.Profile.WorkoutsPerWeek 4}}selected{{end}}>4 раза в неделю</option>
               <option value="5" {{if eq .User.Profile.WorkoutsPerWeek 5}}selected{{end}}>5 раз в неделю</option>
             </select>
           </div>
           <div class="field" style="flex: 1;">
-            <label for="duration_min">Длительность тренировки</label>
-            <select id="duration_min" name="duration_min">
-              <option value="30" {{if eq .User.Profile.DurationMin 30}}selected{{end}}>30 минут</option>
-              <option value="45" {{if eq .User.Profile.DurationMin 45}}selected{{end}}>45 минут</option>
-              <option value="60" {{if eq .User.Profile.DurationMin 60}}selected{{end}}>60 минут</option>
+            <label for="session_minutes">Длительность тренировки (мин)</label>
+            <select id="session_minutes" name="session_minutes">
+              <option value="25" {{if eq .User.Profile.SessionMinutes 25}}selected{{end}}>25 минут (быстро)</option>
+              <option value="35" {{if or (eq .User.Profile.SessionMinutes 35) (eq .User.Profile.SessionMinutes 0)}}selected{{end}}>35 минут (оптимально)</option>
+              <option value="50" {{if eq .User.Profile.SessionMinutes 50}}selected{{end}}>50 минут (полная)</option>
             </select>
           </div>
         </div>
@@ -194,7 +195,7 @@
         <div class="field">
           <label for="equipment">Доступный инвентарь</label>
           <select id="equipment" name="equipment">
-            <option value="none" {{if eq .User.Profile.Equipment "none"}}selected{{end}}>Без оборудования (собственный вес)</option>
+            <option value="none" {{if or (eq .User.Profile.Equipment "none") (eq .User.Profile.Equipment "")}}selected{{end}}>Без оборудования (собственный вес)</option>
             <option value="home" {{if eq .User.Profile.Equipment "home"}}selected{{end}}>Домашний инвентарь (гантели, коврик, резинки)</option>
             <option value="gym" {{if eq .User.Profile.Equipment "gym"}}selected{{end}}>Полноценный спортзал</option>
           </select>
@@ -204,6 +205,7 @@
           <div class="field" style="flex: 1;">
             <label for="preferred_time">Время тренировок</label>
             <select id="preferred_time" name="preferred_time">
+              <option value="any" {{if or (eq .User.Profile.PreferredTime "any") (eq .User.Profile.PreferredTime "")}}selected{{end}}>В любое время</option>
               <option value="morning" {{if eq .User.Profile.PreferredTime "morning"}}selected{{end}}>Утро</option>
               <option value="day" {{if eq .User.Profile.PreferredTime "day"}}selected{{end}}>День</option>
               <option value="evening" {{if eq .User.Profile.PreferredTime "evening"}}selected{{end}}>Вечер</option>
@@ -212,30 +214,43 @@
           <div class="field" style="flex: 1;">
             <label for="activity_level">Активность в течение дня</label>
             <select id="activity_level" name="activity_level">
-              <option value="sedentary" {{if eq .User.Profile.ActivityLevel "sedentary"}}selected{{end}}>Сидячая (офис, учёба)</option>
-              <option value="moderate" {{if eq .User.Profile.ActivityLevel "moderate"}}selected{{end}}>Умеренная (прогулки, дела)</option>
-              <option value="high" {{if eq .User.Profile.ActivityLevel "high"}}selected{{end}}>Высокая (активная работа)</option>
+              <option value="low" {{if or (eq .User.Profile.ActivityLevel "low") (eq .User.Profile.ActivityLevel "sedentary") (eq .User.Profile.ActivityLevel "")}}selected{{end}}>Низкая (сидячая работа)</option>
+              <option value="medium" {{if or (eq .User.Profile.ActivityLevel "medium") (eq .User.Profile.ActivityLevel "moderate")}}selected{{end}}>Средняя (ходьба, умеренная активность)</option>
+              <option value="high" {{if eq .User.Profile.ActivityLevel "high"}}selected{{end}}>Высокая (активный физический труд)</option>
             </select>
           </div>
         </div>
 
         <div class="field">
-          <label for="diet_preference">Тип питания</label>
-          <select id="diet_preference" name="diet_preference">
-            <option value="standard" {{if eq .User.Profile.DietPreference "standard"}}selected{{end}}>Обычное (без ограничений)</option>
-            <option value="pescatarian" {{if eq .User.Profile.DietPreference "pescatarian"}}selected{{end}}>Пескетарианство (рыба, без мяса)</option>
-            <option value="vegetarian" {{if eq .User.Profile.DietPreference "vegetarian"}}selected{{end}}>Вегетарианство</option>
-          </select>
+          <label class="field-title" style="display:block; margin-bottom: 8px;">Диетические предпочтения:</label>
+          <div class="checkbox-group">
+            <label class="check-pill">
+              <input type="checkbox" name="diet_preferences" value="vegetarian" {{if containsStr .User.Profile.DietPreferences "vegetarian"}}checked{{end}}>
+              <span>Вегетарианство</span>
+            </label>
+            <label class="check-pill">
+              <input type="checkbox" name="diet_preferences" value="vegan" {{if containsStr .User.Profile.DietPreferences "vegan"}}checked{{end}}>
+              <span>Веганство</span>
+            </label>
+            <label class="check-pill">
+              <input type="checkbox" name="diet_preferences" value="lactose-free" {{if containsStr .User.Profile.DietPreferences "lactose-free"}}checked{{end}}>
+              <span>Без лактозы</span>
+            </label>
+            <label class="check-pill">
+              <input type="checkbox" name="diet_preferences" value="gluten-free" {{if containsStr .User.Profile.DietPreferences "gluten-free"}}checked{{end}}>
+              <span>Без глютена</span>
+            </label>
+          </div>
         </div>
 
         <div class="field">
-          <label for="allergies">Аллергии</label>
-          <input type="text" id="allergies" name="allergies" maxlength="300" value="{{.User.Profile.Allergies}}">
+          <label for="avoid_foods">Исключить продукты и аллергены</label>
+          <input type="text" id="avoid_foods" name="avoid_foods" maxlength="300" placeholder="Например: орехи, морепродукты, грибы" value="{{.User.Profile.AvoidFoods}}">
         </div>
 
         <div class="field">
-          <label for="avoid_foods">Исключить продукты</label>
-          <input type="text" id="avoid_foods" name="avoid_foods" maxlength="300" value="{{.User.Profile.AvoidFoods}}">
+          <label for="health_notes">Ограничения по здоровью / примечания</label>
+          <input type="text" id="health_notes" name="health_notes" maxlength="300" placeholder="Например: боли в пояснице, избегать прыжков" value="{{.User.Profile.HealthNotes}}">
         </div>
 
         <button type="submit" class="btn">Сохранить изменения анкеты</button>

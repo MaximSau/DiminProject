@@ -765,3 +765,70 @@ func TestStoreCountAndDelete(t *testing.T) {
 		t.Errorf("user still exists after Delete")
 	}
 }
+
+func TestProfilePageRenderAndPost(t *testing.T) {
+	appInstance, tmpDir := setupTestApp(t)
+	defer os.RemoveAll(tmpDir)
+	defer appInstance.Close()
+
+	srv := httptest.NewServer(appInstance.Handler())
+	defer srv.Close()
+
+	jar, _ := cookiejar.New(nil)
+	client := &http.Client{Jar: jar}
+
+	// 1. First visit /profile - user is auto-created and profile template is rendered
+	resp, err := client.Get(srv.URL + "/profile")
+	if err != nil {
+		t.Fatalf("GET /profile failed: %v", err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK on GET /profile, got %d: %s", resp.StatusCode, string(body))
+	}
+	if !strings.Contains(string(body), "Ваш профиль") {
+		t.Errorf("expected body to contain 'Ваш профиль', got: %s", string(body))
+	}
+
+	// 2. POST update profile
+	form := url.Values{
+		"name":              {"Алексей"},
+		"age":               {"28"},
+		"sex":               {"male"},
+		"height_cm":         {"182"},
+		"weight_kg":         {"78.5"},
+		"goal":              {"gain"},
+		"pace":              {"moderate"},
+		"level":             {"intermediate"},
+		"workouts_per_week": {"4"},
+		"session_minutes":   {"45"},
+		"equipment":         {"gym"},
+		"preferred_time":    {"evening"},
+		"activity_level":    {"medium"},
+		"diet_preferences":  {"vegetarian"},
+		"avoid_foods":       {"рыба, моллюски"},
+		"health_notes":      {"нет"},
+	}
+	postResp, err := client.PostForm(srv.URL+"/profile", form)
+	if err != nil {
+		t.Fatalf("POST /profile failed: %v", err)
+	}
+	postResp.Body.Close()
+
+	// 3. Verify GET /profile reflects updated values and renders 200 OK
+	resp2, err := client.Get(srv.URL + "/profile")
+	if err != nil {
+		t.Fatalf("GET /profile second time failed: %v", err)
+	}
+	body2, _ := io.ReadAll(resp2.Body)
+	resp2.Body.Close()
+
+	if resp2.StatusCode != http.StatusOK {
+		t.Fatalf("expected 200 OK on GET /profile after update, got %d: %s", resp2.StatusCode, string(body2))
+	}
+	if !strings.Contains(string(body2), "Алексей") {
+		t.Errorf("expected profile page to contain updated name 'Алексей'")
+	}
+}
