@@ -4,10 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PulseFit — Персональный фитнес и питание</title>
-  <link rel="icon" type="image/svg+xml" href="/static/icon.svg?v=2.1">
+  <link rel="icon" type="image/svg+xml" href="/static/icon.svg?v=2.2">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#08080a">
-  <link rel="stylesheet" href="/static/app.css?v=2.1">
+  <link rel="stylesheet" href="/static/app.css?v=2.2">
   <script>
     // Поддержка темы (по умолчанию темный монохромный Whoop/Gymshark стиль)
     (function() {
@@ -107,6 +107,7 @@
               button.textContent = 'Отметить съеденным';
             }
           }
+          showToast('Сохранено', data.eaten ? 'Приём пищи отмечен' : 'Отметка снята');
         }
       } catch (err) {
         form.submit();
@@ -149,11 +150,54 @@
           if (window.navigator && window.navigator.vibrate) {
             window.navigator.vibrate(18);
           }
+          showToast('Сохранено', delta > 0 ? '+' + delta + ' мл воды' : delta + ' мл воды');
         }
       } catch (err) {
         console.error('Water update failed', err);
       }
     }
+
+    // Всплывающее микро-уведомление (Toast 'Сохранено')
+    function closeToast() {
+      const toast = document.getElementById('toastNotification');
+      if (toast) {
+        toast.classList.remove('show');
+        setTimeout(() => {
+          if (!toast.classList.contains('show')) {
+            toast.style.display = 'none';
+          }
+        }, 250);
+      }
+    }
+
+    function showToast(statusText = 'Сохранено', detailText = '') {
+      const toast = document.getElementById('toastNotification');
+      if (!toast) return;
+      const statusEl = document.getElementById('toastStatus');
+      const detailEl = document.getElementById('toastDetail');
+      if (statusEl) statusEl.textContent = statusText || 'Сохранено';
+      if (detailEl) {
+        detailEl.textContent = detailText;
+        detailEl.style.display = detailText ? 'inline' : 'none';
+      }
+      toast.style.display = 'flex';
+      void toast.offsetWidth;
+      toast.classList.add('show');
+
+      if (window._toastTimeout) clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        closeToast();
+      }, 3500);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const toast = document.getElementById('toastNotification');
+      if (toast && toast.classList.contains('show')) {
+        window._toastTimeout = setTimeout(() => {
+          closeToast();
+        }, 3800);
+      }
+    });
   </script>
 </head>
 <body>
@@ -226,13 +270,30 @@
       </div>
     </header>
 
-    {{if .Notice}}
-      <div class="alert-notice">
-        <div class="container-inner">
-          <span>{{.Notice}}</span>
+    <!-- ВСПЛЫВАЮЩЕЕ МИКРО-УВЕДОМЛЕНИЕ (TOAST "СОХРАНЕНО") -->
+    <div id="toastNotification" class="toast-notice {{if .Notice}}show{{end}}" role="status" aria-live="polite" {{if not .Notice}}style="display: none;"{{end}}>
+      <div class="toast-content">
+        <div class="toast-badge-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+        <div class="toast-text-wrap">
+          <strong class="toast-title" id="toastStatus">Сохранено</strong>
+          {{if and .Notice (ne .Notice "Сохранено")}}
+            <span class="toast-detail" id="toastDetail">{{.Notice}}</span>
+          {{else}}
+            <span class="toast-detail" id="toastDetail" style="display: none;"></span>
+          {{end}}
         </div>
       </div>
-    {{end}}
+      <button type="button" class="toast-close-btn" onclick="closeToast()" aria-label="Закрыть уведомление">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"/>
+          <line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
 
     {{if .Error}}
       <div class="alert-error">

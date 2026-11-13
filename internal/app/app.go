@@ -384,7 +384,7 @@ func (a *App) handleManifest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) handleServiceWorker(w http.ResponseWriter, r *http.Request) {
-	sw := `const CACHE_NAME = 'pulsefit-v2.1-nocache';
+	sw := `const CACHE_NAME = 'pulsefit-v2.2-nocache';
 const STATIC_ASSETS = [
   '/static/app.css',
   '/manifest.json'
