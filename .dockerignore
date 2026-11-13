@@ -2,7 +2,9 @@
 .gitignore
 .agents/
 skills/
-data/
+/data/
+!internal/app/data/
+!internal/app/data/**
 *.db
 *.db-journal
 *.db-wal
