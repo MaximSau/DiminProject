@@ -345,28 +345,7 @@ func (r *SQLiteRepository) User(id string) *models.User {
 		}
 	}
 
-	// 10. chat_messages
-	qChat, argsChat, err := r.sq.Select("id", "role", "text", "at", "kind", "suggestions").
-		From("chat_messages").
-		Where(squirrel.Eq{"user_id": id}).
-		OrderBy("at ASC").
-		ToSql()
-	if err == nil {
-		chRows, err := r.db.Query(qChat, argsChat...)
-		if err == nil {
-			defer chRows.Close()
-			for chRows.Next() {
-				var cm models.ChatMessage
-				var suggJSON sql.NullString
-				if err := chRows.Scan(&cm.ID, &cm.Role, &cm.Text, &cm.At, &cm.Kind, &suggJSON); err == nil {
-					if suggJSON.Valid && suggJSON.String != "" {
-						_ = json.Unmarshal([]byte(suggJSON.String), &cm.Suggestions)
-					}
-					u.Chat = append(u.Chat, cm)
-				}
-			}
-		}
-	}
+
 
 	return u
 }
@@ -610,24 +589,7 @@ func (r *SQLiteRepository) Save(u *models.User) error {
 		}
 	}
 
-	// 10. chat_messages
-	delChatQuery, delChatArgs, _ := r.sq.Delete("chat_messages").Where(squirrel.Eq{"user_id": u.Profile.ID}).ToSql()
-	if _, err = tx.Exec(delChatQuery, delChatArgs...); err != nil {
-		return err
-	}
-	for _, cm := range u.Chat {
-		suggJSON, _ := json.Marshal(cm.Suggestions)
-		insChat, insArgs, err := r.sq.Insert("chat_messages").
-			Columns("id", "user_id", "role", "text", "at", "kind", "suggestions").
-			Values(cm.ID, u.Profile.ID, cm.Role, cm.Text, cm.At, cm.Kind, string(suggJSON)).
-			ToSql()
-		if err != nil {
-			return err
-		}
-		if _, err = tx.Exec(insChat, insArgs...); err != nil {
-			return err
-		}
-	}
+
 
 	if err = tx.Commit(); err != nil {
 		slog.Error("ошибка коммита транзакции сохранения пользователя", "error", err, "id", u.Profile.ID)

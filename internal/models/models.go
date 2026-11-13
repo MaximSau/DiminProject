@@ -300,11 +300,10 @@ func HealthLabel(h string) string {
 
 // User — всё, что приложение хранит про одного человека.
 type User struct {
-	Profile   Profile       `json:"profile"`
-	Plan      *Plan         `json:"plan,omitempty"`
-	Reminders []Reminder    `json:"reminders,omitempty"`
-	Progress  Progress      `json:"progress"`
-	Chat      []ChatMessage `json:"chat,omitempty"`
+	Profile   Profile    `json:"profile"`
+	Plan      *Plan      `json:"plan,omitempty"`
+	Reminders []Reminder `json:"reminders,omitempty"`
+	Progress  Progress   `json:"progress"`
 }
 
 // WaterToday возвращает количество выпитой воды сегодня в миллилитрах.
@@ -360,22 +359,12 @@ type Progress struct {
 	Water    map[string]int  `json:"water,omitempty"` // date -> ml
 }
 
-// ChatMessage — сообщение в чате с помощником.
-type ChatMessage struct {
-	ID          string    `json:"id" db:"id"`
-	Role        string    `json:"role" db:"role"` // user | assistant
-	Text        string    `json:"text" db:"text"`
-	At          time.Time `json:"at" db:"at"`
-	Kind        string    `json:"kind,omitempty" db:"kind"`
-	Suggestions []string  `json:"suggestions,omitempty"`
-}
-
 // Plan — персональный план: тренировки, питание, режим и пояснения.
 type Plan struct {
 	ID        string    `json:"id"`
 	Version   int       `json:"version"`
 	CreatedAt time.Time `json:"created_at"`
-	Source    string    `json:"source"` // demo | ai
+	Source    string    `json:"source"` // demo
 
 	Goal        string `json:"goal"`
 	Explanation string `json:"explanation"`

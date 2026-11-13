@@ -13,28 +13,32 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"pulsefit/internal/models"
+	"pulsefit/internal/repository"
+	"pulsefit/internal/service"
 )
 
 func TestMedicalBlocked(t *testing.T) {
 	// 1. Без противопоказаний
-	pSafe := Profile{
-		HealthFlags: []string{HealthNone},
+	pSafe := models.Profile{
+		HealthFlags: []string{models.HealthNone},
 	}
 	if pSafe.MedicalBlocked() {
 		t.Errorf("ожидалось отсутствие блокировки для безопасного профиля")
 	}
 
 	// 2. С травмой
-	pInjury := Profile{
-		HealthFlags: []string{HealthInjury},
+	pInjury := models.Profile{
+		HealthFlags: []string{models.HealthInjury},
 	}
 	if !pInjury.MedicalBlocked() {
 		t.Errorf("ожидалась медицинская блокировка при указании травмы")
 	}
 
 	// 3. С сердечно-сосудистыми ограничениями
-	pHeart := Profile{
-		HealthFlags: []string{HealthHeart},
+	pHeart := models.Profile{
+		HealthFlags: []string{models.HealthHeart},
 	}
 	if !pHeart.MedicalBlocked() {
 		t.Errorf("ожидалась медицинская блокировка при указании болезней сердца")
@@ -42,7 +46,7 @@ func TestMedicalBlocked(t *testing.T) {
 }
 
 func TestBuildPlan(t *testing.T) {
-	cat, err := LoadCatalog()
+	cat, err := service.LoadCatalog()
 	if err != nil {
 		t.Fatalf("LoadCatalog failed: %v", err)
 	}
@@ -51,13 +55,13 @@ func TestBuildPlan(t *testing.T) {
 	age := 30
 	h := 175.0
 	w := 80.0
-	p := Profile{
-		Goal:            GoalLose,
+	p := models.Profile{
+		Goal:            models.GoalLose,
 		Pace:            "moderate",
-		Level:           LevelBeginner,
+		Level:           models.LevelBeginner,
 		WorkoutsPerWeek: 3,
 		SessionMinutes:  35,
-		Equipment:       EquipHome,
+		Equipment:       models.EquipHome,
 		Age:             &age,
 		HeightCm:        &h,
 		WeightKg:        &w,
@@ -69,8 +73,8 @@ func TestBuildPlan(t *testing.T) {
 		t.Fatalf("BuildPlan failed: %v", err)
 	}
 
-	if plan.Goal != GoalLose {
-		t.Errorf("ожидалась цель %s, получено %s", GoalLose, plan.Goal)
+	if plan.Goal != models.GoalLose {
+		t.Errorf("ожидалась цель %s, получено %s", models.GoalLose, plan.Goal)
 	}
 	if len(plan.Days) != 7 {
 		t.Errorf("ожидалось 7 дней в неделе, получено %d", len(plan.Days))
@@ -101,7 +105,7 @@ func TestBMICalculation(t *testing.T) {
 	// Случай 1: Нормальный вес
 	h1 := 180.0
 	w1 := 72.0
-	pNorm := Profile{HeightCm: &h1, WeightKg: &w1}
+	pNorm := models.Profile{HeightCm: &h1, WeightKg: &w1}
 	bmi, label, status := pNorm.BMI()
 	if bmi < 22.0 || bmi > 22.5 {
 		t.Errorf("ожидался ИМТ ~22.2, получено %.2f", bmi)
@@ -112,7 +116,7 @@ func TestBMICalculation(t *testing.T) {
 
 	// Случай 2: Дефицит массы
 	wUnder := 50.0
-	pUnder := Profile{HeightCm: &h1, WeightKg: &wUnder}
+	pUnder := models.Profile{HeightCm: &h1, WeightKg: &wUnder}
 	_, _, statusUnder := pUnder.BMI()
 	if statusUnder != "underweight" {
 		t.Errorf("ожидался статус underweight, получено %s", statusUnder)
@@ -120,7 +124,7 @@ func TestBMICalculation(t *testing.T) {
 
 	// Случай 3: Избыточная масса
 	wOver := 88.0
-	pOver := Profile{HeightCm: &h1, WeightKg: &wOver}
+	pOver := models.Profile{HeightCm: &h1, WeightKg: &wOver}
 	_, _, statusOver := pOver.BMI()
 	if statusOver != "overweight" {
 		t.Errorf("ожидался статус overweight, получено %s", statusOver)
@@ -128,14 +132,14 @@ func TestBMICalculation(t *testing.T) {
 
 	// Случай 4: Ожирение
 	wObese := 110.0
-	pObese := Profile{HeightCm: &h1, WeightKg: &wObese}
+	pObese := models.Profile{HeightCm: &h1, WeightKg: &wObese}
 	_, _, statusObese := pObese.BMI()
 	if statusObese != "obese" {
 		t.Errorf("ожидался статус obese, получено %s", statusObese)
 	}
 
 	// Случай 5: Пустые параметры (nil)
-	pEmpty := Profile{}
+	pEmpty := models.Profile{}
 	bmiZero, _, _ := pEmpty.BMI()
 	if bmiZero != 0 {
 		t.Errorf("ожидался 0 для пустого профиля, получено %.2f", bmiZero)
@@ -154,14 +158,14 @@ func TestBMICalculation(t *testing.T) {
 func TestWaterTargetCalculation(t *testing.T) {
 	// Вес 70 кг -> 70 * 30-35 мл = 2100 - 2450 мл
 	w := 70.0
-	p := Profile{WeightKg: &w}
+	p := models.Profile{WeightKg: &w}
 	target := p.WaterTargetMl()
 	if target < 2000 || target > 2500 {
 		t.Errorf("ожидалась норма воды в диапазоне 2000-2500 мл, получено %d", target)
 	}
 
 	// Без указания веса — дефолт 2000 мл
-	pEmpty := Profile{}
+	pEmpty := models.Profile{}
 	if pEmpty.WaterTargetMl() != 2000 {
 		t.Errorf("ожидался дефолт 2000 мл для пустого профиля, получено %d", pEmpty.WaterTargetMl())
 	}
@@ -171,17 +175,17 @@ func TestEstimateNutritionSafetyFloor(t *testing.T) {
 	age := 25
 	h := 160.0
 	w := 50.0
-	p := Profile{
+	p := models.Profile{
 		Sex:           "female",
 		Age:           &age,
 		HeightCm:      &h,
 		WeightKg:      &w,
-		Goal:          GoalLose,
+		Goal:          models.GoalLose,
 		Pace:          "steady",
 		ActivityLevel: "sedentary",
 	}
 
-	nut := EstimateNutrition(p)
+	nut := models.EstimateNutrition(p)
 	if nut.Kcal < 1200 {
 		t.Errorf("ожидалась защита нижней границы калорий (floor >= 1200), получено %d", nut.Kcal)
 	}
@@ -189,15 +193,15 @@ func TestEstimateNutritionSafetyFloor(t *testing.T) {
 		t.Errorf("ожидались положительные значения БЖУ, получено %+v", nut)
 	}
 
-	pEmpty := Profile{}
-	nutEmpty := EstimateNutrition(pEmpty)
+	pEmpty := models.Profile{}
+	nutEmpty := models.EstimateNutrition(pEmpty)
 	if nutEmpty.Kcal != 0 {
 		t.Errorf("ожидались нулевые калории для пустого профиля, получено %d", nutEmpty.Kcal)
 	}
 }
 
 func TestCatalogSwapAndSearch(t *testing.T) {
-	cat, err := LoadCatalog()
+	cat, err := service.LoadCatalog()
 	if err != nil {
 		t.Fatalf("LoadCatalog failed: %v", err)
 	}
@@ -211,7 +215,7 @@ func TestCatalogSwapAndSearch(t *testing.T) {
 		t.Errorf("Exercise lookup failed for id %s", firstEx.ID)
 	}
 
-	suitable := cat.SuitableExercises(EquipHome, LevelBeginner)
+	suitable := cat.SuitableExercises(models.EquipHome, models.LevelBeginner)
 	if len(suitable) == 0 {
 		t.Errorf("SuitableExercises returned 0 items for home/beginner")
 	}
@@ -239,7 +243,7 @@ func TestSQLitePersistence(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 
 	dbPath := tmpDir + "/test_store.db"
-	st, err := OpenStore(dbPath)
+	st, err := repository.Open(dbPath)
 	if err != nil {
 		t.Fatalf("OpenStore failed: %v", err)
 	}
@@ -256,10 +260,10 @@ func TestSQLitePersistence(t *testing.T) {
 	u.Profile.Age = &age
 	u.Profile.HeightCm = &h
 	u.Profile.WeightKg = &w
-	u.Profile.Goal = GoalGain
+	u.Profile.Goal = models.GoalGain
 	u.Profile.Onboarded = true
 
-	u.Progress.Weights = append(u.Progress.Weights, WeightEntry{
+	u.Progress.Weights = append(u.Progress.Weights, models.WeightEntry{
 		Date: "2026-11-01",
 		Kg:   76.0,
 		Note: "Старт",
@@ -271,7 +275,7 @@ func TestSQLitePersistence(t *testing.T) {
 	}
 	st.Close()
 
-	st2, err := OpenStore(dbPath)
+	st2, err := repository.Open(dbPath)
 	if err != nil {
 		t.Fatalf("Re-open store failed: %v", err)
 	}
@@ -501,8 +505,8 @@ func TestOnboardingAndPlanRecreateFlow(t *testing.T) {
 	// 1. Отправка анкеты с противопоказаниями -> редирект на /medical-warning
 	medicalForm := url.Values{
 		"name":         {"Алексей"},
-		"goal":         {GoalLose},
-		"health_flags": {HealthInjury},
+		"goal":         {models.GoalLose},
+		"health_flags": {models.HealthInjury},
 		"consent":      {"1"},
 	}
 	resp, err := client.PostForm(ts.URL+"/onboarding", medicalForm)
@@ -517,10 +521,10 @@ func TestOnboardingAndPlanRecreateFlow(t *testing.T) {
 	// 2. Отправка здоровой анкеты -> создание плана и переход на /dashboard
 	healthyForm := url.Values{
 		"name":               {"Алексей"},
-		"goal":               {GoalLose},
+		"goal":               {models.GoalLose},
 		"pace":               {"moderate"},
-		"level":              {LevelBeginner},
-		"equipment":          {EquipHome},
+		"level":              {models.LevelBeginner},
+		"equipment":          {models.EquipHome},
 		"workouts_per_week":  {"3"},
 		"session_minutes":    {"30"},
 		"age":                {"28"},
@@ -528,8 +532,8 @@ func TestOnboardingAndPlanRecreateFlow(t *testing.T) {
 		"weight_kg":          {"82.5"},
 		"sex":                {"male"},
 		"activity_level":     {"medium"},
-		"preferred_time":     {TimeEvening},
-		"health_flags":       {HealthNone},
+		"preferred_time":     {models.TimeEvening},
+		"health_flags":       {models.HealthNone},
 		"consent":            {"1"},
 	}
 	resp, err = client.PostForm(ts.URL+"/onboarding", healthyForm)
@@ -558,7 +562,7 @@ func TestOnboardingAndPlanRecreateFlow(t *testing.T) {
 	resp.Body.Close()
 
 	// 5. Переключение цели (lose -> gain)
-	resp, err = client.PostForm(ts.URL+"/plan/change-goal", url.Values{"goal": {GoalGain}})
+	resp, err = client.PostForm(ts.URL+"/plan/change-goal", url.Values{"goal": {models.GoalGain}})
 	if err != nil {
 		t.Fatalf("POST /plan/change-goal failed: %v", err)
 	}
@@ -655,12 +659,12 @@ func TestConcurrentWritesAndNoDeadlock(t *testing.T) {
 	ts := httptest.NewServer(handler)
 	defer ts.Close()
 
-	u, err := appInstance.store.NewUser()
+	u, err := appInstance.Repo().NewUser()
 	if err != nil {
 		t.Fatalf("NewUser failed: %v", err)
 	}
 	u.Profile.Onboarded = true
-	_ = appInstance.store.Save(u)
+	_ = appInstance.Repo().Save(u)
 
 	const workers = 20
 	var wg sync.WaitGroup
@@ -715,7 +719,7 @@ func TestConcurrentWritesAndNoDeadlock(t *testing.T) {
 		t.Errorf("concurrent test failure: %v", err)
 	}
 
-	reloaded := appInstance.store.User(u.Profile.ID)
+	reloaded := appInstance.Repo().User(u.Profile.ID)
 	if reloaded == nil {
 		t.Fatalf("failed to reload user after concurrent test")
 	}
@@ -730,38 +734,38 @@ func TestStoreCountAndDelete(t *testing.T) {
 	defer os.RemoveAll(tmpDir)
 	defer appInstance.Close()
 
-	initialCount := appInstance.store.Count()
-	u1, err := appInstance.store.NewUser()
+	initialCount := appInstance.Repo().Count()
+	u1, err := appInstance.Repo().NewUser()
 	if err != nil {
 		t.Fatalf("NewUser failed: %v", err)
 	}
 
-	if count := appInstance.store.Count(); count != initialCount+1 {
+	if count := appInstance.Repo().Count(); count != initialCount+1 {
 		t.Errorf("expected count %d, got %d", initialCount+1, count)
 	}
 
 	// Find by code
-	byCode, ok := appInstance.store.ByCode(u1.Profile.Code)
+	byCode, ok := appInstance.Repo().ByCode(u1.Profile.Code)
 	if !ok || byCode == nil || byCode.Profile.ID != u1.Profile.ID {
 		t.Errorf("ByCode failed to find user with code %s", u1.Profile.Code)
 	}
 
 	// Find non-existent code
-	_, ok = appInstance.store.ByCode("NONEXISTINGCODE")
+	_, ok = appInstance.Repo().ByCode("NONEXISTINGCODE")
 	if ok {
 		t.Errorf("ByCode should return false for unknown code")
 	}
 
 	// Delete
-	if err := appInstance.store.Delete(u1.Profile.ID); err != nil {
+	if err := appInstance.Repo().Delete(u1.Profile.ID); err != nil {
 		t.Fatalf("Delete failed: %v", err)
 	}
 
-	if count := appInstance.store.Count(); count != initialCount {
+	if count := appInstance.Repo().Count(); count != initialCount {
 		t.Errorf("expected count %d after delete, got %d", initialCount, count)
 	}
 
-	if appInstance.store.User(u1.Profile.ID) != nil {
+	if appInstance.Repo().User(u1.Profile.ID) != nil {
 		t.Errorf("user still exists after Delete")
 	}
 }
