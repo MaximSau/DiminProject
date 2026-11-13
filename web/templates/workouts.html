@@ -6,12 +6,14 @@
       <a href="/workouts?day={{$idx}}" class="day-tab {{if eq $.SelectedDay $idx}}active{{end}} {{if eq $.TodayIdx $idx}}today{{end}}">
         <span class="day-tab-num">{{if eq $idx 0}}Пн{{else if eq $idx 1}}Вт{{else if eq $idx 2}}Ср{{else if eq $idx 3}}Чт{{else if eq $idx 4}}Пт{{else if eq $idx 5}}Сб{{else}}Вс{{end}}</span>
         <span class="day-tab-status">
-          {{if $day.Rest}}
-            —
-          {{else if isSessionCompleted $.User.Progress.Sessions $idx}}
-            ✓
+          {{if .Rest}}
+            <span class="status-dot rest" title="День восстановления"></span>
+          {{else if isSessionCompleted $.User.Progress.Sessions }}
+            <span class="status-check done" title="Выполнено">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </span>
           {{else}}
-            •
+            <span class="status-dot planned" title="Запланировано"></span>
           {{end}}
         </span>
       </a>
@@ -148,7 +150,9 @@
         <span class="badge">Таймер отдыха</span>
         <h3 id="timer-exercise-name" style="margin: 4px 0 0;">Отдых между подходами</h3>
       </div>
-      <button type="button" class="btn-icon" onclick="closeRestTimer()" aria-label="Закрыть">✕</button>
+      <button type="button" class="btn-icon" onclick="closeRestTimer()" aria-label="Закрыть" title="Закрыть">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
 
     <div class="timer-display-wrap">

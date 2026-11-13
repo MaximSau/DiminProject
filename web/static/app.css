@@ -317,34 +317,7 @@ body {
   transform: scale(1.05);
 }
 
-.chat-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  background: var(--accent);
-  color: var(--accent-contrast);
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  border: 1px solid var(--accent);
-  transition: all var(--transition-fast);
-}
 
-.chat-link:hover {
-  background: var(--accent-hover);
-  color: var(--accent-contrast);
-  box-shadow: 0 4px 14px var(--accent-glow);
-  transform: translateY(-1px);
-}
-
-.chat-link.active {
-  background: var(--accent);
-  color: var(--accent-contrast);
-  box-shadow: 0 4px 14px var(--accent-glow);
-}
 
 /* =========================================================================
    УВЕДОМЛЕНИЯ И АЛЕРТЫ
@@ -1538,115 +1511,7 @@ body {
   gap: 16px;
 }
 
-/* =========================================================================
-   ЧАТ С ИИ (AI CHAT) — HIGH CONTRAST BUBBLES
-   ========================================================================= */
-.chat-window {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  margin-bottom: 80px;
-}
-
-.chat-message, .msg {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-width: 85%;
-  margin-bottom: 12px;
-}
-
-.chat-message.user, .msg.user {
-  margin-left: auto;
-  align-items: flex-end;
-}
-
-.chat-message.assistant, .msg.assistant {
-  margin-right: auto;
-  align-items: flex-start;
-}
-
-.msg-text {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 12px 18px;
-  box-shadow: var(--shadow-sm);
-  line-height: 1.55;
-
-  color: var(--text);
-}
-
-.msgmsg.user .msg-text {
-  background: #ffffff;
-  color: #000000;
-  font-weight: 500;
-  border-color: #ffffff;
-}
-
-.msg-meta {
-  font-size: 11px;
-  color: var(--muted);
-  display: flex;
-  gap: 8px;
-  padding: 0 4px;
-}
-
-.msg.user .msg-meta {
-  justify-content: flex-end;
-}
-
-.msg-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.suggestion-btn {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 5px 12px;
-  font-size: 12px;
-  color: var(--accent);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.suggestion-btn:hover {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-  padding: 0 4px;
-}
-
-.msg.user .msg-meta {
-  justify-content: flex-end;
-}
-
-.msg-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
-}
-
-.suggestion-btn {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  padding: 5px 12px;
-  font-size: 12px;
-  color: var(--text);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.suggestion-btn:hover {
-  background: var(--accent-soft);
-  border-color: #ffffff;
-}
-
+/* Чипсы фильтров (используются в каталоге) */
 .chip {
   white-space: nowrap;
   background: var(--card);
@@ -1668,80 +1533,11 @@ body {
   transform: translateY(-1px);
 }
 
-.chip.safety-chip {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: var(--bg-secondary);
-}
-
-.chat-input-sticky {
-  position: fixed;
-  bottom: 80px;
-  left: 0;
-  right: 0;
-  background: rgba(18, 18, 22, 0.9092);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.5);
-  z-index: 35;
-  padding: 12px 0;
-}
-
-.chat-form {
-  display: flex;
-  gap: 10px;
-}
-
-.chat-form input {
-  flex: 1;
-  padding: 12px 18px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
-  background: var(--bg);
-  color: var(--text);
-  font-size: 15px;
-  font-family: inherit;
-  transition: all var(--transition-fast);
-}
-
-.chat-form input:focus {
-  outline: none;
-  border-color: #ffffff;
-  box-shadow: 0 0 0 3px var(--accent-soft);
-}
-
-.btn-send {
-  background: #ffffff;
-  color: #000000;
-  border: 0;
-  border-radius: var(--radius-md);
-  padding: 0 22px;
-  font-size: 14px;
+.chip.active-filter {
+  background: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ffffff !important;
   font-weight: 700;
-  text-transform: uppercase;
-  cursor: pointer;
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.2);
-  transition: all var(--transition-fast);
-}
-
-.btn-send:hover {
-  background: #e4e4e7;
-  transform: translateY(-1px);
-}
-
-.btn-clear {
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 4px 10px;
-  font-size: 12px;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.btn-clear:hover {
-  color: #ffffff;
-  border-color: #ffffff;
 }
 
 /* =========================================================================
@@ -1895,7 +1691,7 @@ a.link:hover { color: #e4e4e7; }
    ПЕЧАТЬ И ЭКСПОРТ (PRINT / PDF)
    ========================================================================= */
 @media print {
-  .topbar, .mobile-nav, .chat-input-sticky, .btn, .btn-icon, .water-actions-row {
+  .topbar, .mobile-nav, .btn, .btn-icon, .water-actions-row {
     display: none !important;
   }
 
@@ -2239,4 +2035,302 @@ a.link:hover { color: #e4e4e7; }
   .btn-demo-topbar {
     padding: 7px 10px;
   }
+}
+
+
+/* =========================================================================
+   ONBOARDING & GOAL SELECTION CARDS
+   ========================================================================= */
+.onboarding-container {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.hero-desc {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-top: 8px;
+}
+
+.goal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.goal-card {
+  position: relative;
+  display: flex;
+  background: var(--bg-secondary);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 16px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.goal-card:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+  background: #15151a;
+}
+
+.goal-card input[type="radio"] {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  accent-color: #ffffff;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.goal-card:has(input[type="radio"]:checked) {
+  border-color: #ffffff;
+  background: #181820;
+  box-shadow: 0 4px 20px rgba(255, 255, 255, 0.12);
+}
+
+.goal-card-body {
+  display: flex;
+  flex-direction: column;
+  padding-right: 28px;
+}
+
+.goal-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff !important;
+}
+
+.goal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-top: 4px;
+}
+
+.goal-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+@media (max-width: 640px) {
+  .goal-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================================================================
+   EXERCISE DETAIL & VIDEO PRESENTATION
+   ========================================================================= */
+.ex-main-card {
+  margin-bottom: 20px;
+}
+
+.video-section {
+  margin-top: 18px;
+}
+
+.video-link-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  text-decoration: none;
+  color: var(--text);
+  transition: all var(--transition-fast);
+}
+
+.video-link-card:hover {
+  background: #181820;
+  border-color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.1);
+}
+
+.play-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: #ffffff;
+  color: #000000 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.video-link-card:hover .play-icon-wrap {
+  transform: scale(1.1);
+}
+
+.video-notice {
+  background: var(--bg-secondary);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Пошаговые списки и частые ошибки */
+.steps-list, .mistakes-list {
+  padding-left: 20px;
+  margin: 10px 0;
+  line-height: 1.6;
+}
+
+.steps-list li {
+  margin-bottom: 8px;
+}
+
+.mistakes-list li {
+  margin-bottom: 8px;
+  color: #fca5a5;
+}
+
+.card.easier {
+  border-left: 3px solid #60a5fa;
+}
+
+.card.harder {
+  border-left: 3px solid #f59e0b;
+}
+
+/* =========================================================================
+   ПЕЧАТЬ И PDF ЭКСПОРТ (PLAN EXPORT)
+   ========================================================================= */
+.export-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.printable-document {
+  background: #111114;
+  border: 1px solid var(--border);
+  padding: 32px 36px;
+  border-radius: var(--radius-lg);
+  color: var(--text);
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  .no-print, .topbar, .mobile-nav {
+    display: none !important;
+  }
+  .printable-document {
+    background: #ffffff !important;
+    color: #000000 !important;
+    border: none !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+  .print-day-block, .print-summary-grid {
+    border-color: #cccccc !important;
+    background: #f9f9f9 !important;
+    color: #000000 !important;
+  }
+  .print-summary-grid strong, .print-day-block strong {
+    color: #000000 !important;
+  }
+}
+
+/* =========================================================================
+   КАРТОЧКА ОТДЫХА И РЕКОМЕНДАЦИИ
+   ========================================================================= */
+.rest-day-card {
+  padding: 36px 20px;
+  text-align: center;
+}
+
+.recovery-tips {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px 20px;
+}
+
+.recovery-tips li {
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+
+.workout-focus {
+  font-size: 15px;
+  color: #ffffff;
+  margin: 6px 0;
+}
+
+.workout-done-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 700;
+  margin-top: 10px;
+}
+
+
+/* Индикаторы статуса в табах дней недели */
+.day-tab-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 14px;
+  margin-top: 2px;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+
+.status-dot.planned {
+  background: var(--muted);
+}
+
+.status-dot.rest {
+  background: rgba(255, 255, 255, 0.2);
+  width: 8px;
+  height: 2px;
+  border-radius: 1px;
+}
+
+.status-check.done {
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-tab.active .status-dot.planned {
+  background: #000000;
+}
+
+.day-tab.active .status-check.done {
+  color: #000000;
 }
