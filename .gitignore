@@ -40,3 +40,7 @@ skills/
 .vscode/
 *.swp
 *~
+
+# Frontend dependencies
+frontend/node_modules/
+frontend/.vite/

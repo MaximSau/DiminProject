@@ -18,7 +18,7 @@ import (
 
 // Шаблоны и статика вшиты в бинарник: приложение полностью автономно.
 //
-//go:embed web/templates web/static
+//go:embed web/templates web/static web/dist
 var webFiles embed.FS
 
 func main() {
@@ -60,53 +60,40 @@ func main() {
 		IdleTimeout:       60 * time.Second,
 	}
 
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
-
 	go func() {
-		slog.Info("🚀 PulseFit успешно запущен", "addr", "http://"+addr, "storage", dataDir+"/store.db")
+		slog.Info("сервер PulseFit запущен", "address", addr, "env_addr", os.Getenv("PULSEFIT_ADDR"))
 		if err := httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			slog.Error("сервер остановлен с ошибкой", "error", err)
+			slog.Error("критическая ошибка HTTP-сервера", "error", err)
 			os.Exit(1)
 		}
 	}()
 
-	<-stop
-	slog.Info("Завершение работы PulseFit (graceful shutdown)...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	slog.Info("получен сигнал завершения, выполняется graceful shutdown...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := httpSrv.Shutdown(ctx); err != nil {
-		slog.Error("ошибка при остановке сервера", "error", err)
-	}
-	slog.Info("Сервер успешно остановлен.")
-}
-
-func setupLogger() {
-	var handler slog.Handler
-	logFormat := strings.ToLower(envOr("PULSEFIT_LOG_FORMAT", envOr("LOG_FORMAT", "")))
-	env := strings.ToLower(envOr("ENV", envOr("APP_ENV", "")))
-
-	level := slog.LevelInfo
-	if strings.ToLower(envOr("LOG_LEVEL", "")) == "debug" {
-		level = slog.LevelDebug
-	}
-
-	opts := &slog.HandlerOptions{Level: level}
-
-	if logFormat == "json" || env == "production" || env == "prod" {
-		handler = slog.NewJSONHandler(os.Stdout, opts)
+		slog.Error("ошибка при завершении сервера", "error", err)
 	} else {
-		handler = slog.NewTextHandler(os.Stdout, opts)
+		slog.Info("сервер PulseFit корректно остановлен")
 	}
-
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
 }
 
 func envOr(key, fallback string) string {
-	if v := os.Getenv(key); v != "" {
-		return v
+	if val := strings.TrimSpace(os.Getenv(key)); val != "" {
+		return val
 	}
 	return fallback
+}
+
+func setupLogger() {
+	opts := &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))
+	slog.SetDefault(logger)
 }

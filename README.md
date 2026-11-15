@@ -68,32 +68,31 @@
 
 ```
 pulsefit/
-├── .github/workflows/ci.yml    # CI/CD: автотесты, проверка гонок, сборка Docker
+├── .github/workflows/ci.yml    # CI/CD: автотесты, проверка гонок, multi-arch бинарники
+├── frontend/                   # Полноценный продакшн SPA (React + TypeScript + Vite + Tailwind CSS)
+│   ├── src/
+│   │   ├── api/client.ts       # Строго типизированный REST API клиент
+│   │   ├── components/         # Компоненты интерфейса (Navbar, Toast, Modal)
+│   │   ├── context/            # Контексты: ThemeContext (тёмная/светлая), ToastContext
+│   │   ├── pages/              # Страницы: Dashboard, Workouts, Nutrition, Progress, Catalog, Profile, Export
+│   │   └── types/              # TypeScript-интерфейсы моделей
+│   ├── tailwind.config.js      # Конфигурация Tailwind CSS (атлетическая тёмная/светлая тема)
+│   └── vite.config.ts          # Сборка в web/dist
 ├── internal/
-│   └── app/
-│       ├── app.go              # HTTP-контроллер, AJAX API, Service Worker, PWA
-│       ├── app_test.go         # Модульные и интеграционные тесты (-race)
-│       ├── calc.go             # Формулы Миффлина — Сан Жеора, ИМТ, норма воды
-│       ├── catalog.go          # Каталоги упражнений и рецептов
-│       ├── models.go           # Доменные структуры, методы BMI, IdealWeight
-│       ├── plan.go             # Алгоритм генерации персональной программы
-│       └── store.go            # Репозиторий SQLite (WAL, транзакции, Foreign Keys)
+│   ├── models/                 # Доменные сущности (User, Profile, Plan, MealItem, etc.)
+│   ├── repository/             # Слой данных: SQLite (pure-Go), SQLx, Squirrel, Goose миграции
+│   ├── service/                # Бизнес-логика: генерация планов, калькуляции, щадящий режим
+│   ├── transport/http/         # HTTP-слой: REST API контроллеры (/api/...), шаблоны, SPA раздача
+│   ├── routes/                 # Регистрация маршрутов REST API и статики
+│   └── middleware/             # Middleware: SecurityHeaders, RequestID, PanicRecovery, slog
 ├── web/
-│   ├── static/
-│   │   ├── app.css             # Адаптивный CSS3 (ПК + Mobile, Dark Mode, Print)
-│   │   └── icon.svg            # Векторная PWA-иконка (maskable)
-│   └── templates/
-│       ├── catalog.html        # База знаний с живым поиском
-│       ├── dashboard.html      # Главный экран с виджетами воды и питания
-│       ├── layout.html         # Каркас с адаптивной навигацией и PWA
-│       ├── plan_export.html    # Чистая версия плана для печати/PDF
-│       ├── progress.html       # График веса, ИМТ и чек-ины
-│       ├── workouts.html       # Упражнения + интерактивный модальный таймер
-│       └── ...                 # Остальные страницы онбординга, чата и профиля
-├── Dockerfile                  # Многоэтапная сборка легковесного образа (~20 МБ)
+│   ├── dist/                   # Скомпилированный статический бандл React SPA (встроен через go:embed)
+│   ├── static/                 # Статические ресурсы (app.css, icon.svg)
+│   └── templates/              # HTML-шаблоны для классического SSR режима
+├── Dockerfile                  # Легковесный multi-stage образ Alpine (~25 МБ)
 ├── docker-compose.yml          # Развёртывание в Docker одной командой
-├── Makefile                    # Команды сборки, тестирования и запуска
-└── main.go                     # Точка входа, Graceful Shutdown, Security Middleware
+├── Makefile                    # Сборка фронтенда, компиляция Go, тесты с детектором гонок
+└── main.go                     # Точка входа, автономный эмбеддинг //go:embed, Graceful Shutdown
 ```
 
 - **Язык**: Go 1.24+ (без тяжелых сторонних веб-фреймворков).

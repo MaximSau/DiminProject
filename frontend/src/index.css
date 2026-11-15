@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-bg: #090d16;
+    --color-card: #111827;
+    --color-border: #1f2937;
+    --color-text: #f8fafc;
+  }
+
+  html.light {
+    --color-bg: #f8fafc;
+    --color-card: #ffffff;
+    --color-border: #e2e8f0;
+    --color-text: #0f172a;
+  }
+
+  html.light body {
+    background-color: #f8fafc !important;
+    color: #0f172a !important;
+  }
+
+  /* Light mode override for cards and borders */
+  html.light .bg-\[\#090d16\] {
+    background-color: #f8fafc !important;
+  }
+  html.light .bg-\[\#111827\]\/80,
+  html.light .bg-\[\#111827\],
+  html.light .bg-\[\#111827\]\/90 {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+  html.light .bg-slate-900,
+  html.light .bg-slate-900\/60,
+  html.light .bg-slate-900\/40,
+  html.light .bg-slate-900\/80 {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+  }
+  html.light .border-slate-800,
+  html.light .border-slate-800\/80,
+  html.light .border-slate-800\/60,
+  html.light .border-slate-700,
+  html.light .border-slate-700\/80 {
+    border-color: #e2e8f0 !important;
+  }
+  html.light .text-white {
+    color: #0f172a !important;
+  }
+  html.light .text-slate-200,
+  html.light .text-slate-300 {
+    color: #334155 !important;
+  }
+  html.light .text-slate-400 {
+    color: #64748b !important;
+  }
+  html.light input,
+  html.light select {
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border-color: #cbd5e1 !important;
+  }
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

@@ -1,4 +1,4 @@
-.PHONY: all build run test coverage vet docker-build docker-up docker-down clean help
+.PHONY: all build run test coverage vet docker-build docker-up docker-down clean help build-frontend
 
 APP_NAME = pulsefit
 BIN_DIR = bin
@@ -18,8 +18,17 @@ help:
 run:
 	go run main.go
 
-## build: Сборка статического бинарника в папку bin/
-build:
+## build-frontend: Сборка React TypeScript SPA (Vite + Tailwind) в web/dist
+build-frontend:
+	@if which npm >/dev/null 2>&1; then \
+		echo "⚡ Сборка React SPA фронтенда..."; \
+		cd frontend && npm run build; \
+	else \
+		echo "💡 Node.js/npm не обнаружен, используется предварительно скомпилированный web/dist"; \
+	fi
+
+## build: Сборка статического бинарника в папку bin/ (включая SPA фронтенд)
+build: build-frontend
 	@mkdir -p $(BIN_DIR)
 	CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o $(BIN_DIR)/$(APP_NAME) main.go
 	@echo "Бинарник успешно собран: $(BIN_DIR)/$(APP_NAME)"

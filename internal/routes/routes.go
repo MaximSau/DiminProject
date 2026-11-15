@@ -7,11 +7,18 @@ import (
 	transport "pulsefit/internal/transport/http"
 )
 
-// RegisterRoutes регистрирует все HTTP-эндпоинты и статическую раздачу на ServeMux.
+// RegisterRoutes регистрирует все HTTP-эндпоинты, REST API и статическую раздачу на ServeMux.
 func RegisterRoutes(mux *http.ServeMux, h *transport.Handler, assets fs.FS) {
 	// Раздача статических файлов (CSS, SVG и т.д.)
 	if staticSub, err := fs.Sub(assets, "static"); err == nil {
 		mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.FS(staticSub))))
+	}
+
+	// Раздача скомпилированных ассетов React SPA (Vite / React dist)
+	if distSub, err := fs.Sub(assets, "dist"); err == nil {
+		if assetsSub, err := fs.Sub(distSub, "assets"); err == nil {
+			mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.FS(assetsSub))))
+		}
 	}
 
 	// Системные и PWA эндпоинты
@@ -19,7 +26,32 @@ func RegisterRoutes(mux *http.ServeMux, h *transport.Handler, assets fs.FS) {
 	mux.HandleFunc("/manifest.json", h.HandleManifest)
 	mux.HandleFunc("/sw.js", h.HandleServiceWorker)
 
-	// Основные страницы и онбординг
+	// REST API для React SPA фронтенда
+	mux.HandleFunc("/api/bootstrap", h.HandleAPIBootstrap)
+	mux.HandleFunc("/api/onboarding", h.HandleAPIOnboarding)
+	mux.HandleFunc("/api/dashboard", h.HandleAPIDashboard)
+	mux.HandleFunc("/api/workouts", h.HandleAPIWorkouts)
+	mux.HandleFunc("/api/workouts/complete", h.HandleAPIWorkoutComplete)
+	mux.HandleFunc("/api/workouts/swap", h.HandleAPIWorkoutSwap)
+	mux.HandleFunc("/api/nutrition", h.HandleAPINutrition)
+	mux.HandleFunc("/api/nutrition/toggle", h.HandleAPINutritionToggle)
+	mux.HandleFunc("/api/water/add", h.HandleAPIWaterAdd)
+	mux.HandleFunc("/api/progress", h.HandleAPIProgress)
+	mux.HandleFunc("/api/progress/weight", h.HandleAPIProgressWeight)
+	mux.HandleFunc("/api/catalog", h.HandleAPICatalog)
+	mux.HandleFunc("/api/catalog/exercise", h.HandleAPICatalogExercise)
+	mux.HandleFunc("/api/profile", h.HandleAPIProfile)
+	mux.HandleFunc("/api/plan/export", h.HandleAPIPlanExport)
+	mux.HandleFunc("/api/demo/seed", h.HandleAPIDemoSeed)
+	mux.HandleFunc("/api/demo/reset", h.HandleAPIDemoReset)
+
+	// Маршрут прямого доступа к React SPA
+	mux.HandleFunc("/spa", h.HandleSPA)
+	mux.HandleFunc("/spa/", h.HandleSPA)
+	mux.HandleFunc("/app", h.HandleSPA)
+	mux.HandleFunc("/app/", h.HandleSPA)
+
+	// Основные страницы и онбординг (SSR)
 	mux.HandleFunc("/", h.HandleRoot)
 	mux.HandleFunc("/onboarding", h.HandleOnboarding)
 	mux.HandleFunc("/medical-warning", h.HandleMedicalWarning)
