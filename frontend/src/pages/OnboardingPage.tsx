@@ -85,7 +85,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
   };
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center bg-[#090d16]">
+    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center bg-[#08080a]">
       <div className="max-w-2xl w-full space-y-6">
         {/* Brand header */}
         <div className="text-center space-y-2">
@@ -115,7 +115,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
         </div>
 
         {/* Onboarding Form */}
-        <form onSubmit={handleSubmit} className="rounded-2xl p-6 sm:p-8 border bg-[#111827]/90 border-slate-800 shadow-2xl space-y-6 backdrop-blur-md">
+        <form onSubmit={handleSubmit} className="rounded-2xl p-6 sm:p-8 border bg-[#121216] border-white/[0.08] shadow-2xl space-y-6 backdrop-blur-md">
           {/* Goal selection */}
           <div className="space-y-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -135,7 +135,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   className={`p-3 rounded-xl text-xs font-bold transition-all text-center ${
                     goal === g.id
                       ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                      : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
+                      : 'bg-slate-900 text-slate-300 hover:text-white border border-white/[0.08]'
                   }`}
                 >
                   {g.label}
@@ -158,7 +158,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   max="90"
                   value={age}
                   onChange={e => setAge(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
                   required
                 />
               </div>
@@ -170,7 +170,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   max="230"
                   value={height}
                   onChange={e => setHeight(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
                   required
                 />
               </div>
@@ -183,7 +183,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   max="250"
                   value={weight}
                   onChange={e => setWeight(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
                   required
                 />
               </div>
@@ -196,7 +196,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   max="250"
                   value={targetWeight}
                   onChange={e => setTargetWeight(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
                   required
                 />
               </div>
@@ -221,7 +221,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                     className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                       daysPerWeek === d
                         ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                        : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                        : 'bg-slate-900 text-slate-400 hover:text-white border border-white/[0.08]'
                     }`}
                   >
                     {d}
@@ -236,7 +236,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                 <select
                   value={equipment}
                   onChange={e => setEquipment(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="bodyweight">Свой вес (дома/на турниках)</option>
                   <option value="dumbbells">Гантели / эспандеры</option>
@@ -249,7 +249,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                 <select
                   value={preferredTime}
                   onChange={e => setPreferredTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="morning">Утро (07:00 – 09:00)</option>
                   <option value="day">День (12:00 – 15:00)</option>
@@ -260,7 +260,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
           </div>
 
           {/* Vegan diet toggle */}
-          <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700">
+          <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08] cursor-pointer hover:border-slate-700">
             <input
               type="checkbox"
               checked={isVegan}
@@ -296,7 +296,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all ${
                     healthIssues.includes(h.id)
                       ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                      : 'bg-slate-900/60 border-slate-800 text-slate-400'
+                      : 'bg-slate-900/60 border-white/[0.08] text-slate-400'
                   }`}
                 >
                   <div className="flex items-center justify-between">

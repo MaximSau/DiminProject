@@ -3,42 +3,84 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --color-bg: #090d16;
-    --color-card: #111827;
-    --color-border: #1f2937;
-    --color-text: #f8fafc;
+  :root,
+  [data-theme="dark"],
+  html.dark {
+    --bg-main: #08080a;
+    --bg-header: rgba(8, 8, 10, 0.92);
+    --bg-card: #121216;
+    --bg-card-hover: #17171d;
+    --bg-surface: #101014;
+    --bg-input: #101014;
+    --border-color: rgba(255, 255, 255, 0.10);
+    --border-hover: rgba(255, 255, 255, 0.20);
+    --text-main: #f4f4f5;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
   }
 
+  [data-theme="light"],
   html.light {
-    --color-bg: #f8fafc;
-    --color-card: #ffffff;
-    --color-border: #e2e8f0;
-    --color-text: #0f172a;
+    --bg-main: #f8fafc;
+    --bg-header: rgba(255, 255, 255, 0.95);
+    --bg-card: #ffffff;
+    --bg-card-hover: #f8fafc;
+    --bg-surface: #f1f5f9;
+    --bg-input: #ffffff;
+    --border-color: #e2e8f0;
+    --border-hover: #cbd5e1;
+    --text-main: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
   }
 
-  html.light body {
-    background-color: #f8fafc !important;
-    color: #0f172a !important;
+  body {
+    background-color: var(--bg-main);
+    color: var(--text-main);
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
-  /* Light mode override for cards and borders */
-  html.light .bg-\[\#090d16\] {
+  /* Universal mapping for cards and surfaces across dark/light */
+  .bg-dark-card,
+  .app-card {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  .bg-dark-surface,
+  .app-surface {
+    background-color: var(--bg-surface) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  .app-header {
+    background-color: var(--bg-header) !important;
+    border-color: var(--border-color) !important;
+  }
+
+  /* Light theme component overrides */
+  html.light .bg-\[\#090d16\],
+  html.light .bg-\[\#08080a\] {
     background-color: #f8fafc !important;
   }
+
   html.light .bg-\[\#111827\]\/80,
   html.light .bg-\[\#111827\],
-  html.light .bg-\[\#111827\]\/90 {
+  html.light .bg-\[\#111827\]\/90,
+  html.light .bg-\[\#121216\] {
     background-color: #ffffff !important;
     border-color: #e2e8f0 !important;
   }
+
   html.light .bg-slate-900,
   html.light .bg-slate-900\/60,
   html.light .bg-slate-900\/40,
-  html.light .bg-slate-900\/80 {
+  html.light .bg-slate-900\/80,
+  html.light .bg-\[\#101014\] {
     background-color: #f1f5f9 !important;
     border-color: #e2e8f0 !important;
   }
+
   html.light .border-slate-800,
   html.light .border-slate-800\/80,
   html.light .border-slate-800\/60,
@@ -46,16 +88,20 @@
   html.light .border-slate-700\/80 {
     border-color: #e2e8f0 !important;
   }
+
   html.light .text-white {
     color: #0f172a !important;
   }
+
   html.light .text-slate-200,
   html.light .text-slate-300 {
     color: #334155 !important;
   }
+
   html.light .text-slate-400 {
     color: #64748b !important;
   }
+
   html.light input,
   html.light select {
     background-color: #ffffff !important;
@@ -73,9 +119,9 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #33333d;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #4a4a58;
 }

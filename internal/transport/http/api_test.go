@@ -146,6 +146,20 @@ func TestRESTAPIEndpoints(t *testing.T) {
 		t.Errorf("unexpected water add result: %v", waterRes)
 	}
 
+	// 6b. POST /api/water/add with negative delta (subtract 330ml glass)
+	waterSubPayload := map[string]any{"delta": -330}
+	wsJSON, _ := json.Marshal(waterSubPayload)
+	resp, err = client.Post(srv.URL+"/api/water/add", "application/json", bytes.NewReader(wsJSON))
+	if err != nil {
+		t.Fatalf("POST /api/water/add negative failed: %v", err)
+	}
+	var waterSubRes map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&waterSubRes)
+	resp.Body.Close()
+	if waterSubRes["ok"] != true || waterSubRes["current"].(float64) != 0 {
+		t.Errorf("unexpected water subtract result, expected 0: %v", waterSubRes)
+	}
+
 	// 7. GET /api/nutrition
 	resp, err = client.Get(srv.URL + "/api/nutrition?day=1")
 	if err != nil {

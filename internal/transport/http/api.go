@@ -632,8 +632,8 @@ func (h *Handler) HandleAPIWaterAdd(w http.ResponseWriter, r *http.Request) {
 		req.Delta, _ = strconv.Atoi(deltaStr)
 	}
 
-	if req.Delta <= 0 {
-		req.Delta = 330 // 1 glass
+	if req.Delta == 0 {
+		req.Delta = 330 // default 1 glass
 	}
 
 	today := time.Now().Format("2006-01-02")

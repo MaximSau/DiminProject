@@ -78,7 +78,7 @@ const AppContent: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#090d16] text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#08080a] text-white">
         <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4" />
         <span className="text-sm font-semibold tracking-wider uppercase text-slate-400">
           Загрузка PulseFit...
@@ -98,7 +98,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#090d16] text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#08080a] text-slate-100 transition-colors duration-200">
       <Navbar
         currentTab={currentTab}
         onNavigate={handleNavigate}
@@ -137,7 +137,7 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 py-6 text-center text-xs text-slate-500 print:hidden">
+      <footer className="border-t border-white/[0.08] py-6 text-center text-xs text-slate-500 print:hidden">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>PulseFit Pro © 2026. Профессиональный фитнес-трекер и рацион.</span>
           <span>Автономная архитектура • SQLite Pure-Go • React + Tailwind SPA</span>

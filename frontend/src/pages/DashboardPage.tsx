@@ -7,6 +7,7 @@ import {
   ShieldAlert,
   ChevronRight,
   Plus,
+  Minus,
   Moon,
   Sun,
   Activity,
@@ -23,18 +24,18 @@ interface DashboardPageProps {
 }
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, onRefresh }) => {
-  const { user, todayWorkout, todayMeals, todayWater, streak, isGentleMode, reminders } = data;
+  const { user, todayWorkout, todayMeals, todayWater, streak, isGentleMode } = data;
   const { showToast } = useToast();
   const [addingWater, setAddingWater] = useState(false);
 
-  const handleAddWater = async (delta = 330) => {
+  const handleAddWater = async (delta: number) => {
     try {
       setAddingWater(true);
       await api.addWater(delta);
-      showToast(`+${delta} мл воды добавлено`);
+      showToast(delta > 0 ? `+${delta} мл воды добавлено` : `${delta} мл воды списано`);
       onRefresh();
     } catch (e: any) {
-      showToast(e.message || 'Ошибка добавления воды', 'error');
+      showToast(e.message || 'Ошибка обновления водного баланса', 'error');
     } finally {
       setAddingWater(false);
     }
@@ -52,17 +53,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
 
   return (
     <div className="space-y-6">
-      {/* Gentle Medical Mode Banner */}
+      {/* Gentle Medical Mode Banner — High Contrast Dark Obsidian style */}
       {isGentleMode && (
-        <div className="rounded-2xl p-4 sm:p-5 border bg-amber-500/10 border-amber-500/30 text-amber-200 flex items-start gap-4 shadow-lg backdrop-blur-sm">
-          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-300 flex-shrink-0 mt-0.5">
-            <ShieldAlert className="w-5 h-5" />
+        <div className="rounded-2xl p-4 sm:p-5 border bg-[#121216] border-amber-500/40 text-slate-100 flex items-start gap-4 shadow-lg backdrop-blur-sm">
+          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30 flex-shrink-0 mt-0.5">
+            <ShieldAlert className="w-5 h-5 text-amber-400" />
           </div>
           <div className="space-y-1">
-            <h4 className="font-bold text-amber-300 text-sm sm:text-base flex items-center gap-2">
+            <h4 className="font-bold text-white text-sm sm:text-base flex items-center gap-2">
               Активирован щадящий режим: восстановление и мобильность
             </h4>
-            <p className="text-xs sm:text-sm text-amber-200/90 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-normal">
               В вашем профиле отмечены медицинские особенности. Программа автоматически адаптирована: исключены ударные осевые нагрузки, прыжки и высокоинтенсивные берпи. Перед началом занятий обязательно проконсультируйтесь с лечащим врачом.
             </p>
           </div>
@@ -72,70 +73,85 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
       {/* Top Welcome & KPI row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Calories Card */}
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-colors">
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm relative overflow-hidden group hover:border-white/[0.18] transition-colors">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Калории за день</span>
-            <div className="p-2 rounded-xl bg-rose-500/15 text-rose-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Калории за день</span>
+            <div className="p-2 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/20">
               <Flame className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mb-2">
             <span className="text-2xl sm:text-3xl font-black text-white">{calCurrent}</span>
-            <span className="text-xs font-semibold text-slate-400">/ {calTarget} ккал</span>
+            <span className="text-xs font-semibold text-slate-300">/ {calTarget} ккал</span>
           </div>
-          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-[#1c1c24] h-2 rounded-full overflow-hidden border border-white/[0.04]">
             <div
               className="bg-gradient-to-r from-rose-500 to-amber-400 h-full rounded-full transition-all duration-500"
               style={{ width: `${calPercent}%` }}
             />
           </div>
-          <div className="mt-2 text-[11px] text-slate-400 flex justify-between font-medium">
+          <div className="mt-2.5 text-[11px] text-slate-300 flex justify-between font-medium">
             <span>{calPercent}% выполнено</span>
             <span>Осталось {Math.max(0, calTarget - calCurrent)} ккал</span>
           </div>
         </div>
 
-        {/* Water Card (in 330ml glasses as requested) */}
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-colors">
+        {/* Water Card with +330 and -330 ml buttons */}
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm relative overflow-hidden group hover:border-white/[0.18] transition-colors">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Водный баланс</span>
-            <div className="p-2 rounded-xl bg-sky-500/15 text-sky-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Водный баланс</span>
+            <div className="p-2 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20">
               <Droplets className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline justify-between mb-2">
             <div className="flex items-baseline gap-2">
               <span className="text-2xl sm:text-3xl font-black text-white">{waterCurrent}</span>
-              <span className="text-xs font-semibold text-slate-400">/ {waterTarget} мл</span>
+              <span className="text-xs font-semibold text-slate-300">/ {waterTarget} мл</span>
             </div>
-            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-sky-500/10 text-sky-400 border border-sky-500/20">
+            <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-sky-500/15 text-sky-300 border border-sky-500/30">
               {waterGlasses} / {targetGlasses} стак.
             </span>
           </div>
-          <div className="w-full bg-slate-800 h-2 rounded-full overflow-hidden">
+          <div className="w-full bg-[#1c1c24] h-2 rounded-full overflow-hidden border border-white/[0.04]">
             <div
               className="bg-gradient-to-r from-sky-500 to-emerald-400 h-full rounded-full transition-all duration-500"
               style={{ width: `${waterPercent}%` }}
             />
           </div>
           <div className="mt-3 flex items-center justify-between">
-            <span className="text-[11px] text-slate-400">1 стакан = 330 мл</span>
-            <button
-              onClick={() => handleAddWater(330)}
-              disabled={addingWater}
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/30 transition-all active:scale-95 disabled:opacity-50"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              <span>+330 мл</span>
-            </button>
+            <span className="text-[11px] text-slate-300 font-medium">1 стак. = 330 мл</span>
+            <div className="flex items-center gap-1.5">
+              {/* Minus glass button */}
+              <button
+                onClick={() => handleAddWater(-330)}
+                disabled={addingWater || waterCurrent <= 0}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold bg-[#1c1c24] hover:bg-[#252530] text-slate-200 border border-white/[0.10] transition-all active:scale-95 disabled:opacity-40"
+                title="Убрать 1 стакан воды (-330 мл)"
+              >
+                <Minus className="w-3.5 h-3.5" />
+                <span>-330</span>
+              </button>
+
+              {/* Plus glass button */}
+              <button
+                onClick={() => handleAddWater(330)}
+                disabled={addingWater}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 transition-all active:scale-95 disabled:opacity-50"
+                title="Добавить 1 стакан воды (+330 мл)"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+330</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Workout Activity Card */}
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-colors">
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm relative overflow-hidden group hover:border-white/[0.18] transition-colors">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Тренировка сегодня</span>
-            <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Тренировка сегодня</span>
+            <div className="p-2 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
               <Dumbbell className="w-4 h-4" />
             </div>
           </div>
@@ -143,13 +159,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
             <div className="text-lg font-bold text-white truncate">
               {todayWorkout?.isRest ? 'День восстановления' : todayWorkout?.dayName || 'Тренировка'}
             </div>
-            <div className="text-xs text-slate-400 truncate">
+            <div className="text-xs text-slate-300 truncate font-medium">
               {todayWorkout?.focus || 'Отдых и растяжка'}
             </div>
           </div>
           <div className="mt-4 flex items-center justify-between text-xs">
-            <span className="text-slate-400 flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-slate-500" />
+            <span className="text-slate-300 flex items-center gap-1.5 font-medium">
+              <Clock className="w-3.5 h-3.5 text-slate-400" />
               ~{todayWorkout?.estimatedMinutes || user.workoutDuration || 45} мин
             </span>
             <button
@@ -163,25 +179,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
         </div>
 
         {/* Streak & Goal Card */}
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm relative overflow-hidden group hover:border-slate-700 transition-colors">
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm relative overflow-hidden group hover:border-white/[0.18] transition-colors">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Серия и Цель</span>
-            <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-300">Серия и Цель</span>
+            <div className="p-2 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/20">
               <Activity className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-2 mb-1">
-            <span className="text-2xl sm:text-3xl font-black text-amber-400">{streak || 1}</span>
-            <span className="text-xs font-semibold text-slate-400">дней подряд 🔥</span>
+            <span className="text-2xl sm:text-3xl font-black text-white">{streak || 1}</span>
+            <span className="text-xs font-semibold text-emerald-400">дней подряд 🔥</span>
           </div>
           <div className="text-xs text-slate-300 font-medium">
             ИМТ: <span className="font-bold text-white">{user.bmi?.toFixed(1) || '22.5'}</span> • Вес: {user.weight} кг → {user.targetWeight} кг
           </div>
           <div className="mt-3 flex items-center gap-2">
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold">
               {user.goal === 'weight_loss' ? 'Похудение' : user.goal === 'muscle_gain' ? 'Набор массы' : 'Поддержание формы'}
             </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-semibold">
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-slate-200 border border-white/[0.08] font-semibold">
               {user.daysPerWeek || 3} тр/нед
             </span>
           </div>
@@ -191,8 +207,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
       {/* Main Grid: Today's Workout detail + Daily Schedule (Мой распорядок дня) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Today's Workout detailed card */}
-        <div className="lg:col-span-2 rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-5">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-4">
+        <div className="lg:col-span-2 rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-5">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-4">
             <div>
               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
                 {todayWorkout?.weekdayName || 'Сегодня'}
@@ -200,13 +216,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
               <h3 className="text-xl font-bold text-white mt-0.5">
                 {todayWorkout?.dayName || 'Программа тренировки'}
               </h3>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Фокус: {todayWorkout?.focus || 'Комплексная проработка'}
+              <p className="text-xs sm:text-sm text-slate-300">
+                Фокус: <span className="font-medium text-white">{todayWorkout?.focus || 'Комплексная проработка'}</span>
               </p>
             </div>
             <button
               onClick={() => onNavigate('workouts')}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-500/20"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-md shadow-emerald-500/20 active:scale-95"
             >
               <span>К тренировке</span>
               <ChevronRight className="w-4 h-4" />
@@ -218,23 +234,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
               {todayWorkout.exercises.slice(0, 4).map((ex, idx) => (
                 <div
                   key={ex.id || idx}
-                  className="rounded-xl p-3.5 border bg-slate-900/60 border-slate-800/80 hover:border-slate-700 transition-colors flex items-center justify-between"
+                  className="rounded-xl p-3.5 border bg-[#17171d] border-white/[0.06] hover:border-white/[0.15] transition-colors flex items-center justify-between"
                 >
                   <div className="space-y-0.5 truncate pr-2">
                     <span className="text-xs font-bold text-white truncate block">{ex.title}</span>
-                    <span className="text-[11px] text-slate-400">{ex.muscle} • {ex.equipment}</span>
+                    <span className="text-[11px] text-slate-300 font-medium">{ex.muscle} • {ex.equipment}</span>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <span className="text-xs font-bold text-emerald-400">{ex.sets} × {ex.reps}</span>
+                    <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">{ex.sets} × {ex.reps}</span>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="p-8 text-center rounded-xl bg-slate-900/40 border border-slate-800/60">
-              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-80" />
+            <div className="p-8 text-center rounded-xl bg-[#17171d] border border-white/[0.06]">
+              <CheckCircle2 className="w-8 h-8 text-emerald-400 mx-auto mb-2 opacity-90" />
               <div className="text-sm font-semibold text-white">Сегодня день восстановления</div>
-              <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+              <p className="text-xs text-slate-300 mt-1 max-w-sm mx-auto">
                 Отдохните, уделите время прогулке на свежем воздухе или легкой растяжке для регенерации мышц.
               </p>
             </div>
@@ -242,45 +258,45 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
         </div>
 
         {/* Bio-rhythm / "Мой распорядок дня" card */}
-        <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+        <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
             <div className="flex items-center gap-2.5">
               <Clock className="w-5 h-5 text-sky-400" />
               <h3 className="text-base font-bold text-white">Мой распорядок дня</h3>
             </div>
             <button
               onClick={() => onNavigate('profile')}
-              className="text-xs text-slate-400 hover:text-slate-200"
+              className="text-xs text-slate-300 hover:text-white font-medium"
             >
               Настроить
             </button>
           </div>
-          <p className="text-xs text-slate-400 leading-relaxed">
+          <p className="text-xs text-slate-300 leading-relaxed font-normal">
             Ваш оптимизированный биологический ритм для поддержания высокой энергии и восстановления:
           </p>
 
           <div className="space-y-3 pt-1">
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#17171d] border border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-amber-500/15 text-amber-400">
-                  <Sun className="w-4 h-4" />
+                <div className="p-2 rounded-lg bg-white/10 text-white">
+                  <Sun className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white">Подъем и стакан воды</div>
-                  <div className="text-[11px] text-slate-400">Запуск метаболизма</div>
+                  <div className="text-[11px] text-slate-300">Запуск метаболизма</div>
                 </div>
               </div>
-              <span className="text-xs font-bold text-amber-300">07:00</span>
+              <span className="text-xs font-bold text-white">07:00</span>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#17171d] border border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-400">
+                <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
                   <Dumbbell className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white">Окно тренировки</div>
-                  <div className="text-[11px] text-slate-400">Пик физической активности</div>
+                  <div className="text-[11px] text-slate-300">Пик физической активности</div>
                 </div>
               </div>
               <span className="text-xs font-bold text-emerald-400">
@@ -288,14 +304,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ data, onNavigate, 
               </span>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/60 border border-slate-800/80">
+            <div className="flex items-center justify-between p-3 rounded-xl bg-[#17171d] border border-white/[0.06]">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-sky-500/15 text-sky-400">
+                <div className="p-2 rounded-lg bg-sky-500/15 text-sky-400 border border-sky-500/20">
                   <Moon className="w-4 h-4" />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-white">Отбой и восстановление</div>
-                  <div className="text-[11px] text-slate-400">8 часов качественного сна</div>
+                  <div className="text-[11px] text-slate-300">8 часов качественного сна</div>
                 </div>
               </div>
               <span className="text-xs font-bold text-sky-300">23:00</span>

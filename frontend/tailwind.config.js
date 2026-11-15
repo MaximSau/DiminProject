@@ -8,10 +8,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        darkBg: '#090d16',
-        darkCard: '#111827',
-        darkBorder: '#1f2937',
-        darkSurface: '#161f30',
+        darkBg: '#08080a',
+        darkCard: '#121216',
+        darkCardHover: '#17171d',
+        darkBorder: 'rgba(255, 255, 255, 0.10)',
+        darkSurface: '#101014',
         lightBg: '#f8fafc',
         lightCard: '#ffffff',
         lightBorder: '#e2e8f0',

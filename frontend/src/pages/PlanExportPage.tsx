@@ -63,9 +63,9 @@ export const PlanExportPage: React.FC<PlanExportPageProps> = ({ onBack }) => {
       {loading ? (
         <div className="py-20 text-center text-slate-400">Формирование документа программы...</div>
       ) : user ? (
-        <div className="rounded-2xl p-8 border bg-[#111827] border-slate-800 space-y-8 print:border-none print:bg-white print:text-black">
+        <div className="rounded-2xl p-8 border bg-[#121216] border-white/[0.08] space-y-8 print:border-none print:bg-white print:text-black">
           {/* Header */}
-          <div className="border-b border-slate-800 pb-6 print:border-slate-300">
+          <div className="border-b border-white/[0.08] pb-6 print:border-slate-300">
             <div className="flex items-center gap-2 text-emerald-400 print:text-emerald-700 text-xs font-bold uppercase tracking-wider mb-1">
               <Activity className="w-4 h-4" />
               PulseFit Athletic Program
@@ -92,9 +92,9 @@ export const PlanExportPage: React.FC<PlanExportPageProps> = ({ onBack }) => {
               {days.map(d => (
                 <div
                   key={d.dayIndex}
-                  className="rounded-xl p-4 border bg-slate-900/60 border-slate-800/80 print:bg-slate-50 print:border-slate-300 space-y-2"
+                  className="rounded-xl p-4 border bg-[#17171d] border-white/[0.06] print:bg-slate-50 print:border-slate-300 space-y-2"
                 >
-                  <div className="flex items-center justify-between border-b border-slate-800/60 print:border-slate-200 pb-2">
+                  <div className="flex items-center justify-between border-b border-white/[0.08]/60 print:border-slate-200 pb-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 print:text-emerald-700">
                       {d.weekdayName} • День {d.dayIndex}
                     </span>

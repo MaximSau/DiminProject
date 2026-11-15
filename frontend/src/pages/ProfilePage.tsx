@@ -128,7 +128,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm flex items-center justify-between">
+      <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-3 rounded-2xl bg-emerald-500/15 text-emerald-400">
             <User className="w-6 h-6" />
@@ -147,8 +147,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
           {/* Section 1: Personal Measurements */}
-          <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-white border-b border-slate-800/80 pb-3 flex items-center gap-2">
+          <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-white border-b border-white/[0.08] pb-3 flex items-center gap-2">
               <Settings className="w-4 h-4 text-emerald-400" />
               Личные параметры
             </h3>
@@ -161,7 +161,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Ваше имя"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -170,7 +170,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={gender}
                   onChange={e => setGender(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="male">Мужской</option>
                   <option value="female">Женский</option>
@@ -185,7 +185,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   max="100"
                   value={age}
                   onChange={e => setAge(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -197,7 +197,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   max="250"
                   value={height}
                   onChange={e => setHeight(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -210,7 +210,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   max="300"
                   value={weight}
                   onChange={e => setWeight(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
 
@@ -223,15 +223,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   max="300"
                   value={targetWeight}
                   onChange={e => setTargetWeight(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Goals & Schedule */}
-          <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-5">
-            <h3 className="text-base font-bold text-white border-b border-slate-800/80 pb-3 flex items-center gap-2">
+          <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-5">
+            <h3 className="text-base font-bold text-white border-b border-white/[0.08] pb-3 flex items-center gap-2">
               <Dumbbell className="w-4 h-4 text-emerald-400" />
               Цель и расписание тренировок
             </h3>
@@ -242,7 +242,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={goal}
                   onChange={e => setGoal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="weight_loss">Похудение и сжигание жира</option>
                   <option value="muscle_gain">Набор сухой мышечной массы</option>
@@ -256,7 +256,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={level}
                   onChange={e => setLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="beginner">Начинающий (до 6 месяцев)</option>
                   <option value="intermediate">Средний (1–2 года тренировок)</option>
@@ -269,7 +269,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={equipment}
                   onChange={e => setEquipment(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="bodyweight">Только вес тела (дома/на улице)</option>
                   <option value="dumbbells">Гантели / эспандеры</option>
@@ -291,7 +291,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                         daysPerWeek === d
                           ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                          : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                          : 'bg-slate-900 text-slate-400 hover:text-white border border-white/[0.08]'
                       }`}
                     >
                       {d}
@@ -314,7 +314,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                         workoutDuration === dur
                           ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                          : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                          : 'bg-slate-900 text-slate-400 hover:text-white border border-white/[0.08]'
                       }`}
                     >
                       {dur}м
@@ -331,7 +331,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={preferredTime}
                   onChange={e => setPreferredTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
                 >
                   <option value="morning">Утро (07:00 – 09:00)</option>
                   <option value="day">День (12:00 – 15:00)</option>
@@ -342,14 +342,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
           </div>
 
           {/* Section 3: Nutrition & Health */}
-          <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-white border-b border-slate-800/80 pb-3 flex items-center gap-2">
+          <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+            <h3 className="text-base font-bold text-white border-b border-white/[0.08] pb-3 flex items-center gap-2">
               <Leaf className="w-4 h-4 text-emerald-400" />
               Особенности питания и здоровье
             </h3>
 
             <div className="space-y-4">
-              <label className="flex items-center gap-3 p-3.5 rounded-xl bg-slate-900/60 border border-slate-800/80 cursor-pointer hover:border-slate-700">
+              <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08]/80 cursor-pointer hover:border-slate-700">
                 <input
                   type="checkbox"
                   checked={isVegan}
@@ -384,7 +384,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                       className={`p-3 rounded-xl text-left border text-xs font-bold transition-all ${
                         healthIssues.includes(h.id)
                           ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                          : 'bg-slate-900/60 border-slate-800 text-slate-400 hover:text-white'
+                          : 'bg-slate-900/60 border-white/[0.08] text-slate-400 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center justify-between">

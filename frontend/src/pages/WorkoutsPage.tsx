@@ -91,7 +91,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
   return (
     <div className="space-y-6">
       {/* 7-Day Selector Tabs */}
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-[#111827]/80 border border-slate-800 backdrop-blur-sm">
+      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-[#111827]/80 border border-white/[0.08] backdrop-blur-sm">
         {[1, 2, 3, 4, 5, 6, 7].map(day => {
           const isSelected = selectedDay === day;
           const dayData = allDays.find(d => d.dayIndex === day);
@@ -105,7 +105,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
               className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-xl text-xs font-bold transition-all duration-150 ${
                 isSelected
                   ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20 scale-[1.02]'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <span className="text-[10px] uppercase font-semibold opacity-75">
@@ -125,7 +125,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
       ) : workout ? (
         <div className="space-y-6">
           {/* Header Card */}
-          <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
@@ -164,7 +164,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
 
           {/* Gentle mode alert if active */}
           {user?.hasHealthIssues && (
-            <div className="rounded-xl p-3.5 border bg-amber-500/10 border-amber-500/30 text-amber-200 text-xs flex items-center gap-3">
+            <div className="rounded-xl p-3.5 border bg-[#121216] border-amber-500/40 text-slate-200 text-xs flex items-center gap-3">
               <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
               <span>
                 Щадящий режим: упражнения подобраны без осевой ударной нагрузки на позвоночник и суставы.
@@ -174,12 +174,12 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
 
           {/* Exercise list or Rest Day screen */}
           {workout.isRest ? (
-            <div className="rounded-2xl p-12 border bg-[#111827]/80 border-slate-800 text-center max-w-xl mx-auto space-y-4">
+            <div className="rounded-2xl p-12 border bg-[#121216] border-white/[0.08] text-center max-w-xl mx-auto space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
                 <Sparkles className="w-7 h-7" />
               </div>
               <h3 className="text-xl font-bold text-white">Время восстановить силы</h3>
-              <p className="text-sm text-slate-400 leading-relaxed">
+              <p className="text-sm text-slate-200 leading-relaxed">
                 Мышцы растут и адаптируются именно во время отдыха. Проведите легкую пешую прогулку, пейте достаточно воды и соблюдайте режим сна.
               </p>
             </div>
@@ -199,7 +199,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                 {workout.exercises?.map((ex, idx) => (
                   <div
                     key={ex.id || idx}
-                    className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm hover:border-slate-700 transition-all flex flex-col justify-between gap-4 group"
+                    className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm hover:border-slate-700 transition-all flex flex-col justify-between gap-4 group"
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2 mb-2">
@@ -229,16 +229,16 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                       </div>
 
                       {ex.coachTip && (
-                        <p className="text-xs text-slate-400 mt-3 line-clamp-2 leading-relaxed bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
+                        <p className="text-xs text-slate-200 mt-3 line-clamp-2 leading-relaxed bg-slate-900/60 p-2.5 rounded-xl border border-white/[0.08]/60">
                           💡 <span className="text-slate-300 font-medium">Совет тренера:</span> {ex.coachTip}
                         </p>
                       )}
                     </div>
 
-                    <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                    <div className="pt-2 border-t border-white/[0.08]/80 flex items-center justify-between">
                       <button
                         onClick={() => setDetailExercise(ex)}
-                        className="text-xs font-bold text-slate-400 hover:text-white flex items-center gap-1 transition-colors"
+                        className="text-xs font-bold text-slate-300 hover:text-white flex items-center gap-1 transition-colors"
                       >
                         <Info className="w-3.5 h-3.5 text-slate-500" />
                         Техника
@@ -262,7 +262,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
           {/* Exercise Detail Modal */}
           {detailExercise && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
-              <div className="rounded-2xl p-6 bg-[#111827] border border-slate-700 shadow-2xl max-w-lg w-full space-y-4">
+              <div className="rounded-2xl p-6 bg-[#121216] border border-white/20 shadow-2xl max-w-lg w-full space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
@@ -272,7 +272,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                   </div>
                   <button
                     onClick={() => setDetailExercise(null)}
-                    className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                    className="p-1 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800"
                   >
                     ✕
                   </button>
@@ -287,7 +287,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                   </span>
                 </div>
 
-                <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 text-xs sm:text-sm text-slate-300 leading-relaxed space-y-2">
+                <div className="p-4 rounded-xl bg-slate-900 border border-white/[0.08] text-xs sm:text-sm text-slate-300 leading-relaxed space-y-2">
                   <div className="font-bold text-white flex items-center gap-1.5">
                     <Sparkles className="w-4 h-4 text-emerald-400" />
                     Рекомендации по выполнению:
@@ -295,7 +295,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                   <p>{detailExercise.coachTip || 'Выполняйте упражнение в подконтрольном темпе, сохраняя ровное дыхание.'}</p>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.08]">
                   <span>Рекомендуемый сет: {detailExercise.sets} подходов по {detailExercise.reps}</span>
                   <button
                     onClick={() => setDetailExercise(null)}

@@ -98,7 +98,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
     <div className="space-y-6">
       {/* KPI Top Row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Текущий вес</span>
             <div className="text-2xl sm:text-3xl font-black text-white mt-1">
@@ -113,7 +113,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
           </div>
         </div>
 
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Серия активности</span>
             <div className="text-2xl sm:text-3xl font-black text-amber-400 mt-1">
@@ -128,7 +128,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
           </div>
         </div>
 
-        <div className="rounded-2xl p-5 border bg-[#111827]/80 border-slate-800 shadow-sm flex items-center justify-between">
+        <div className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm flex items-center justify-between">
           <div>
             <span className="text-xs font-bold uppercase tracking-wider text-slate-400">ИМТ и статус</span>
             <div className="text-2xl sm:text-3xl font-black text-white mt-1">
@@ -151,8 +151,8 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
           {/* Left Column: Weight Logging & History */}
           <div className="space-y-6">
             {/* New Weight Entry Form */}
-            <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-4">
-              <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-3">
+            <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+              <div className="flex items-center gap-2.5 border-b border-white/[0.08] pb-3">
                 <Scale className="w-5 h-5 text-emerald-400" />
                 <h3 className="text-base font-bold text-white">Внести замер веса</h3>
               </div>
@@ -160,7 +160,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
               <form onSubmit={handleAddWeight} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-medium">
                       Вес (кг)
                     </label>
                     <input
@@ -169,12 +169,12 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
                       value={inputWeight}
                       onChange={e => setInputWeight(e.target.value)}
                       placeholder="Например, 75.4"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white font-bold text-base focus:border-emerald-500 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-base focus:border-emerald-500 focus:outline-none"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                    <label className="block text-xs font-semibold text-slate-300 mb-1.5 font-medium">
                       Заметка к замеру (видна в истории!)
                     </label>
                     <input
@@ -182,7 +182,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
                       value={inputNote}
                       onChange={e => setInputNote(e.target.value)}
                       placeholder="Напр., после пробежки, легкость"
-                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-slate-700/80 text-white text-xs sm:text-sm focus:border-emerald-500 focus:outline-none"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs sm:text-sm focus:border-emerald-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -199,8 +199,8 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
             </div>
 
             {/* SVG Weight Dynamics Chart */}
-            <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+              <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
                 <div className="flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-emerald-400" />
                   <h3 className="text-base font-bold text-white">Динамика веса</h3>
@@ -230,15 +230,15 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
                   </div>
                 </div>
               ) : (
-                <div className="p-6 text-center text-xs text-slate-400 bg-slate-900/30 rounded-xl border border-slate-800/60">
+                <div className="p-6 text-center text-xs text-slate-400 bg-slate-900/30 rounded-xl border border-white/[0.08]/60">
                   Добавьте хотя бы 2 замера для построения интерактивного графика динамики.
                 </div>
               )}
             </div>
 
             {/* Weight History Journal with visible notes */}
-            <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-3">
-              <div className="flex items-center gap-2 border-b border-slate-800/80 pb-3">
+            <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-3">
+              <div className="flex items-center gap-2 border-b border-white/[0.08] pb-3">
                 <FileText className="w-5 h-5 text-sky-400" />
                 <h3 className="text-base font-bold text-white">История замеров веса и заметки</h3>
               </div>
@@ -248,7 +248,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
                   {weightHistory.map((item, idx) => (
                     <div
                       key={idx}
-                      className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-start justify-between gap-3"
+                      className="p-3 rounded-xl bg-[#17171d] border border-white/[0.06] flex items-start justify-between gap-3"
                     >
                       <div className="space-y-0.5">
                         <div className="text-sm font-bold text-white flex items-center gap-2">
@@ -275,8 +275,8 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
           </div>
 
           {/* Right Column: Workout History Activity */}
-          <div className="rounded-2xl p-6 border bg-[#111827]/80 border-slate-800 shadow-sm space-y-4">
-            <div className="flex items-center gap-2.5 border-b border-slate-800/80 pb-3">
+          <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+            <div className="flex items-center gap-2.5 border-b border-white/[0.08] pb-3">
               <Dumbbell className="w-5 h-5 text-emerald-400" />
               <h3 className="text-base font-bold text-white">История выполненных тренировок</h3>
             </div>
@@ -286,7 +286,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
                 {workoutHistory.map((w, idx) => (
                   <div
                     key={idx}
-                    className="p-4 rounded-xl bg-slate-900/60 border border-slate-800/80 flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
+                    className="p-4 rounded-xl bg-[#17171d] border border-white/[0.06] flex items-center justify-between gap-3 hover:border-slate-700 transition-colors"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
@@ -313,7 +313,7 @@ export const ProgressPage: React.FC<ProgressPageProps> = ({ onRefresh }) => {
                 ))}
               </div>
             ) : (
-              <div className="p-8 text-center rounded-xl bg-slate-900/40 border border-slate-800/60 space-y-2">
+              <div className="p-8 text-center rounded-xl bg-slate-900/40 border border-white/[0.08]/60 space-y-2">
                 <Award className="w-8 h-8 text-slate-500 mx-auto opacity-75" />
                 <div className="text-sm font-semibold text-white">История пока пуста</div>
                 <p className="text-xs text-slate-400 max-w-xs mx-auto">
