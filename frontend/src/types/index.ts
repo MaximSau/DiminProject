@@ -45,6 +45,7 @@ export interface PlanExercise {
   restSec: number;
   coachTip: string;
   isGentle?: boolean;
+  isContraindicated?: boolean;
 }
 
 export interface WorkoutDay {
@@ -133,6 +134,7 @@ export interface DashboardResponse {
   streak: number;
   weightHistory: WeightEntry[];
   workoutHistory: WorkoutHistoryEntry[];
+  completedDates?: string[];
   isGentleMode: boolean;
   reminders: Reminder[];
 }

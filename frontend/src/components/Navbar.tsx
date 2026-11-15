@@ -7,13 +7,10 @@ import {
   BookOpen,
   User,
   Sparkles,
-  Sun,
-  Moon,
   Menu,
   X,
   Printer,
 } from 'lucide-react';
-import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { api } from '../api/client';
 
@@ -24,7 +21,6 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefresh }) => {
-  const { theme, toggleTheme } = useTheme();
   const { showToast } = useToast();
   const [seeding, setSeeding] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -53,7 +49,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b backdrop-blur-md transition-colors duration-200 bg-[#08080a]/90 border-white/[0.08] dark:bg-[#08080a]/90 dark:border-white/[0.08]">
+    <header className="sticky top-0 z-40 w-full border-b backdrop-blur-md transition-colors duration-200 bg-[#08080a]/90 border-white/[0.08]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         {/* Logo */}
         <button
@@ -97,7 +93,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
           })}
         </nav>
 
-        {/* Right action buttons: Demo, Print, Theme, Mobile toggle */}
+        {/* Right action buttons: Demo, Print, Mobile toggle */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Plan export link */}
           <button
@@ -106,19 +102,6 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
             className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
           >
             <Printer className="w-4 h-4" />
-          </button>
-
-          {/* Theme switcher */}
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'}
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
-          >
-            {theme === 'dark' ? (
-              <Sun className="w-4 h-4 text-amber-400" />
-            ) : (
-              <Moon className="w-4 h-4 text-sky-400" />
-            )}
           </button>
 
           {/* Demo Button - strictly preserved for project defense */}

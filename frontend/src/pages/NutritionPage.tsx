@@ -10,6 +10,10 @@ import {
   Utensils,
   Cookie,
   Moon,
+  Calendar as CalendarIcon,
+  ChevronLeft,
+  ChevronRight,
+  X,
 } from 'lucide-react';
 import { DayMeals, MealItem, UserProfile } from '../types';
 import { api } from '../api/client';
@@ -30,6 +34,82 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
   const [waterTarget, setWaterTarget] = useState(2000);
   const [addingWater, setAddingWater] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+
+  // Unified Calendar state
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+  const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
+
+  const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const monthsRu = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+  ];
+  const monthsRuNominative = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+  ];
+  const monthsShortRu = [
+    'янв', 'фев', 'мар', 'апр', 'мая', 'июн',
+    'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
+  ];
+  const weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+  const getMondayOfWeek = (offset: number) => {
+    const d = new Date();
+    const isoDay = d.getDay() === 0 ? 7 : d.getDay();
+    d.setDate(d.getDate() - (isoDay - 1) + offset * 7);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const getDateForDay = (dayIndex: number, offset: number) => {
+    const monday = getMondayOfWeek(offset);
+    const target = new Date(monday);
+    target.setDate(monday.getDate() + (dayIndex - 1));
+    target.setHours(0, 0, 0, 0);
+    return target;
+  };
+
+  const isSameDay = (d1: Date, d2: Date) => {
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
+  };
+
+  const activeDate = getDateForDay(selectedDay, weekOffset);
+
+  // Week range label
+  const mondayDate = getDateForDay(1, weekOffset);
+  const sundayDate = getDateForDay(7, weekOffset);
+  const weekLabel = `${mondayDate.getDate()} ${monthsShortRu[mondayDate.getMonth()]} – ${sundayDate.getDate()} ${monthsShortRu[sundayDate.getMonth()]} ${sundayDate.getFullYear()}`;
+
+  // Calendar calculations
+  const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const monthStartOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+  const handleSelectCalendarDate = (dayNum: number) => {
+    const targetDate = new Date(calendarYear, calendarMonth, dayNum);
+    const targetIsoDay = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
+
+    const targetMonday = new Date(targetDate);
+    targetMonday.setDate(targetDate.getDate() - (targetIsoDay - 1));
+    targetMonday.setHours(0, 0, 0, 0);
+
+    const baseMonday = getMondayOfWeek(0);
+    const diffWeeks = Math.round((targetMonday.getTime() - baseMonday.getTime()) / (7 * 24 * 3600 * 1000));
+
+    setWeekOffset(diffWeeks);
+    setSelectedDay(targetIsoDay);
+    setCalendarModalOpen(false);
+    showToast(`Выбрана дата: ${dayNum} ${monthsRu[calendarMonth]} ${calendarYear}`);
+  };
 
   const fetchNutrition = async (day: number) => {
     try {
@@ -94,8 +174,6 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
     }
   };
 
-  const weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
-
   const mealSections = [
     { key: 'breakfast', title: 'Завтрак', icon: Coffee, desc: 'Энергетический старт дня' },
     { key: 'lunch', title: 'Обед', icon: Utensils, desc: 'Основной приём пищи и баланс нутриентов' },
@@ -105,24 +183,126 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
 
   return (
     <div className="space-y-6">
-      {/* 7-Day Selector Tabs */}
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2 p-1.5 rounded-2xl bg-[#121216] border border-white/[0.08] backdrop-blur-sm">
-        {[1, 2, 3, 4, 5, 6, 7].map(day => (
-          <button
-            key={day}
-            onClick={() => setSelectedDay(day)}
-            className={`flex flex-col items-center justify-center py-2.5 px-1 rounded-xl text-xs font-bold transition-all duration-150 ${
-              selectedDay === day
-                ? 'bg-white text-zinc-950 shadow-md shadow-white/10 scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-[#1a1a22]'
-            }`}
-          >
-            <span className="text-[10px] uppercase font-semibold opacity-75">
-              {weekdayShort[day - 1]}
-            </span>
-            <span className="text-sm font-black mt-0.5">День {day}</span>
-          </button>
-        ))}
+      {/* Unified Real-Time Calendar Bar */}
+      <div className="rounded-2xl p-4 sm:p-5 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
+              <CalendarIcon className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-bold text-white tracking-wide">
+                  {weekLabel}
+                </span>
+                {weekOffset === 0 && (
+                  <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-white/15 text-white border border-white/20">
+                    Текущая неделя
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-zinc-400">
+                Единый календарь питания и нутриентов
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Week navigation arrows */}
+            <div className="flex items-center bg-[#17171d] rounded-xl border border-white/[0.08] p-1">
+              <button
+                onClick={() => setWeekOffset(prev => prev - 1)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Предыдущая неделя"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setWeekOffset(0);
+                  const todayIso = today.getDay() === 0 ? 7 : today.getDay();
+                  setSelectedDay(todayIso);
+                }}
+                className="px-2.5 py-1 text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
+              >
+                Сегодня
+              </button>
+              <button
+                onClick={() => setWeekOffset(prev => prev + 1)}
+                className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                title="Следующая неделя"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Big Calendar modal trigger */}
+            <button
+              onClick={() => {
+                setCalendarYear(activeDate.getFullYear());
+                setCalendarMonth(activeDate.getMonth());
+                setCalendarModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all active:scale-95 shadow-sm"
+            >
+              <CalendarIcon className="w-4 h-4 text-white" />
+              <span>Календарь</span>
+            </button>
+          </div>
+        </div>
+
+        {/* 7-Day Real Date Selector Strip */}
+        <div className="grid grid-cols-7 gap-1.5 sm:gap-2 pt-1">
+          {[1, 2, 3, 4, 5, 6, 7].map(day => {
+            const isSelected = selectedDay === day;
+            const dayDate = getDateForDay(day, weekOffset);
+            const isToday = isSameDay(dayDate, today);
+            const isPast = dayDate.getTime() < todayMidnight.getTime() && !isToday;
+
+            return (
+              <button
+                key={day}
+                onClick={() => setSelectedDay(day)}
+                className={`relative flex flex-col items-center justify-center py-2.5 px-1 rounded-xl text-xs font-bold transition-all duration-150 ${
+                  isSelected
+                    ? 'bg-white text-zinc-950 shadow-lg shadow-white/10 scale-[1.02] border border-white'
+                    : isToday
+                    ? 'bg-zinc-800/90 text-white border border-white/40 hover:bg-zinc-800'
+                    : isPast
+                    ? 'bg-[#141419]/80 text-zinc-500 hover:text-zinc-300 hover:bg-[#1a1a22] border border-white/[0.04]'
+                    : 'bg-[#17171d] text-zinc-400 hover:text-white hover:bg-[#202028] border border-white/[0.06]'
+                }`}
+              >
+                {/* Weekday & Indicator */}
+                <div className="flex items-center gap-1 mb-0.5">
+                  <span className={`text-[10px] uppercase font-semibold ${isSelected ? 'text-zinc-800' : isPast ? 'text-zinc-500' : 'text-zinc-400'}`}>
+                    {weekdayShort[day - 1]}
+                  </span>
+                  {isToday && (
+                    <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-zinc-950' : 'bg-white animate-pulse'}`} />
+                  )}
+                </div>
+
+                {/* Real calendar date number */}
+                <span className={`text-sm font-black ${isPast && !isSelected ? 'text-zinc-500' : ''}`}>
+                  {dayDate.getDate()} {monthsShortRu[dayDate.getMonth()]}
+                </span>
+
+                <span className={`text-[10px] mt-1 font-medium truncate max-w-full px-1 ${
+                  isSelected
+                    ? 'text-zinc-900 font-bold'
+                    : isToday
+                    ? 'text-zinc-200'
+                    : isPast
+                    ? 'text-zinc-600'
+                    : 'text-zinc-400'
+                }`}>
+                  Рацион
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {loading ? (
@@ -134,7 +314,7 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/[0.08] pb-4">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  {dayMeals.weekdayName} • День {selectedDay}
+                  {dayMeals.weekdayName} • {activeDate.getDate()} {monthsRu[activeDate.getMonth()]} {activeDate.getFullYear()}
                 </span>
                 <h2 className="text-2xl font-black text-white mt-1">
                   Рацион на день
@@ -292,6 +472,119 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
         </div>
       ) : (
         <div className="py-20 text-center text-zinc-300">Данные рациона недоступны</div>
+      )}
+
+      {/* Calendar Modal */}
+      {calendarModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="rounded-3xl p-6 bg-[#121216] border border-white/20 shadow-2xl max-w-md w-full space-y-5">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-black text-white">
+                  {monthsRuNominative[calendarMonth]} {calendarYear}
+                </h3>
+                <p className="text-xs text-zinc-400">
+                  Выберите дату для перехода к рациону
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    if (calendarMonth === 0) {
+                      setCalendarMonth(11);
+                      setCalendarYear(y => y - 1);
+                    } else {
+                      setCalendarMonth(m => m - 1);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => {
+                    if (calendarMonth === 11) {
+                      setCalendarMonth(0);
+                      setCalendarYear(y => y + 1);
+                    } else {
+                      setCalendarMonth(m => m + 1);
+                    }
+                  }}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setCalendarModalOpen(false)}
+                  className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800 ml-1"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Weekday headers */}
+            <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-zinc-400">
+              {weekdayShort.map(w => (
+                <div key={w} className="py-1">
+                  {w}
+                </div>
+              ))}
+            </div>
+
+            {/* Days grid */}
+            <div className="grid grid-cols-7 gap-1 text-center">
+              {/* Empty cells */}
+              {Array.from({ length: monthStartOffset }).map((_, i) => (
+                <div key={`empty-${i}`} className="h-11" />
+              ))}
+
+              {/* Month days */}
+              {Array.from({ length: daysInMonth }).map((_, i) => {
+                const dayNum = i + 1;
+                const dateObj = new Date(calendarYear, calendarMonth, dayNum);
+                dateObj.setHours(0, 0, 0, 0);
+                const isTodayCell = isSameDay(dateObj, today);
+                const isPast = dateObj.getTime() < todayMidnight.getTime() && !isTodayCell;
+
+                return (
+                  <button
+                    key={dayNum}
+                    onClick={() => handleSelectCalendarDate(dayNum)}
+                    className={`h-11 rounded-2xl flex flex-col items-center justify-center text-xs transition-all ${
+                      isTodayCell
+                        ? 'bg-white text-zinc-950 font-black shadow-md'
+                        : isPast
+                        ? 'text-zinc-600 hover:text-zinc-300 hover:bg-white/5 opacity-60'
+                        : 'hover:bg-white/10 text-zinc-200'
+                    }`}
+                  >
+                    <span className="font-bold leading-none">{dayNum}</span>
+                    <span className={`w-1 h-1 rounded-full mt-1 ${
+                      isTodayCell ? 'bg-zinc-950' : 'bg-white/60'
+                    }`} />
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Footer */}
+            <div className="pt-2 border-t border-white/[0.08] flex items-center justify-end text-xs text-zinc-400">
+              <button
+                onClick={() => {
+                  setWeekOffset(0);
+                  const todayIso = today.getDay() === 0 ? 7 : today.getDay();
+                  setSelectedDay(todayIso);
+                  setCalendarModalOpen(false);
+                }}
+                className="text-white hover:underline font-bold"
+              >
+                К сегодня
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

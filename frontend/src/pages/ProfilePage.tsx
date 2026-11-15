@@ -25,13 +25,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
 
-  // Form fields
+  // Form fields (strings to avoid sticky leading zero on backspace)
   const [name, setName] = useState('');
   const [gender, setGender] = useState('male');
-  const [age, setAge] = useState(25);
-  const [height, setHeight] = useState(175);
-  const [weight, setWeight] = useState(75);
-  const [targetWeight, setTargetWeight] = useState(70);
+  const [age, setAge] = useState('25');
+  const [height, setHeight] = useState('175');
+  const [weight, setWeight] = useState('75');
+  const [targetWeight, setTargetWeight] = useState('70');
   const [goal, setGoal] = useState('weight_loss');
   const [level, setLevel] = useState('beginner');
   const [equipment, setEquipment] = useState('bodyweight');
@@ -41,6 +41,14 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
   const [isVegan, setIsVegan] = useState(false);
   const [healthIssues, setHealthIssues] = useState<string[]>([]);
 
+  const cleanNumber = (val: string) => {
+    if (val === '') return '';
+    if (val.startsWith('0') && val.length > 1 && !val.startsWith('0.')) {
+      return val.replace(/^0+/, '');
+    }
+    return val;
+  };
+
   const fetchProfile = async () => {
     try {
       setLoading(true);
@@ -49,10 +57,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
       if (u) {
         setName(u.name || '');
         setGender(u.gender || 'male');
-        setAge(u.age || 25);
-        setHeight(u.height || 175);
-        setWeight(u.weight || 75);
-        setTargetWeight(u.targetWeight || 70);
+        setAge(String(u.age || 25));
+        setHeight(String(u.height || 175));
+        setWeight(String(u.weight || 75));
+        setTargetWeight(String(u.targetWeight || 70));
         setGoal(u.goal || 'weight_loss');
         setLevel(u.level || 'beginner');
         setEquipment(u.equipment || 'bodyweight');
@@ -81,15 +89,38 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const numAge = Number(age);
+    const numHeight = Number(height);
+    const numWeight = parseFloat(weight);
+    const numTarget = parseFloat(targetWeight);
+
+    if (!numAge || numAge < 14 || numAge > 100) {
+      showToast('Пожалуйста, укажите корректный возраст (от 14 до 100 лет)', 'error');
+      return;
+    }
+    if (!numHeight || numHeight < 100 || numHeight > 250) {
+      showToast('Пожалуйста, укажите корректный рост (от 100 до 250 см)', 'error');
+      return;
+    }
+    if (!numWeight || numWeight < 30 || numWeight > 300) {
+      showToast('Пожалуйста, укажите корректный вес (от 30 до 300 кг)', 'error');
+      return;
+    }
+    if (!numTarget || numTarget < 30 || numTarget > 300) {
+      showToast('Пожалуйста, укажите целевой вес (от 30 до 300 кг)', 'error');
+      return;
+    }
+
     try {
       setSaving(true);
       await api.updateProfile({
         name,
         gender,
-        age: Number(age),
-        height: Number(height),
-        weight: Number(weight),
-        targetWeight: Number(targetWeight),
+        age: numAge,
+        height: numHeight,
+        weight: numWeight,
+        targetWeight: numTarget,
         goal,
         level,
         equipment,
@@ -179,10 +210,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Возраст (лет)</label>
                 <input
                   type="number"
-                  min="14"
-                  max="100"
                   value={age}
-                  onChange={e => setAge(Number(e.target.value))}
+                  onChange={e => setAge(cleanNumber(e.target.value))}
+                  placeholder="25"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
@@ -191,10 +221,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Рост (см)</label>
                 <input
                   type="number"
-                  min="100"
-                  max="250"
                   value={height}
-                  onChange={e => setHeight(Number(e.target.value))}
+                  onChange={e => setHeight(cleanNumber(e.target.value))}
+                  placeholder="175"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
@@ -204,10 +233,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <input
                   type="number"
                   step="0.1"
-                  min="30"
-                  max="300"
                   value={weight}
-                  onChange={e => setWeight(Number(e.target.value))}
+                  onChange={e => setWeight(cleanNumber(e.target.value))}
+                  placeholder="75"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
@@ -217,10 +245,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <input
                   type="number"
                   step="0.1"
-                  min="30"
-                  max="300"
                   value={targetWeight}
-                  onChange={e => setTargetWeight(Number(e.target.value))}
+                  onChange={e => setTargetWeight(cleanNumber(e.target.value))}
+                  placeholder="70"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>

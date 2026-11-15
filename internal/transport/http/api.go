@@ -117,7 +117,7 @@ func MapWorkoutDay(d models.PlanDay, sessions []models.SessionEntry) map[string]
 	todayStr := time.Now().Format("2006-01-02")
 	completed := false
 	for _, s := range sessions {
-		if (s.DayIndex == d.Index || s.Date == todayStr) && s.Completed {
+		if s.Date == todayStr && s.DayIndex == d.Index && s.Completed {
 			completed = true
 			break
 		}
@@ -132,17 +132,35 @@ func MapWorkoutDay(d models.PlanDay, sessions []models.SessionEntry) map[string]
 
 	exList := make([]map[string]any, 0, len(d.Exercises))
 	for _, ex := range d.Exercises {
+		nameLower := strings.ToLower(ex.Name)
+		isContra := strings.Contains(nameLower, "приседан") ||
+			strings.Contains(nameLower, "прыж") ||
+			strings.Contains(nameLower, "берпи") ||
+			strings.Contains(nameLower, "станов") ||
+			strings.Contains(nameLower, "выпад") ||
+			strings.Contains(nameLower, "жим стоя")
+
+		isGentle := !isContra && (ex.Level == models.LevelBeginner || ex.Equipment == models.EquipNone ||
+			strings.Contains(nameLower, "планк") ||
+			strings.Contains(nameLower, "лодочк") ||
+			strings.Contains(nameLower, "растяжк") ||
+			strings.Contains(nameLower, "мостик") ||
+			strings.Contains(nameLower, "скручиван") ||
+			strings.Contains(nameLower, "сгибан"))
+
 		exList = append(exList, map[string]any{
-			"id":          ex.ExerciseID,
-			"title":       ex.Name,
-			"muscle":      strings.Join(ex.Muscles, ", "),
-			"equipment":   models.EquipLabel(ex.Equipment),
-			"difficulty":  models.LevelLabel(ex.Level),
-			"sets":        ex.Sets,
-			"reps":        ex.Reps,
-			"durationSec": ex.DurationSec,
-			"restSec":     ex.RestSec,
-			"coachTip":    "Контролируйте движение в негативной фазе и соблюдайте ровное дыхание.",
+			"id":                 ex.ExerciseID,
+			"title":              ex.Name,
+			"muscle":             strings.Join(ex.Muscles, ", "),
+			"equipment":          models.EquipLabel(ex.Equipment),
+			"difficulty":         models.LevelLabel(ex.Level),
+			"sets":               ex.Sets,
+			"reps":               ex.Reps,
+			"durationSec":        ex.DurationSec,
+			"restSec":            ex.RestSec,
+			"coachTip":           "Контролируйте движение в негативной фазе и соблюдайте ровное дыхание.",
+			"isGentle":           isGentle,
+			"isContraindicated":  isContra,
 		})
 	}
 
@@ -401,6 +419,13 @@ func (h *Handler) HandleAPIDashboard(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
+	completedDates := make([]string, 0)
+	for _, s := range u.Progress.Sessions {
+		if s.Completed && s.Date != "" {
+			completedDates = append(completedDates, s.Date)
+		}
+	}
+
 	JSONResponse(w, http.StatusOK, map[string]any{
 		"user":           MapUserProfile(u),
 		"todayWorkout":   todayWorkout,
@@ -409,6 +434,7 @@ func (h *Handler) HandleAPIDashboard(w http.ResponseWriter, r *http.Request) {
 		"streak":         len(u.Progress.Sessions) + 1,
 		"weightHistory":  weights,
 		"workoutHistory": sessions,
+		"completedDates": completedDates,
 		"isGentleMode":   u.Profile.MedicalBlocked() || len(u.Profile.HealthFlags) > 0,
 		"reminders":      u.Reminders,
 	})
@@ -450,11 +476,19 @@ func (h *Handler) HandleAPIWorkouts(w http.ResponseWriter, r *http.Request) {
 		dayIdx = 0
 	}
 
+	completedDates := make([]string, 0)
+	for _, s := range u.Progress.Sessions {
+		if s.Completed && s.Date != "" {
+			completedDates = append(completedDates, s.Date)
+		}
+	}
+
 	JSONResponse(w, http.StatusOK, map[string]any{
-		"user":        MapUserProfile(u),
-		"selectedDay": dayIdx + 1,
-		"workout":     selectedWorkout,
-		"allDays":     allDays,
+		"user":           MapUserProfile(u),
+		"selectedDay":    dayIdx + 1,
+		"workout":        selectedWorkout,
+		"allDays":        allDays,
+		"completedDates": completedDates,
 	})
 }
 
@@ -473,6 +507,7 @@ func (h *Handler) HandleAPIWorkoutComplete(w http.ResponseWriter, r *http.Reques
 
 	var req struct {
 		Day       int    `json:"day"`
+		Date      string `json:"date"`
 		Completed bool   `json:"completed"`
 		Feeling   string `json:"feeling"`
 		Energy    int    `json:"energy"`
@@ -488,7 +523,7 @@ func (h *Handler) HandleAPIWorkoutComplete(w http.ResponseWriter, r *http.Reques
 		dayIdx = 0
 	}
 
-	if err := h.svc.CompleteWorkout(u, dayIdx, req.Completed, req.Feeling, req.Energy); err != nil {
+	if err := h.svc.CompleteWorkoutForDate(u, dayIdx, req.Date, req.Completed, req.Feeling, req.Energy); err != nil {
 		JSONError(w, http.StatusInternalServerError, err.Error())
 		return
 	}

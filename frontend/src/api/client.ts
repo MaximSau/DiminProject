@@ -64,20 +64,24 @@ export const api = {
   },
 
   // Workouts
-  async getWorkouts(day?: number): Promise<{
+  async getWorkouts(day?: number, date?: string): Promise<{
     user: UserProfile;
     selectedDay: number;
     workout: WorkoutDay;
     allDays: WorkoutDay[];
+    completedDates: string[];
   }> {
-    const q = day !== undefined ? `?day=${day}` : '';
+    const params = new URLSearchParams();
+    if (day !== undefined) params.set('day', String(day));
+    if (date) params.set('date', date);
+    const q = params.toString() ? `?${params.toString()}` : '';
     return request(`/api/workouts${q}`);
   },
 
-  async completeWorkout(day: number, completed = true, feeling = 'good', energy = 8): Promise<{ ok: boolean; message: string }> {
+  async completeWorkout(day: number, date?: string, completed = true, feeling = 'good', energy = 8): Promise<{ ok: boolean; message: string }> {
     return request('/api/workouts/complete', {
       method: 'POST',
-      body: JSON.stringify({ day, completed, feeling, energy }),
+      body: JSON.stringify({ day, date, completed, feeling, energy }),
     });
   },
 

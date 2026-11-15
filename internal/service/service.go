@@ -193,6 +193,10 @@ func (s *Service) ChangeGoal(u *models.User, newGoal string) error {
 }
 
 func (s *Service) CompleteWorkout(u *models.User, dayIndex int, completed bool, feeling string, energy int) error {
+	return s.CompleteWorkoutForDate(u, dayIndex, "", completed, feeling, energy)
+}
+
+func (s *Service) CompleteWorkoutForDate(u *models.User, dayIndex int, dateStr string, completed bool, feeling string, energy int) error {
 	if u == nil || u.Plan == nil {
 		return errors.New("план не найден")
 	}
@@ -200,17 +204,24 @@ func (s *Service) CompleteWorkout(u *models.User, dayIndex int, completed bool, 
 		dayIndex = models.TodayIndex()
 	}
 
-	dateStr := time.Now().Format("2006-01-02")
+	if dateStr == "" {
+		dateStr = time.Now().Format("2006-01-02")
+	}
 	title := u.Plan.Days[dayIndex].Title
 
-	// Проверяем, есть ли уже запись за этот день недели
+	// Ищем запись именно за эту календарную дату
 	found := false
 	for i := range u.Progress.Sessions {
-		if u.Progress.Sessions[i].DayIndex == dayIndex {
+		if u.Progress.Sessions[i].Date == dateStr {
 			u.Progress.Sessions[i].Completed = completed
-			u.Progress.Sessions[i].Date = dateStr
-			u.Progress.Sessions[i].Feeling = feeling
-			u.Progress.Sessions[i].Energy = energy
+			u.Progress.Sessions[i].DayIndex = dayIndex
+			u.Progress.Sessions[i].Title = title
+			if feeling != "" {
+				u.Progress.Sessions[i].Feeling = feeling
+			}
+			if energy > 0 {
+				u.Progress.Sessions[i].Energy = energy
+			}
 			found = true
 			break
 		}

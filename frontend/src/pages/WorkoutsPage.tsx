@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Dumbbell,
-  Clock,
   RotateCw,
   CheckCircle2,
   Info,
   ShieldAlert,
-  Calendar,
+  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
   ArrowRightLeft,
@@ -14,6 +13,7 @@ import {
   Save,
   Sparkles,
   X,
+  AlertTriangle,
 } from 'lucide-react';
 import { WorkoutDay, PlanExercise, UserProfile } from '../types';
 import { api } from '../api/client';
@@ -30,6 +30,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
   const [selectedDay, setSelectedDay] = useState(initialDay || 1);
   const [workout, setWorkout] = useState<WorkoutDay | null>(null);
   const [allDays, setAllDays] = useState<WorkoutDay[]>([]);
+  const [completedDates, setCompletedDates] = useState<string[]>([]);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [swappingId, setSwappingId] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
@@ -41,9 +42,17 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
   const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
 
-  // Workout rescheduling modal
+  // Reschedule calendar modal
   const [rescheduleModalOpen, setRescheduleModalOpen] = useState(false);
-  const [rescheduleTargetDay, setRescheduleTargetDay] = useState<number>(1);
+  const [rescheduleYear, setRescheduleYear] = useState(() => new Date().getFullYear());
+  const [rescheduleMonth, setRescheduleMonth] = useState(() => new Date().getMonth());
+  const [rescheduleTargetDate, setRescheduleTargetDate] = useState<{
+    dateStr: string;
+    dayNum: number;
+    month: number;
+    year: number;
+    isoDay: number;
+  } | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
 
   // Dedicated notes state
@@ -56,6 +65,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
       const res = await api.getWorkouts(day);
       setWorkout(res.workout);
       setAllDays(res.allDays || []);
+      setCompletedDates(res.completedDates || []);
       setUser(res.user);
       setSelectedDay(res.selectedDay);
       setNoteText(res.workout?.notes || '');
@@ -69,6 +79,92 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
   useEffect(() => {
     fetchWorkout(selectedDay);
   }, [selectedDay]);
+
+  // Calendar date math
+  const today = new Date();
+  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+  const monthsRu = [
+    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+  ];
+  const monthsRuNominative = [
+    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
+    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
+  ];
+  const monthsShortRu = [
+    'янв', 'фев', 'мар', 'апр', 'мая', 'июн',
+    'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
+  ];
+  const weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+
+  const formatDateKey = (d: Date): string => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const getMondayOfWeek = (offset: number) => {
+    const d = new Date();
+    const isoDay = d.getDay() === 0 ? 7 : d.getDay();
+    d.setDate(d.getDate() - (isoDay - 1) + offset * 7);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
+
+  const getDateForDay = (dayIndex: number, offset: number) => {
+    const monday = getMondayOfWeek(offset);
+    const target = new Date(monday);
+    target.setDate(monday.getDate() + (dayIndex - 1));
+    target.setHours(0, 0, 0, 0);
+    return target;
+  };
+
+  const isSameDay = (d1: Date, d2: Date) => {
+    return (
+      d1.getFullYear() === d2.getFullYear() &&
+      d1.getMonth() === d2.getMonth() &&
+      d1.getDate() === d2.getDate()
+    );
+  };
+
+  // Active workout date calculations
+  const activeDate = getDateForDay(selectedDay, weekOffset);
+  const activeDateKey = formatDateKey(activeDate);
+  const isWorkoutCompletedOnActiveDate = completedDates.includes(activeDateKey);
+
+  // Week range label
+  const mondayDate = getDateForDay(1, weekOffset);
+  const sundayDate = getDateForDay(7, weekOffset);
+  const weekLabel = `${mondayDate.getDate()} ${monthsShortRu[mondayDate.getMonth()]} – ${sundayDate.getDate()} ${monthsShortRu[sundayDate.getMonth()]} ${sundayDate.getFullYear()}`;
+
+  // Big Calendar calculations
+  const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
+  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+  const monthStartOffset = (firstDayOfMonth.getDay() + 6) % 7;
+
+  // Reschedule Calendar calculations
+  const rescheduleFirstDay = new Date(rescheduleYear, rescheduleMonth, 1);
+  const rescheduleDaysCount = new Date(rescheduleYear, rescheduleMonth + 1, 0).getDate();
+  const rescheduleStartOffset = (rescheduleFirstDay.getDay() + 6) % 7;
+
+  const handleSelectCalendarDate = (dayNum: number) => {
+    const targetDate = new Date(calendarYear, calendarMonth, dayNum);
+    const targetIsoDay = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
+
+    const targetMonday = new Date(targetDate);
+    targetMonday.setDate(targetDate.getDate() - (targetIsoDay - 1));
+    targetMonday.setHours(0, 0, 0, 0);
+
+    const baseMonday = getMondayOfWeek(0);
+    const diffWeeks = Math.round((targetMonday.getTime() - baseMonday.getTime()) / (7 * 24 * 3600 * 1000));
+
+    setWeekOffset(diffWeeks);
+    setSelectedDay(targetIsoDay);
+    setCalendarModalOpen(false);
+    showToast(`Выбрана дата: ${dayNum} ${monthsRu[calendarMonth]} ${calendarYear}`);
+  };
 
   const handleSwap = async (exerciseId: string) => {
     try {
@@ -89,33 +185,56 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
     }
   };
 
-  const handleComplete = async () => {
+  const handleToggleComplete = async () => {
+    const targetStatus = !isWorkoutCompletedOnActiveDate;
     try {
       setCompleting(true);
-      await api.completeWorkout(selectedDay, true);
-      showToast('Тренировка отмечена как выполненная! Отличная работа!');
+      await api.completeWorkout(selectedDay, activeDateKey, targetStatus);
+      if (targetStatus) {
+        setCompletedDates(prev => (prev.includes(activeDateKey) ? prev : [...prev, activeDateKey]));
+        showToast(`Тренировка за ${activeDate.getDate()} ${monthsRu[activeDate.getMonth()]} выполнена! 🔥`);
+      } else {
+        setCompletedDates(prev => prev.filter(d => d !== activeDateKey));
+        showToast('Отметка о выполнении снята');
+      }
       if (workout) {
-        setWorkout({ ...workout, completed: true });
+        setWorkout({ ...workout, completed: targetStatus });
       }
       if (onRefresh) onRefresh();
     } catch (e: any) {
-      showToast(e.message || 'Ошибка завершения тренировки', 'error');
+      showToast(e.message || 'Ошибка изменения статуса тренировки', 'error');
     } finally {
       setCompleting(false);
     }
   };
 
-  const handleReschedule = async () => {
-    if (rescheduleTargetDay === selectedDay) {
-      showToast('Выберите день, отличный от текущего', 'error');
+  const handleExecuteReschedule = async () => {
+    if (!rescheduleTargetDate) {
+      showToast('Выберите свободную дату в календаре для переноса', 'error');
+      return;
+    }
+    if (rescheduleTargetDate.isoDay === selectedDay) {
+      showToast('Выберите день, отличный от текущей тренировки', 'error');
       return;
     }
     try {
       setRescheduling(true);
-      await api.rescheduleWorkout(selectedDay, rescheduleTargetDay);
-      showToast(`Тренировка перенесена: День ${selectedDay} ⇄ День ${rescheduleTargetDay}`);
+      await api.rescheduleWorkout(selectedDay, rescheduleTargetDate.isoDay);
+      showToast(`Тренировка перенесена на ${rescheduleTargetDate.dayNum} ${monthsRu[rescheduleTargetDate.month]}!`);
       setRescheduleModalOpen(false);
-      await fetchWorkout(rescheduleTargetDay);
+
+      // Compute week offset for the target date to focus on it
+      const targetDateObj = new Date(rescheduleTargetDate.year, rescheduleTargetDate.month, rescheduleTargetDate.dayNum);
+      const targetIso = rescheduleTargetDate.isoDay;
+      const targetMonday = new Date(targetDateObj);
+      targetMonday.setDate(targetDateObj.getDate() - (targetIso - 1));
+      targetMonday.setHours(0, 0, 0, 0);
+      const baseMonday = getMondayOfWeek(0);
+      const diffWeeks = Math.round((targetMonday.getTime() - baseMonday.getTime()) / (7 * 24 * 3600 * 1000));
+
+      setWeekOffset(diffWeeks);
+      setSelectedDay(targetIso);
+      await fetchWorkout(targetIso);
       if (onRefresh) onRefresh();
     } catch (e: any) {
       showToast(e.message || 'Ошибка переноса тренировки', 'error');
@@ -140,82 +259,25 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
     }
   };
 
-  // Calendar date math
-  const today = new Date();
-  const monthsRu = [
-    'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-    'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-  ];
-  const monthsRuNominative = [
-    'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-    'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'
-  ];
-  const monthsShortRu = [
-    'янв', 'фев', 'мар', 'апр', 'мая', 'июн',
-    'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'
-  ];
-  const weekdayShort = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+  // Sort exercises for gentle mode:
+  // Recommended exercises first, contraindicated ones with clear warnings placed at the end
+  const sortedExercises = useMemo(() => {
+    if (!workout?.exercises) return [];
+    if (!user?.hasHealthIssues) return workout.exercises;
 
-  const getMondayOfWeek = (offset: number) => {
-    const d = new Date();
-    const isoDay = d.getDay() === 0 ? 7 : d.getDay();
-    d.setDate(d.getDate() - (isoDay - 1) + offset * 7);
-    d.setHours(0, 0, 0, 0);
-    return d;
-  };
-
-  const getDateForDay = (dayIndex: number, offset: number) => {
-    const monday = getMondayOfWeek(offset);
-    const target = new Date(monday);
-    target.setDate(monday.getDate() + (dayIndex - 1));
-    return target;
-  };
-
-  const isSameDay = (d1: Date, d2: Date) => {
-    return (
-      d1.getFullYear() === d2.getFullYear() &&
-      d1.getMonth() === d2.getMonth() &&
-      d1.getDate() === d2.getDate()
-    );
-  };
-
-  // Week range label (e.g., "10 ноя – 16 ноя 2026")
-  const mondayDate = getDateForDay(1, weekOffset);
-  const sundayDate = getDateForDay(7, weekOffset);
-  const weekLabel = `${mondayDate.getDate()} ${monthsShortRu[mondayDate.getMonth()]} – ${sundayDate.getDate()} ${monthsShortRu[sundayDate.getMonth()]} ${sundayDate.getFullYear()}`;
-
-  // Big iOS Calendar calculations
-  const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
-  const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
-  // Monday = 0 ... Sunday = 6
-  const monthStartOffset = (firstDayOfMonth.getDay() + 6) % 7;
-
-  const handleSelectCalendarDate = (dayNum: number) => {
-    const targetDate = new Date(calendarYear, calendarMonth, dayNum);
-    const targetIsoDay = targetDate.getDay() === 0 ? 7 : targetDate.getDay();
-
-    // Compute Monday of clicked date
-    const targetMonday = new Date(targetDate);
-    targetMonday.setDate(targetDate.getDate() - (targetIsoDay - 1));
-    targetMonday.setHours(0, 0, 0, 0);
-
-    const baseMonday = getMondayOfWeek(0);
-    const diffWeeks = Math.round((targetMonday.getTime() - baseMonday.getTime()) / (7 * 24 * 3600 * 1000));
-
-    setWeekOffset(diffWeeks);
-    setSelectedDay(targetIsoDay);
-    setCalendarModalOpen(false);
-    showToast(`Выбрана дата: ${dayNum} ${monthsRu[calendarMonth]} ${calendarYear}`);
-  };
+    const recommended = workout.exercises.filter(ex => !ex.isContraindicated);
+    const contraindicated = workout.exercises.filter(ex => ex.isContraindicated);
+    return [...recommended, ...contraindicated];
+  }, [workout?.exercises, user?.hasHealthIssues]);
 
   return (
     <div className="space-y-6">
-      {/* Top Calendar Bar: Week navigation, dates, iOS calendar trigger */}
+      {/* Top Calendar Bar: Week navigation, dates, Calendar modal trigger */}
       <div className="rounded-2xl p-4 sm:p-5 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="p-2.5 rounded-xl bg-white/10 text-white border border-white/20">
-              <Calendar className="w-5 h-5 text-white" />
+              <CalendarIcon className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -263,17 +325,17 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
               </button>
             </div>
 
-            {/* Big iOS Calendar modal trigger */}
+            {/* Calendar modal trigger */}
             <button
               onClick={() => {
-                setCalendarYear(today.getFullYear());
-                setCalendarMonth(today.getMonth());
+                setCalendarYear(activeDate.getFullYear());
+                setCalendarMonth(activeDate.getMonth());
                 setCalendarModalOpen(true);
               }}
               className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all active:scale-95 shadow-sm"
             >
-              <Calendar className="w-4 h-4 text-white" />
-              <span>Календарь iOS</span>
+              <CalendarIcon className="w-4 h-4 text-white" />
+              <span>Календарь</span>
             </button>
           </div>
         </div>
@@ -284,9 +346,11 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
             const isSelected = selectedDay === day;
             const dayData = allDays.find(d => d.dayIndex === day);
             const isRest = dayData?.isRest;
-            const isDone = dayData?.completed;
             const dayDate = getDateForDay(day, weekOffset);
+            const dayDateKey = formatDateKey(dayDate);
+            const isDone = completedDates.includes(dayDateKey);
             const isToday = isSameDay(dayDate, today);
+            const isPast = dayDate.getTime() < todayMidnight.getTime() && !isToday;
 
             return (
               <button
@@ -296,13 +360,15 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                   isSelected
                     ? 'bg-white text-zinc-950 shadow-lg shadow-white/10 scale-[1.02] border border-white'
                     : isToday
-                    ? 'bg-zinc-800/80 text-white border border-white/40 hover:bg-zinc-800'
+                    ? 'bg-zinc-800/90 text-white border border-white/40 hover:bg-zinc-800'
+                    : isPast
+                    ? 'bg-[#141419]/80 text-zinc-500 hover:text-zinc-300 hover:bg-[#1a1a22] border border-white/[0.04]'
                     : 'bg-[#17171d] text-zinc-400 hover:text-white hover:bg-[#202028] border border-white/[0.06]'
                 }`}
               >
-                {/* Indicator dot if completed or training */}
+                {/* Weekday & Indicator */}
                 <div className="flex items-center gap-1 mb-0.5">
-                  <span className={`text-[10px] uppercase font-semibold ${isSelected ? 'text-zinc-700' : 'text-zinc-400'}`}>
+                  <span className={`text-[10px] uppercase font-semibold ${isSelected ? 'text-zinc-800' : isPast ? 'text-zinc-500' : 'text-zinc-400'}`}>
                     {weekdayShort[day - 1]}
                   </span>
                   {isToday && (
@@ -311,17 +377,20 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                 </div>
 
                 {/* Real calendar date number */}
-                <span className="text-sm font-black">
+                <span className={`text-sm font-black ${isPast && !isSelected ? 'text-zinc-500' : ''}`}>
                   {dayDate.getDate()} {monthsShortRu[dayDate.getMonth()]}
                 </span>
 
-                <span className={`text-[10px] mt-1 font-medium truncate max-w-full px-1 ${
+                {/* Completion or Status tag */}
+                <span className={`text-[10px] mt-1 font-medium truncate max-w-full px-1 flex items-center gap-0.5 ${
                   isSelected
-                    ? 'text-zinc-800 font-bold'
+                    ? 'text-zinc-900 font-bold'
                     : isDone
-                    ? 'text-white'
+                    ? 'text-emerald-400 font-bold'
                     : isRest
                     ? 'text-zinc-500'
+                    : isPast
+                    ? 'text-zinc-600'
                     : 'text-zinc-300'
                 }`}>
                   {isDone ? '✓ Готово' : isRest ? 'Отдых' : 'Тренинг'}
@@ -341,11 +410,11 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                  {workout.weekdayName} • День {selectedDay}
+                  {workout.weekdayName} • {activeDate.getDate()} {monthsRu[activeDate.getMonth()]} {activeDate.getFullYear()}
                 </span>
-                {workout.completed && (
-                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-white/10 text-white border border-white/20">
-                    <CheckCircle2 className="w-3 h-3 text-white" />
+                {isWorkoutCompletedOnActiveDate && (
+                  <span className="flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     Выполнено
                   </span>
                 )}
@@ -362,12 +431,13 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
               {/* Reschedule Button */}
               <button
                 onClick={() => {
-                  const target = selectedDay === 7 ? 1 : selectedDay + 1;
-                  setRescheduleTargetDay(target);
+                  setRescheduleYear(activeDate.getFullYear());
+                  setRescheduleMonth(activeDate.getMonth());
+                  setRescheduleTargetDate(null);
                   setRescheduleModalOpen(true);
                 }}
                 className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold bg-[#17171d] hover:bg-[#22222c] text-zinc-200 hover:text-white border border-white/[0.12] transition-all active:scale-95"
-                title="Перенести тренировку на другой день"
+                title="Перенести тренировку на другую дату"
               >
                 <ArrowRightLeft className="w-4 h-4 text-zinc-300" />
                 <span>Перенести</span>
@@ -375,16 +445,20 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
 
               {!workout.isRest && (
                 <button
-                  onClick={handleComplete}
-                  disabled={completing || workout.completed}
+                  onClick={handleToggleComplete}
+                  disabled={completing}
                   className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md ${
-                    workout.completed
-                      ? 'bg-zinc-800 text-zinc-300 border border-white/20 cursor-default'
+                    isWorkoutCompletedOnActiveDate
+                      ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-white/20 active:scale-95'
                       : 'bg-white hover:bg-zinc-200 text-zinc-950 shadow-white/10 active:scale-95'
                   }`}
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{workout.completed ? 'Выполнена' : 'Отметить как выполненную'}</span>
+                  <CheckCircle2 className={`w-4 h-4 ${isWorkoutCompletedOnActiveDate ? 'text-emerald-400' : 'text-zinc-950'}`} />
+                  <span>
+                    {isWorkoutCompletedOnActiveDate
+                      ? '✓ Выполнено • Отменить'
+                      : 'Отметить как выполненную'}
+                  </span>
                 </button>
               )}
             </div>
@@ -392,11 +466,16 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
 
           {/* Gentle mode alert if active */}
           {user?.hasHealthIssues && (
-            <div className="rounded-xl p-3.5 border bg-[#121216] border-amber-500/40 text-zinc-200 text-xs flex items-center gap-3">
-              <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
-              <span>
-                Щадящий режим: упражнения подобраны без осевой ударной нагрузки на позвоночник и суставы.
-              </span>
+            <div className="rounded-xl p-4 border bg-[#121216] border-amber-500/40 text-zinc-200 text-xs flex items-start gap-3">
+              <ShieldAlert className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <span className="font-bold text-white block">
+                  Включен щадящий режим тренировок
+                </span>
+                <p className="text-zinc-300 leading-relaxed font-normal">
+                  Рекомендованные безопасные упражнения отображаются первыми с зеленой отметкой. Упражнения с осевой нагрузкой помечены знаком предупреждения — тренер настоятельно рекомендует заменить их на щадящие аналоги.
+                </p>
+              </div>
             </div>
           )}
 
@@ -416,7 +495,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-bold text-white flex items-center gap-2">
                   <Dumbbell className="w-4 h-4 text-white" />
-                  Упражнения программы ({workout.exercises?.length || 0})
+                  Упражнения программы ({sortedExercises.length})
                 </h3>
                 <span className="text-xs text-zinc-400">
                   Если упражнение не подходит — нажмите «Заменить»
@@ -424,70 +503,122 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {workout.exercises?.map((ex, idx) => (
-                  <div
-                    key={ex.id || idx}
-                    className="rounded-2xl p-5 border bg-[#121216] border-white/[0.08] shadow-sm hover:border-white/[0.20] transition-all flex flex-col justify-between gap-4 group"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div>
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">
-                            Упражнение {idx + 1}
+                {sortedExercises.map((ex, idx) => {
+                  const isContra = ex.isContraindicated && user?.hasHealthIssues;
+
+                  return (
+                    <div
+                      key={ex.id || idx}
+                      className={`rounded-2xl p-5 border shadow-sm transition-all flex flex-col justify-between gap-4 group ${
+                        isContra
+                          ? 'bg-[#161214] border-rose-500/40 hover:border-rose-500/70'
+                          : 'bg-[#121216] border-white/[0.08] hover:border-white/[0.20]'
+                      }`}
+                    >
+                      <div>
+                        {/* Header badge & status */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 block">
+                                Упражнение {idx + 1}
+                              </span>
+                              {user?.hasHealthIssues && (
+                                isContra ? (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
+                                    ✕ Противопоказано
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                                    ✓ Рекомендовано
+                                  </span>
+                                )
+                              )}
+                            </div>
+                            <h4 className={`text-base font-bold transition-colors ${isContra ? 'text-rose-100' : 'text-white group-hover:text-zinc-200'}`}>
+                              {ex.title}
+                            </h4>
+                          </div>
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border flex-shrink-0 ${
+                            isContra
+                              ? 'bg-rose-500/15 text-rose-200 border-rose-500/30'
+                              : 'bg-white/10 text-white border-white/20'
+                          }`}>
+                            {ex.sets} × {ex.reps}
                           </span>
-                          <h4 className="text-base font-bold text-white group-hover:text-zinc-200 transition-colors">
-                            {ex.title}
-                          </h4>
                         </div>
-                        <span className="text-xs font-bold px-2.5 py-1 rounded-lg bg-white/10 text-white border border-white/20 flex-shrink-0">
-                          {ex.sets} × {ex.reps}
-                        </span>
+
+                        {/* Muscle & equipment pills */}
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-zinc-300 font-medium border border-white/[0.06]">
+                            {ex.muscle}
+                          </span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-zinc-300 font-medium border border-white/[0.06]">
+                            {ex.equipment}
+                          </span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-zinc-400 font-medium border border-white/[0.06]">
+                            Отдых {ex.restSec || 60}с
+                          </span>
+                        </div>
+
+                        {/* Contraindication Warning Banner */}
+                        {isContra && (
+                          <div className="mt-3 p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-200 text-xs flex items-start gap-2.5">
+                            <AlertTriangle className="w-4 h-4 text-rose-400 flex-shrink-0 mt-0.5" />
+                            <div className="space-y-0.5">
+                              <span className="font-bold text-rose-300 block">
+                                Не рекомендуется тренером!
+                              </span>
+                              <p className="text-[11px] text-rose-200/90 leading-relaxed font-normal">
+                                Создает осевую или ударную нагрузку на позвоночник/суставы. Нажмите «Заменить», чтобы подобрать безопасную альтернативу.
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {ex.coachTip && (
+                          <p className="text-xs text-zinc-200 mt-3 line-clamp-2 leading-relaxed bg-[#17171d] p-2.5 rounded-xl border border-white/[0.08]">
+                            💡 <span className="text-white font-medium">Совет тренера:</span> {ex.coachTip}
+                          </p>
+                        )}
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-zinc-300 font-medium border border-white/[0.06]">
-                          {ex.muscle}
-                        </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-zinc-300 font-medium border border-white/[0.06]">
-                          {ex.equipment}
-                        </span>
-                        <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#1c1c24] text-zinc-400 font-medium border border-white/[0.06]">
-                          Отдых {ex.restSec || 60}с
-                        </span>
+                      <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between">
+                        <button
+                          onClick={() => setDetailExercise(ex)}
+                          className="text-xs font-bold text-zinc-300 hover:text-white flex items-center gap-1 transition-colors"
+                        >
+                          <Info className="w-3.5 h-3.5 text-zinc-400" />
+                          Техника
+                        </button>
+
+                        <button
+                          onClick={() => handleSwap(ex.id)}
+                          disabled={swappingId === ex.id}
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-50 ${
+                            isContra
+                              ? 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 border border-rose-500/40'
+                              : 'bg-[#17171d] hover:bg-[#252530] text-zinc-200 hover:text-white border border-white/[0.12]'
+                          }`}
+                        >
+                          <RotateCw className={`w-3.5 h-3.5 ${swappingId === ex.id ? 'animate-spin text-white' : ''}`} />
+                          <span>
+                            {swappingId === ex.id
+                              ? 'Подбор...'
+                              : isContra
+                              ? 'Заменить на безопасное'
+                              : 'Заменить'}
+                          </span>
+                        </button>
                       </div>
-
-                      {ex.coachTip && (
-                        <p className="text-xs text-zinc-200 mt-3 line-clamp-2 leading-relaxed bg-[#17171d] p-2.5 rounded-xl border border-white/[0.08]">
-                          💡 <span className="text-white font-medium">Совет тренера:</span> {ex.coachTip}
-                        </p>
-                      )}
                     </div>
-
-                    <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between">
-                      <button
-                        onClick={() => setDetailExercise(ex)}
-                        className="text-xs font-bold text-zinc-300 hover:text-white flex items-center gap-1 transition-colors"
-                      >
-                        <Info className="w-3.5 h-3.5 text-zinc-400" />
-                        Техника
-                      </button>
-
-                      <button
-                        onClick={() => handleSwap(ex.id)}
-                        disabled={swappingId === ex.id}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#17171d] hover:bg-[#252530] text-zinc-200 hover:text-white border border-white/[0.12] transition-all active:scale-95 disabled:opacity-50"
-                      >
-                        <RotateCw className={`w-3.5 h-3.5 ${swappingId === ex.id ? 'animate-spin text-white' : ''}`} />
-                        <span>{swappingId === ex.id ? 'Подбор...' : 'Заменить'}</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* DEDICATED WORKOUT NOTES CARD ("Где писать заметки") */}
+          {/* DEDICATED WORKOUT NOTES CARD */}
           <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
               <div className="flex items-center gap-2.5">
@@ -496,7 +627,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white">
-                    Заметки к тренировке (День {selectedDay})
+                    Заметки к тренировке ({workout.dayName})
                   </h3>
                   <p className="text-xs text-zinc-400">
                     Запишите рабочие веса, самочувствие, пульс, количество повторений или ощущения
@@ -585,7 +716,7 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
             </div>
           )}
 
-          {/* Big iOS-Style Calendar Modal */}
+          {/* Standard Calendar Modal */}
           {calendarModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
               <div className="rounded-3xl p-6 bg-[#121216] border border-white/20 shadow-2xl max-w-md w-full space-y-5">
@@ -644,18 +775,22 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                   ))}
                 </div>
 
-                {/* Days grid iOS style */}
+                {/* Days grid */}
                 <div className="grid grid-cols-7 gap-1 text-center">
                   {/* Empty cells */}
                   {Array.from({ length: monthStartOffset }).map((_, i) => (
-                    <div key={`empty-${i}`} className="h-10" />
+                    <div key={`empty-${i}`} className="h-11" />
                   ))}
 
                   {/* Month days */}
                   {Array.from({ length: daysInMonth }).map((_, i) => {
                     const dayNum = i + 1;
                     const dateObj = new Date(calendarYear, calendarMonth, dayNum);
+                    dateObj.setHours(0, 0, 0, 0);
                     const isTodayCell = isSameDay(dateObj, today);
+                    const cellKey = formatDateKey(dateObj);
+                    const isDone = completedDates.includes(cellKey);
+                    const isPast = dateObj.getTime() < todayMidnight.getTime() && !isTodayCell;
                     const isoDay = dateObj.getDay() === 0 ? 7 : dateObj.getDay();
                     const dayData = allDays.find(d => d.dayIndex === isoDay);
                     const isRestDay = dayData?.isRest;
@@ -664,21 +799,29 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                       <button
                         key={dayNum}
                         onClick={() => handleSelectCalendarDate(dayNum)}
-                        className={`h-11 rounded-2xl flex flex-col items-center justify-center text-xs transition-all ${
+                        className={`h-11 rounded-2xl flex flex-col items-center justify-center text-xs transition-all relative ${
                           isTodayCell
                             ? 'bg-white text-zinc-950 font-black shadow-md'
+                            : isDone
+                            ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 hover:bg-emerald-500/25'
+                            : isPast
+                            ? 'text-zinc-600 hover:text-zinc-300 hover:bg-white/5 opacity-60'
                             : 'hover:bg-white/10 text-zinc-200'
                         }`}
                       >
                         <span className="font-bold leading-none">{dayNum}</span>
-                        {/* Dot indicator */}
-                        <span className={`w-1 h-1 rounded-full mt-1 ${
-                          isTodayCell
-                            ? 'bg-zinc-950'
-                            : isRestDay
-                            ? 'bg-zinc-600'
-                            : 'bg-white'
-                        }`} />
+                        {/* Dot indicator or checkmark */}
+                        {isDone ? (
+                          <span className="text-[10px] font-black text-emerald-400 leading-none mt-0.5">✓</span>
+                        ) : (
+                          <span className={`w-1 h-1 rounded-full mt-1 ${
+                            isTodayCell
+                              ? 'bg-zinc-950'
+                              : isRestDay
+                              ? 'bg-zinc-600'
+                              : 'bg-white'
+                          }`} />
+                        )}
                       </button>
                     );
                   })}
@@ -687,6 +830,9 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                 {/* Footer notes */}
                 <div className="pt-2 border-t border-white/[0.08] flex items-center justify-between text-xs text-zinc-400">
                   <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-emerald-400 font-bold">✓</span> Выполнено
+                    </span>
                     <span className="flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-white" /> Тренинг
                     </span>
@@ -703,24 +849,24 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                     }}
                     className="text-white hover:underline font-bold"
                   >
-                    К сегодняшнему дню
+                    К сегодня
                   </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Reschedule Modal ("Перенести тренировку") */}
+          {/* Reschedule Modal: Real Calendar Picker */}
           {rescheduleModalOpen && (
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
-              <div className="rounded-2xl p-6 bg-[#121216] border border-white/20 shadow-2xl max-w-md w-full space-y-4">
+              <div className="rounded-3xl p-6 bg-[#121216] border border-white/20 shadow-2xl max-w-lg w-full space-y-4">
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                      Перенос тренировки
+                      Перенос тренировки по календарю
                     </span>
                     <h3 className="text-lg font-black text-white mt-1">
-                      Перенести День {selectedDay} ({workout.dayName})
+                      Перенести «{workout.dayName}»
                     </h3>
                   </div>
                   <button
@@ -732,43 +878,147 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                 </div>
 
                 <p className="text-xs text-zinc-300 leading-relaxed">
-                  Выберите день недели, с которым вы хотите поменять местами текущую программу. Все упражнения и статус сохранятся.
+                  Выберите свободную дату в календаре (день отдыха). Если на день уже назначена тренировка — перенести на него нельзя.
                 </p>
 
-                <div className="space-y-2 pt-1">
-                  {[1, 2, 3, 4, 5, 6, 7].map(d => {
-                    if (d === selectedDay) return null;
-                    const dData = allDays.find(item => item.dayIndex === d);
-                    const isSelected = rescheduleTargetDay === d;
+                {/* Month navigation */}
+                <div className="flex items-center justify-between bg-[#17171d] p-3 rounded-2xl border border-white/[0.08]">
+                  <span className="text-sm font-bold text-white">
+                    {monthsRuNominative[rescheduleMonth]} {rescheduleYear}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (rescheduleMonth === 0) {
+                          setRescheduleMonth(11);
+                          setRescheduleYear(y => y - 1);
+                        } else {
+                          setRescheduleMonth(m => m - 1);
+                        }
+                      }}
+                      className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (rescheduleMonth === 11) {
+                          setRescheduleMonth(0);
+                          setRescheduleYear(y => y + 1);
+                        } else {
+                          setRescheduleMonth(m => m + 1);
+                        }
+                      }}
+                      className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10"
+                    >
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Weekday headers */}
+                <div className="grid grid-cols-7 gap-1 text-center text-xs font-bold text-zinc-400">
+                  {weekdayShort.map(w => (
+                    <div key={w} className="py-1">
+                      {w}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Days grid with occupied / free indicators */}
+                <div className="grid grid-cols-7 gap-1 text-center max-h-60 overflow-y-auto p-1">
+                  {/* Empty cells */}
+                  {Array.from({ length: rescheduleStartOffset }).map((_, i) => (
+                    <div key={`re-empty-${i}`} className="h-12" />
+                  ))}
+
+                  {/* Month days */}
+                  {Array.from({ length: rescheduleDaysCount }).map((_, i) => {
+                    const dayNum = i + 1;
+                    const dateObj = new Date(rescheduleYear, rescheduleMonth, dayNum);
+                    dateObj.setHours(0, 0, 0, 0);
+                    const isoDay = dateObj.getDay() === 0 ? 7 : dateObj.getDay();
+                    const dayData = allDays.find(d => d.dayIndex === isoDay);
+                    const isOccupied = dayData && !dayData.isRest;
+                    const isCurrent = isoDay === selectedDay;
+                    const dKey = formatDateKey(dateObj);
+                    const isSelected = rescheduleTargetDate?.dateStr === dKey;
+
+                    // A date can be selected ONLY if it's not occupied and not current day
+                    const canSelect = !isOccupied && !isCurrent;
 
                     return (
                       <button
-                        key={d}
+                        key={dayNum}
                         type="button"
-                        onClick={() => setRescheduleTargetDay(d)}
-                        className={`w-full p-3 rounded-xl border text-left flex items-center justify-between transition-all ${
+                        disabled={!canSelect}
+                        onClick={() => {
+                          if (canSelect) {
+                            setRescheduleTargetDate({
+                              dateStr: dKey,
+                              dayNum,
+                              month: rescheduleMonth,
+                              year: rescheduleYear,
+                              isoDay,
+                            });
+                          }
+                        }}
+                        className={`h-12 rounded-xl flex flex-col items-center justify-center p-1 text-xs transition-all relative ${
                           isSelected
-                            ? 'bg-white/10 text-white border-white'
-                            : 'bg-[#17171d] text-zinc-300 border-white/[0.08] hover:border-white/20'
+                            ? 'bg-white text-zinc-950 font-black shadow-lg scale-105 border border-white'
+                            : isCurrent
+                            ? 'bg-zinc-800 text-zinc-400 opacity-60 cursor-not-allowed border border-white/[0.05]'
+                            : isOccupied
+                            ? 'bg-rose-950/20 text-zinc-500 border border-rose-500/20 cursor-not-allowed opacity-50'
+                            : 'bg-[#17171d] text-zinc-200 hover:bg-emerald-500/20 hover:border-emerald-500/40 border border-white/[0.06] cursor-pointer'
                         }`}
+                        title={
+                          isCurrent
+                            ? 'Текущая тренировка'
+                            : isOccupied
+                            ? `Занято: ${dayData?.dayName}`
+                            : 'Свободный день отдыха (можно перенести сюда)'
+                        }
                       >
-                        <div>
-                          <div className="text-xs font-bold text-white">
-                            День {d} ({weekdayShort[d - 1]})
-                          </div>
-                          <div className="text-[11px] text-zinc-400">
-                            {dData ? (dData.isRest ? 'День восстановления' : dData.dayName) : 'Программа'}
-                          </div>
-                        </div>
-                        {isSelected && (
-                          <span className="text-xs font-bold px-2 py-0.5 rounded bg-white text-zinc-950">
-                            Выбран
-                          </span>
-                        )}
+                        <span className="font-bold leading-none">{dayNum}</span>
+                        <span className={`text-[9px] mt-0.5 truncate max-w-full font-semibold ${
+                          isSelected
+                            ? 'text-zinc-900'
+                            : isCurrent
+                            ? 'text-zinc-400'
+                            : isOccupied
+                            ? 'text-rose-400'
+                            : 'text-emerald-400'
+                        }`}>
+                          {isCurrent ? 'Текущая' : isOccupied ? 'Занято' : 'Свободно'}
+                        </span>
                       </button>
                     );
                   })}
                 </div>
+
+                {/* Selected target info banner */}
+                {rescheduleTargetDate ? (
+                  <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between">
+                    <div>
+                      <span className="font-bold text-white block">
+                        Выбрана дата переноса:
+                      </span>
+                      <span>
+                        {rescheduleTargetDate.dayNum} {monthsRu[rescheduleTargetDate.month]} {rescheduleTargetDate.year} ({weekdayShort[rescheduleTargetDate.isoDay - 1]})
+                      </span>
+                    </div>
+                    <span className="px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 text-[11px] font-bold">
+                      День свободен
+                    </span>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-xl bg-[#17171d] border border-white/[0.06] text-zinc-400 text-xs">
+                    Нажмите на любую зеленую дату («Свободно»), чтобы запланировать тренировку на этот день.
+                  </div>
+                )}
 
                 <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-white/[0.08]">
                   <button
@@ -780,9 +1030,9 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                   </button>
                   <button
                     type="button"
-                    onClick={handleReschedule}
-                    disabled={rescheduling}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all active:scale-95 disabled:opacity-50"
+                    onClick={handleExecuteReschedule}
+                    disabled={rescheduling || !rescheduleTargetDate}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all active:scale-95 disabled:opacity-40"
                   >
                     <ArrowRightLeft className="w-3.5 h-3.5" />
                     <span>{rescheduling ? 'Перенос...' : 'Подтвердить перенос'}</span>
