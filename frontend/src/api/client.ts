@@ -25,13 +25,23 @@ async function request<T>(url: string, options: RequestInit = {}): Promise<T> {
     try {
       const errData = await res.json();
       if (errData && errData.error) errMsg = errData.error;
+      if (errData && errData.notOnboarded) {
+        window.dispatchEvent(new CustomEvent("pulsefit:reset"));
+      }
     } catch {
       // non-JSON error
+    }
+    if (res.status === 404 || res.status === 401) {
+      window.dispatchEvent(new CustomEvent("pulsefit:reset"));
     }
     throw new Error(errMsg);
   }
 
-  return res.json();
+  const data = await res.json();
+  if (data && data.notOnboarded) {
+    window.dispatchEvent(new CustomEvent("pulsefit:reset"));
+  }
+  return data;
 }
 
 export const api = {
@@ -75,6 +85,20 @@ export const api = {
     return request('/api/workouts/swap', {
       method: 'POST',
       body: JSON.stringify({ day, exerciseId }),
+    });
+  },
+
+  async rescheduleWorkout(fromDay: number, toDay: number): Promise<{ ok: boolean; message: string }> {
+    return request('/api/workouts/reschedule', {
+      method: 'POST',
+      body: JSON.stringify({ fromDay, toDay }),
+    });
+  },
+
+  async saveWorkoutNote(day: number, note: string): Promise<{ ok: boolean; message: string }> {
+    return request('/api/workouts/note', {
+      method: 'POST',
+      body: JSON.stringify({ day, note }),
     });
   },
 

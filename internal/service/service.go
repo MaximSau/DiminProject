@@ -229,6 +229,71 @@ func (s *Service) CompleteWorkout(u *models.User, dayIndex int, completed bool, 
 	return s.repo.Save(u)
 }
 
+func (s *Service) RescheduleWorkout(u *models.User, fromDay, toDay int) error {
+	if u == nil || u.Plan == nil {
+		return errors.New("план не найден")
+	}
+	if fromDay < 0 || fromDay >= len(u.Plan.Days) || toDay < 0 || toDay >= len(u.Plan.Days) {
+		return errors.New("неверный индекс дня")
+	}
+	if fromDay == toDay {
+		return nil
+	}
+
+	// Swap day contents while keeping their respective Index values intact
+	dayA := u.Plan.Days[fromDay]
+	dayB := u.Plan.Days[toDay]
+
+	u.Plan.Days[fromDay].Title = dayB.Title
+	u.Plan.Days[fromDay].Focus = dayB.Focus
+	u.Plan.Days[fromDay].Rest = dayB.Rest
+	u.Plan.Days[fromDay].Minutes = dayB.Minutes
+	u.Plan.Days[fromDay].Exercises = dayB.Exercises
+	u.Plan.Days[fromDay].Notes = dayB.Notes
+
+	u.Plan.Days[toDay].Title = dayA.Title
+	u.Plan.Days[toDay].Focus = dayA.Focus
+	u.Plan.Days[toDay].Rest = dayA.Rest
+	u.Plan.Days[toDay].Minutes = dayA.Minutes
+	u.Plan.Days[toDay].Exercises = dayA.Exercises
+	u.Plan.Days[toDay].Notes = dayA.Notes
+
+	return s.repo.Save(u)
+}
+
+func (s *Service) SaveWorkoutNote(u *models.User, dayIndex int, note string) error {
+	if u == nil || u.Plan == nil {
+		return errors.New("план не найден")
+	}
+	if dayIndex < 0 || dayIndex >= len(u.Plan.Days) {
+		dayIndex = models.TodayIndex()
+	}
+
+	u.Plan.Days[dayIndex].Notes = note
+
+	dateStr := time.Now().Format("2006-01-02")
+	found := false
+	for i := range u.Progress.Sessions {
+		if u.Progress.Sessions[i].DayIndex == dayIndex {
+			u.Progress.Sessions[i].Feeling = note
+			found = true
+			break
+		}
+	}
+	if !found && note != "" {
+		u.Progress.Sessions = append(u.Progress.Sessions, models.SessionEntry{
+			Date:      dateStr,
+			DayIndex:  dayIndex,
+			Title:     u.Plan.Days[dayIndex].Title,
+			Completed: false,
+			Feeling:   note,
+			Energy:    8,
+		})
+	}
+
+	return s.repo.Save(u)
+}
+
 func (s *Service) SwapExercise(u *models.User, dayIndex int, currentExerciseID string) (*models.PlanExercise, error) {
 	if u == nil || u.Plan == nil {
 		return nil, errors.New("план не найден")

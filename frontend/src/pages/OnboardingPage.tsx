@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Activity,
   Sparkles,
-  Flame,
   ArrowRight,
   ShieldAlert,
   Leaf,
@@ -89,14 +88,14 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
       <div className="max-w-2xl w-full space-y-6">
         {/* Brand header */}
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
-            <Activity className="w-4 h-4 animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white text-xs font-bold uppercase tracking-wider mb-2">
+            <Activity className="w-4 h-4 animate-pulse text-white" />
             Интеллектуальный тренер PulseFit
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white tracking-tight">
             Создайте вашу персональную программу
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto">
             Ответьте на несколько вопросов, чтобы система рассчитала ваш дефицит/профицит, подобрала сплит и составила план питания.
           </p>
 
@@ -106,9 +105,9 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
               type="button"
               onClick={handleDemo}
               disabled={seedingDemo}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
             >
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
               <span>{seedingDemo ? 'Загрузка сценария...' : 'Запустить демонстрационный сценарий (Демо)'}</span>
             </button>
           </div>
@@ -118,7 +117,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
         <form onSubmit={handleSubmit} className="rounded-2xl p-6 sm:p-8 border bg-[#121216] border-white/[0.08] shadow-2xl space-y-6 backdrop-blur-md">
           {/* Goal selection */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
               Главная цель
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
@@ -134,8 +133,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   onClick={() => setGoal(g.id)}
                   className={`p-3 rounded-xl text-xs font-bold transition-all text-center ${
                     goal === g.id
-                      ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                      : 'bg-slate-900 text-slate-300 hover:text-white border border-white/[0.08]'
+                      ? 'bg-white text-zinc-950 shadow-md font-black'
+                      : 'bg-[#17171d] text-zinc-300 hover:text-white border border-white/[0.08]'
                   }`}
                 >
                   {g.label}
@@ -146,36 +145,36 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
 
           {/* Body stats */}
           <div className="space-y-2">
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-400">
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
               Параметры тела
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div>
-                <span className="block text-[11px] text-slate-400 mb-1">Возраст</span>
+                <span className="block text-[11px] text-zinc-400 mb-1">Возраст</span>
                 <input
                   type="number"
                   min="14"
                   max="90"
                   value={age}
                   onChange={e => setAge(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
                   required
                 />
               </div>
               <div>
-                <span className="block text-[11px] text-slate-400 mb-1">Рост (см)</span>
+                <span className="block text-[11px] text-zinc-400 mb-1">Рост (см)</span>
                 <input
                   type="number"
                   min="120"
                   max="230"
                   value={height}
                   onChange={e => setHeight(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
                   required
                 />
               </div>
               <div>
-                <span className="block text-[11px] text-slate-400 mb-1">Вес (кг)</span>
+                <span className="block text-[11px] text-zinc-400 mb-1">Вес (кг)</span>
                 <input
                   type="number"
                   step="0.1"
@@ -183,12 +182,12 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   max="250"
                   value={weight}
                   onChange={e => setWeight(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
                   required
                 />
               </div>
               <div>
-                <span className="block text-[11px] text-slate-400 mb-1">Цель (кг)</span>
+                <span className="block text-[11px] text-zinc-400 mb-1">Цель (кг)</span>
                 <input
                   type="number"
                   step="0.1"
@@ -196,7 +195,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   max="250"
                   value={targetWeight}
                   onChange={e => setTargetWeight(Number(e.target.value))}
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
                   required
                 />
               </div>
@@ -207,10 +206,10 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
           <div className="space-y-3">
             <div>
               <div className="flex justify-between items-center mb-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
                   Частота тренировок в неделю
                 </label>
-                <span className="text-xs font-bold text-emerald-400">{daysPerWeek} дней</span>
+                <span className="text-xs font-bold text-white">{daysPerWeek} дней</span>
               </div>
               <div className="flex gap-1.5">
                 {[1, 2, 3, 4, 5, 6, 7].map(d => (
@@ -220,8 +219,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                     onClick={() => setDaysPerWeek(d)}
                     className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                       daysPerWeek === d
-                        ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                        : 'bg-slate-900 text-slate-400 hover:text-white border border-white/[0.08]'
+                        ? 'bg-white text-zinc-950 shadow-sm'
+                        : 'bg-[#17171d] text-zinc-400 hover:text-white border border-white/[0.08]'
                     }`}
                   >
                     {d}
@@ -232,11 +231,11 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Инвентарь</label>
+                <label className="block text-xs text-zinc-400 mb-1 font-medium">Инвентарь</label>
                 <select
                   value={equipment}
                   onChange={e => setEquipment(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-white focus:outline-none"
                 >
                   <option value="bodyweight">Свой вес (дома/на турниках)</option>
                   <option value="dumbbells">Гантели / эспандеры</option>
@@ -245,11 +244,11 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1 font-medium">Время для тренировок</label>
+                <label className="block text-xs text-zinc-400 mb-1 font-medium">Время для тренировок</label>
                 <select
                   value={preferredTime}
                   onChange={e => setPreferredTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-white focus:outline-none"
                 >
                   <option value="morning">Утро (07:00 – 09:00)</option>
                   <option value="day">День (12:00 – 15:00)</option>
@@ -260,19 +259,19 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
           </div>
 
           {/* Vegan diet toggle */}
-          <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08] cursor-pointer hover:border-slate-700">
+          <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08] cursor-pointer hover:border-zinc-700">
             <input
               type="checkbox"
               checked={isVegan}
               onChange={e => setIsVegan(e.target.checked)}
-              className="w-4 h-4 rounded text-emerald-500 bg-slate-800 border-slate-700"
+              className="w-4 h-4 rounded text-white bg-zinc-800 border-zinc-700"
             />
             <div>
               <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+                <Leaf className="w-3.5 h-3.5 text-zinc-300" />
                 Веганский рацион
               </span>
-              <span className="text-[11px] text-slate-400 block">
+              <span className="text-[11px] text-zinc-400 block">
                 Исключить продукты животного происхождения из меню.
               </span>
             </div>
@@ -280,7 +279,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
 
           {/* Health issues */}
           <div>
-            <label className="block text-xs text-slate-400 mb-1.5 font-medium">
+            <label className="block text-xs text-zinc-400 mb-1.5 font-medium">
               Ограничения по здоровью (включают щадящий режим восстановления)
             </label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
@@ -296,7 +295,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all ${
                     healthIssues.includes(h.id)
                       ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                      : 'bg-slate-900/60 border-white/[0.08] text-slate-400'
+                      : 'bg-[#17171d] border-white/[0.08] text-zinc-400'
                   }`}
                 >
                   <div className="flex items-center justify-between">
@@ -312,7 +311,7 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/25 active:scale-95 disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all shadow-lg active:scale-95 disabled:opacity-50"
           >
             <span>{submitting ? 'Создание программы...' : 'Сформировать программу тренировок'}</span>
             <ArrowRight className="w-4 h-4" />

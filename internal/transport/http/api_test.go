@@ -117,6 +117,30 @@ func TestRESTAPIEndpoints(t *testing.T) {
 		t.Errorf("expected selectedDay 1, got %v", workoutsData["selectedDay"])
 	}
 
+	// 4b. POST /api/workouts/note
+	notePayload := map[string]any{"day": 1, "note": "Жим лежа 75кг 4х8"}
+	nJSON, _ := json.Marshal(notePayload)
+	resp, err = client.Post(srv.URL+"/api/workouts/note", "application/json", bytes.NewReader(nJSON))
+	if err != nil {
+		t.Fatalf("POST /api/workouts/note failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 for workout note, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+
+	// 4c. POST /api/workouts/reschedule
+	reschedPayload := map[string]any{"fromDay": 1, "toDay": 2}
+	rsJSON, _ := json.Marshal(reschedPayload)
+	resp, err = client.Post(srv.URL+"/api/workouts/reschedule", "application/json", bytes.NewReader(rsJSON))
+	if err != nil {
+		t.Fatalf("POST /api/workouts/reschedule failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 for workout reschedule, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+
 	// 5. POST /api/workouts/complete
 	completePayload := map[string]any{"day": 1, "completed": true, "feeling": "great", "energy": 9}
 	cJSON, _ := json.Marshal(completePayload)
@@ -221,4 +245,26 @@ func TestRESTAPIEndpoints(t *testing.T) {
 		t.Errorf("expected 200 for demo seed, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
+
+	// 12. POST /api/demo/reset
+	resp, err = client.Post(srv.URL+"/api/demo/reset", "application/json", nil)
+	if err != nil {
+		t.Fatalf("POST /api/demo/reset failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 for demo reset, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+
+	// 13. Verify /api/workouts returns notOnboarded: true after reset
+	resp, err = client.Get(srv.URL + "/api/workouts")
+	if err != nil {
+		t.Fatalf("GET /api/workouts after reset failed: %v", err)
+	}
+	var afterReset map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&afterReset)
+	resp.Body.Close()
+	if afterReset["notOnboarded"] != true {
+		t.Errorf("expected notOnboarded: true after reset, got %v", afterReset)
+	}
 }

@@ -76,7 +76,12 @@
   html.light .bg-slate-900\/60,
   html.light .bg-slate-900\/40,
   html.light .bg-slate-900\/80,
-  html.light .bg-\[\#101014\] {
+  html.light .bg-\[\#101014\],
+  html.light .bg-\[\#17171d\],
+  html.light .bg-\[\#1c1c24\],
+  html.light .bg-\[\#1a1a22\],
+  html.light .bg-\[\#202028\],
+  html.light .bg-\[\#22222c\] {
     background-color: #f1f5f9 !important;
     border-color: #e2e8f0 !important;
   }
@@ -85,7 +90,16 @@
   html.light .border-slate-800\/80,
   html.light .border-slate-800\/60,
   html.light .border-slate-700,
-  html.light .border-slate-700\/80 {
+  html.light .border-slate-700\/80,
+  html.light .border-white\/\[0\.04\],
+  html.light .border-white\/\[0\.06\],
+  html.light .border-white\/\[0\.08\],
+  html.light .border-white\/\[0\.10\],
+  html.light .border-white\/\[0\.12\],
+  html.light .border-white\/\[0\.15\],
+  html.light .border-white\/\[0\.18\],
+  html.light .border-white\/\[0\.20\],
+  html.light .border-white\/20 {
     border-color: #e2e8f0 !important;
   }
 
@@ -103,7 +117,8 @@
   }
 
   html.light input,
-  html.light select {
+  html.light select,
+  html.light textarea {
     background-color: #ffffff !important;
     color: #0f172a !important;
     border-color: #cbd5e1 !important;

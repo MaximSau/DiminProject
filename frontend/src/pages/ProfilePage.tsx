@@ -115,9 +115,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
     try {
       setResetting(true);
       await api.resetDemo();
-      showToast('Данные сброшены');
-      if (onNavigate) onNavigate('onboarding');
-      if (onRefresh) onRefresh();
+      showToast('Данные сброшены. Перенаправление на создание профиля...');
     } catch (e: any) {
       showToast(e.message || 'Ошибка сброса', 'error');
     } finally {
@@ -130,12 +128,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
       {/* Header */}
       <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-3 rounded-2xl bg-emerald-500/15 text-emerald-400">
-            <User className="w-6 h-6" />
+          <div className="p-3 rounded-2xl bg-white/10 text-white border border-white/20">
+            <User className="w-6 h-6 text-white" />
           </div>
           <div>
             <h2 className="text-2xl font-black text-white">Мой профиль и параметры</h2>
-            <p className="text-xs sm:text-sm text-slate-400">
+            <p className="text-xs sm:text-sm text-zinc-400">
               Единый центр управления программой тренировок, питанием и целями
             </p>
           </div>
@@ -143,34 +141,34 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
       </div>
 
       {loading ? (
-        <div className="py-20 text-center text-slate-400">Загрузка профиля...</div>
+        <div className="py-20 text-center text-zinc-400">Загрузка профиля...</div>
       ) : (
         <form onSubmit={handleSave} className="space-y-6">
           {/* Section 1: Personal Measurements */}
           <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
             <h3 className="text-base font-bold text-white border-b border-white/[0.08] pb-3 flex items-center gap-2">
-              <Settings className="w-4 h-4 text-emerald-400" />
+              <Settings className="w-4 h-4 text-white" />
               Личные параметры
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Имя</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Имя</label>
                 <input
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
                   placeholder="Ваше имя"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Пол</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Пол</label>
                 <select
                   value={gender}
                   onChange={e => setGender(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 >
                   <option value="male">Мужской</option>
                   <option value="female">Женский</option>
@@ -178,31 +176,31 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Возраст (лет)</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Возраст (лет)</label>
                 <input
                   type="number"
                   min="14"
                   max="100"
                   value={age}
                   onChange={e => setAge(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Рост (см)</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Рост (см)</label>
                 <input
                   type="number"
                   min="100"
                   max="250"
                   value={height}
                   onChange={e => setHeight(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Текущий вес (кг)</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Текущий вес (кг)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -210,12 +208,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   max="300"
                   value={weight}
                   onChange={e => setWeight(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Целевой вес (кг)</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Целевой вес (кг)</label>
                 <input
                   type="number"
                   step="0.1"
@@ -223,7 +221,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   max="300"
                   value={targetWeight}
                   onChange={e => setTargetWeight(Number(e.target.value))}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 />
               </div>
             </div>
@@ -232,17 +230,17 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
           {/* Section 2: Goals & Schedule */}
           <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-5">
             <h3 className="text-base font-bold text-white border-b border-white/[0.08] pb-3 flex items-center gap-2">
-              <Dumbbell className="w-4 h-4 text-emerald-400" />
+              <Dumbbell className="w-4 h-4 text-white" />
               Цель и расписание тренировок
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Цель программы</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Цель программы</label>
                 <select
                   value={goal}
                   onChange={e => setGoal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 >
                   <option value="weight_loss">Похудение и сжигание жира</option>
                   <option value="muscle_gain">Набор сухой мышечной массы</option>
@@ -252,11 +250,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Уровень подготовки</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Уровень подготовки</label>
                 <select
                   value={level}
                   onChange={e => setLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 >
                   <option value="beginner">Начинающий (до 6 месяцев)</option>
                   <option value="intermediate">Средний (1–2 года тренировок)</option>
@@ -265,11 +263,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">Инвентарь</label>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Инвентарь</label>
                 <select
                   value={equipment}
                   onChange={e => setEquipment(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 >
                   <option value="bodyweight">Только вес тела (дома/на улице)</option>
                   <option value="dumbbells">Гантели / эспандеры</option>
@@ -279,8 +277,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
 
               {/* 1-7 days per week selector */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                  Частота тренировок: <span className="text-emerald-400 font-bold">{daysPerWeek} дней/нед</span>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
+                  Частота тренировок: <span className="text-white font-bold">{daysPerWeek} дней/нед</span>
                 </label>
                 <div className="flex gap-1.5">
                   {[1, 2, 3, 4, 5, 6, 7].map(d => (
@@ -290,8 +288,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                       onClick={() => setDaysPerWeek(d)}
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                         daysPerWeek === d
-                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                          : 'bg-slate-900 text-slate-400 hover:text-white border border-white/[0.08]'
+                          ? 'bg-white text-zinc-950 shadow-sm'
+                          : 'bg-[#17171d] text-zinc-400 hover:text-white border border-white/[0.08]'
                       }`}
                     >
                       {d}
@@ -302,8 +300,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
 
               {/* Duration up to 90 min */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
-                  Длительность тренировки: <span className="text-emerald-400 font-bold">{workoutDuration} мин</span>
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
+                  Длительность тренировки: <span className="text-white font-bold">{workoutDuration} мин</span>
                 </label>
                 <div className="flex gap-1.5">
                   {[30, 45, 60, 75, 90].map(dur => (
@@ -313,8 +311,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                       onClick={() => setWorkoutDuration(dur)}
                       className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                         workoutDuration === dur
-                          ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                          : 'bg-slate-900 text-slate-400 hover:text-white border border-white/[0.08]'
+                          ? 'bg-white text-zinc-950 shadow-sm'
+                          : 'bg-[#17171d] text-zinc-400 hover:text-white border border-white/[0.08]'
                       }`}
                     >
                       {dur}м
@@ -325,13 +323,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
 
               {/* Preferred time */}
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-1.5">
+                <label className="block text-xs font-semibold text-zinc-400 mb-1.5">
                   Окно тренировки (биологический ритм)
                 </label>
                 <select
                   value={preferredTime}
                   onChange={e => setPreferredTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-emerald-500 focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
                 >
                   <option value="morning">Утро (07:00 – 09:00)</option>
                   <option value="day">День (12:00 – 15:00)</option>
@@ -344,31 +342,31 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
           {/* Section 3: Nutrition & Health */}
           <div className="rounded-2xl p-6 border bg-[#121216] border-white/[0.08] shadow-sm space-y-4">
             <h3 className="text-base font-bold text-white border-b border-white/[0.08] pb-3 flex items-center gap-2">
-              <Leaf className="w-4 h-4 text-emerald-400" />
+              <Leaf className="w-4 h-4 text-white" />
               Особенности питания и здоровье
             </h3>
 
             <div className="space-y-4">
-              <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08]/80 cursor-pointer hover:border-slate-700">
+              <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08] cursor-pointer hover:border-zinc-700">
                 <input
                   type="checkbox"
                   checked={isVegan}
                   onChange={e => setIsVegan(e.target.checked)}
-                  className="w-4 h-4 rounded text-emerald-500 focus:ring-emerald-500 bg-slate-800 border-slate-700"
+                  className="w-4 h-4 rounded text-white focus:ring-white bg-zinc-800 border-zinc-700"
                 />
                 <div>
                   <div className="text-sm font-bold text-white flex items-center gap-1.5">
-                    <Leaf className="w-4 h-4 text-emerald-400" />
+                    <Leaf className="w-4 h-4 text-zinc-300" />
                     Веганский рацион
                   </div>
-                  <div className="text-xs text-slate-400">
+                  <div className="text-xs text-zinc-400">
                     Исключить мясо, рыбу, яйца и молочные продукты. Меню составляется из растительных источников белка (тофу, бобовые, киноа).
                   </div>
                 </div>
               </label>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-400 mb-2">
+                <label className="block text-xs font-semibold text-zinc-400 mb-2">
                   Медицинские ограничения (активируют щадящий режим программы)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -384,7 +382,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                       className={`p-3 rounded-xl text-left border text-xs font-bold transition-all ${
                         healthIssues.includes(h.id)
                           ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                          : 'bg-slate-900/60 border-white/[0.08] text-slate-400 hover:text-white'
+                          : 'bg-[#17171d] border-white/[0.08] text-zinc-400 hover:text-white'
                       }`}
                     >
                       <div className="flex items-center justify-between">
@@ -403,7 +401,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
             <button
               type="submit"
               disabled={saving}
-              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition-all shadow-lg shadow-emerald-500/25 active:scale-95 disabled:opacity-50"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-3.5 rounded-xl text-sm font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all shadow-lg active:scale-95 disabled:opacity-50"
             >
               <Save className="w-4 h-4" />
               <span>{saving ? 'Сохранение...' : 'Сохранить профиль и обновить программу'}</span>

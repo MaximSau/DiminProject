@@ -146,6 +146,14 @@ func MapWorkoutDay(d models.PlanDay, sessions []models.SessionEntry) map[string]
 		})
 	}
 
+	note := d.Notes
+	for _, s := range sessions {
+		if s.DayIndex == d.Index && s.Feeling != "" {
+			note = s.Feeling
+			break
+		}
+	}
+
 	return map[string]any{
 		"dayIndex":         d.Index + 1,
 		"weekdayName":      weekdayName,
@@ -154,6 +162,7 @@ func MapWorkoutDay(d models.PlanDay, sessions []models.SessionEntry) map[string]
 		"isRest":           d.Rest,
 		"estimatedMinutes": d.Minutes,
 		"completed":        completed,
+		"notes":            note,
 		"exercises":        exList,
 	}
 }
@@ -348,8 +357,12 @@ func (h *Handler) HandleAPIOnboarding(w http.ResponseWriter, r *http.Request) {
 // HandleAPIDashboard возвращает данные для главной страницы дашборда.
 func (h *Handler) HandleAPIDashboard(w http.ResponseWriter, r *http.Request) {
 	u := h.GetOrCreateUser(w, r)
-	if u == nil {
-		JSONError(w, http.StatusInternalServerError, "пользователь не найден")
+	if u == nil || !u.Profile.Onboarded {
+		JSONResponse(w, http.StatusOK, map[string]any{
+			"ok":           false,
+			"notOnboarded": true,
+			"error":        "профиль не найден",
+		})
 		return
 	}
 
@@ -404,8 +417,12 @@ func (h *Handler) HandleAPIDashboard(w http.ResponseWriter, r *http.Request) {
 // HandleAPIWorkouts возвращает тренировки для запрошенного дня или всей недели.
 func (h *Handler) HandleAPIWorkouts(w http.ResponseWriter, r *http.Request) {
 	u := h.GetOrCreateUser(w, r)
-	if u == nil || u.Plan == nil {
-		JSONError(w, http.StatusNotFound, "план тренировок не найден")
+	if u == nil || u.Plan == nil || !u.Profile.Onboarded {
+		JSONResponse(w, http.StatusOK, map[string]any{
+			"ok":           false,
+			"notOnboarded": true,
+			"error":        "план не найден",
+		})
 		return
 	}
 
@@ -530,6 +547,78 @@ func (h *Handler) HandleAPIWorkoutSwap(w http.ResponseWriter, r *http.Request) {
 			"restSec":     newEx.RestSec,
 			"coachTip":    "Выполняйте упражнение подконтрольно, акцентируя внимание на рабочей мышечной группе.",
 		},
+	})
+}
+
+// HandleAPIWorkoutReschedule переносит тренировки между днями недели.
+func (h *Handler) HandleAPIWorkoutReschedule(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		JSONError(w, http.StatusMethodNotAllowed, "метод не поддерживается")
+		return
+	}
+
+	u := h.GetOrCreateUser(w, r)
+	if u == nil || u.Plan == nil || !u.Profile.Onboarded {
+		JSONResponse(w, http.StatusOK, map[string]any{"ok": false, "notOnboarded": true, "error": "план не найден"})
+		return
+	}
+
+	var req struct {
+		FromDay int `json:"fromDay"`
+		ToDay   int `json:"toDay"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		JSONError(w, http.StatusBadRequest, "неверный формат запроса")
+		return
+	}
+
+	fromIdx := req.FromDay - 1
+	toIdx := req.ToDay - 1
+
+	if err := h.svc.RescheduleWorkout(u, fromIdx, toIdx); err != nil {
+		JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	JSONResponse(w, http.StatusOK, map[string]any{
+		"ok":      true,
+		"message": "тренировка успешно перенесена",
+	})
+}
+
+// HandleAPIWorkoutNote сохраняет пользовательскую заметку к тренировке.
+func (h *Handler) HandleAPIWorkoutNote(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		JSONError(w, http.StatusMethodNotAllowed, "метод не поддерживается")
+		return
+	}
+
+	u := h.GetOrCreateUser(w, r)
+	if u == nil || u.Plan == nil || !u.Profile.Onboarded {
+		JSONResponse(w, http.StatusOK, map[string]any{"ok": false, "notOnboarded": true, "error": "план не найден"})
+		return
+	}
+
+	var req struct {
+		Day  int    `json:"day"`
+		Note string `json:"note"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		JSONError(w, http.StatusBadRequest, "неверный формат запроса")
+		return
+	}
+
+	dayIdx := req.Day - 1
+	if err := h.svc.SaveWorkoutNote(u, dayIdx, req.Note); err != nil {
+		JSONError(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	JSONResponse(w, http.StatusOK, map[string]any{
+		"ok":   true,
+		"note": req.Note,
 	})
 }
 

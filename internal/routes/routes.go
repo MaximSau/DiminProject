@@ -33,6 +33,8 @@ func RegisterRoutes(mux *http.ServeMux, h *transport.Handler, assets fs.FS) {
 	mux.HandleFunc("/api/workouts", h.HandleAPIWorkouts)
 	mux.HandleFunc("/api/workouts/complete", h.HandleAPIWorkoutComplete)
 	mux.HandleFunc("/api/workouts/swap", h.HandleAPIWorkoutSwap)
+	mux.HandleFunc("/api/workouts/reschedule", h.HandleAPIWorkoutReschedule)
+	mux.HandleFunc("/api/workouts/note", h.HandleAPIWorkoutNote)
 	mux.HandleFunc("/api/nutrition", h.HandleAPINutrition)
 	mux.HandleFunc("/api/nutrition/toggle", h.HandleAPINutritionToggle)
 	mux.HandleFunc("/api/water/add", h.HandleAPIWaterAdd)

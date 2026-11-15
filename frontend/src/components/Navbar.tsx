@@ -60,16 +60,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
           onClick={() => onNavigate('dashboard')}
           className="flex items-center gap-3 group text-left focus:outline-none"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-sky-400 p-0.5 shadow-lg shadow-emerald-500/20 group-hover:scale-105 transition-transform duration-200">
-            <div className="w-full h-full bg-[#08080a] rounded-[10px] flex items-center justify-center">
-              <Activity className="w-5 h-5 text-emerald-400 animate-pulse" />
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-zinc-700 to-zinc-500 p-0.5 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200">
+            <div className="w-full h-full bg-[#121216] rounded-[10px] flex items-center justify-center">
+              <Activity className="w-5 h-5 text-white" />
             </div>
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight bg-gradient-to-r from-emerald-400 via-sky-300 to-white bg-clip-text text-transparent">
+            <span className="text-xl font-black tracking-tight text-white">
               PulseFit
             </span>
-            <span className="block text-[10px] uppercase tracking-widest font-semibold text-slate-400 -mt-1">
+            <span className="block text-[10px] uppercase tracking-widest font-semibold text-zinc-400 -mt-1">
               Pro Fitness
             </span>
           </div>
@@ -86,11 +86,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
                 onClick={() => onNavigate(item.id)}
                 className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
                   isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm'
-                    : 'text-slate-300 hover:text-white hover:bg-slate-800/50 dark:hover:bg-slate-800/60 dark:hover:text-white light:text-slate-600 light:hover:text-slate-900 light:hover:bg-slate-100'
+                    ? 'bg-white/10 text-white border border-white/20 shadow-sm font-bold'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'}`} />
                 <span>{item.label}</span>
               </button>
             );
@@ -103,7 +103,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
           <button
             onClick={() => onNavigate('export')}
             title="Экспорт / Печать программы"
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 dark:hover:bg-slate-800/60 transition-colors"
+            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
           >
             <Printer className="w-4 h-4" />
           </button>
@@ -112,7 +112,7 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
           <button
             onClick={toggleTheme}
             title={theme === 'dark' ? 'Включить светлую тему' : 'Включить тёмную тему'}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 dark:hover:bg-slate-800/60 transition-colors"
+            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
           >
             {theme === 'dark' ? (
               <Sun className="w-4 h-4 text-amber-400" />
@@ -126,16 +126,16 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
             id="btn-demo-topbar"
             onClick={handleDemoSeed}
             disabled={seeding}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-gradient-to-r from-white/10 to-white/15 hover:from-white/20 hover:to-white/25 text-white border border-white/20 shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-sm hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
           >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-spin" style={{ animationDuration: '4s' }} />
+            <Sparkles className="w-3.5 h-3.5 text-zinc-300" />
             <span>{seeding ? 'Загрузка...' : 'Демо'}</span>
           </button>
 
           {/* Mobile menu trigger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60"
+            className="md:hidden p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800/60"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -157,11 +157,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition-colors ${
                   isActive
-                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/40'
+                    ? 'bg-white/10 text-white border border-white/20'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/40'
                 }`}
               >
-                <Icon className="w-4 h-4 text-emerald-400" />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400'}`} />
                 <span>{item.label}</span>
               </button>
             );

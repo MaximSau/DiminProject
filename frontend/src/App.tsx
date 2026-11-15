@@ -41,7 +41,7 @@ const AppContent: React.FC = () => {
       setDashboardData(dash);
     } catch (e: any) {
       console.error('Bootstrap error', e);
-      // fallback or prompt
+      setOnboarded(false);
     } finally {
       setLoading(false);
     }
@@ -57,8 +57,20 @@ const AppContent: React.FC = () => {
         setCurrentTab(hash);
       }
     };
+
+    const handleReset = () => {
+      setOnboarded(false);
+      setDashboardData(null);
+      window.location.hash = 'dashboard';
+      setCurrentTab('dashboard');
+    };
+
     window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
+    window.addEventListener('pulsefit:reset', handleReset);
+    return () => {
+      window.removeEventListener('hashchange', handleHash);
+      window.removeEventListener('pulsefit:reset', handleReset);
+    };
   }, []);
 
   const handleNavigate = (tab: string) => {
@@ -79,8 +91,8 @@ const AppContent: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#08080a] text-white">
-        <div className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full animate-spin mb-4" />
-        <span className="text-sm font-semibold tracking-wider uppercase text-slate-400">
+        <div className="w-10 h-10 border-4 border-white/20 border-t-white rounded-full animate-spin mb-4" />
+        <span className="text-sm font-semibold tracking-wider uppercase text-zinc-400">
           Загрузка PulseFit...
         </span>
       </div>
@@ -98,7 +110,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#08080a] text-slate-100 transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#08080a] text-zinc-100 transition-colors duration-200">
       <Navbar
         currentTab={currentTab}
         onNavigate={handleNavigate}
@@ -137,7 +149,7 @@ const AppContent: React.FC = () => {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.08] py-6 text-center text-xs text-slate-500 print:hidden">
+      <footer className="border-t border-white/[0.08] py-6 text-center text-xs text-zinc-500 print:hidden">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
           <span>PulseFit Pro © 2026. Профессиональный фитнес-трекер и рацион.</span>
           <span>Автономная архитектура • SQLite Pure-Go • React + Tailwind SPA</span>

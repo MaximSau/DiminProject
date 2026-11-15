@@ -55,6 +55,7 @@ export interface WorkoutDay {
   isRest: boolean;
   estimatedMinutes: number;
   completed: boolean;
+  notes?: string;
   exercises: PlanExercise[];
 }
 
