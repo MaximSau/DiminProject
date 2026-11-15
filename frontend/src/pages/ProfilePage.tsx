@@ -147,6 +147,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
       setResetting(true);
       await api.resetDemo();
       showToast('Данные сброшены. Перенаправление на создание профиля...');
+      window.dispatchEvent(new CustomEvent("pulsefit:reset"));
+      if (onNavigate) onNavigate("dashboard");
     } catch (e: any) {
       showToast(e.message || 'Ошибка сброса', 'error');
     } finally {
@@ -189,8 +191,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   type="text"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="Ваше имя"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  placeholder="Фамилия Имя"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
@@ -199,7 +201,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={gender}
                   onChange={e => setGender(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 >
                   <option value="male">Мужской</option>
                   <option value="female">Женский</option>
@@ -212,8 +214,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   type="number"
                   value={age}
                   onChange={e => setAge(cleanNumber(e.target.value))}
-                  placeholder="25"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
@@ -223,8 +225,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   type="number"
                   value={height}
                   onChange={e => setHeight(cleanNumber(e.target.value))}
-                  placeholder="175"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
@@ -235,8 +237,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   step="0.1"
                   value={weight}
                   onChange={e => setWeight(cleanNumber(e.target.value))}
-                  placeholder="75"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 />
               </div>
 
@@ -247,8 +249,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                   step="0.1"
                   value={targetWeight}
                   onChange={e => setTargetWeight(cleanNumber(e.target.value))}
-                  placeholder="70"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 />
               </div>
             </div>
@@ -267,7 +269,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={goal}
                   onChange={e => setGoal(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 >
                   <option value="weight_loss">Похудение и сжигание жира</option>
                   <option value="muscle_gain">Набор сухой мышечной массы</option>
@@ -281,7 +283,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={level}
                   onChange={e => setLevel(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 >
                   <option value="beginner">Начинающий (до 6 месяцев)</option>
                   <option value="intermediate">Средний (1–2 года тренировок)</option>
@@ -294,7 +296,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={equipment}
                   onChange={e => setEquipment(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 >
                   <option value="bodyweight">Только вес тела (дома/на улице)</option>
                   <option value="dumbbells">Гантели / эспандеры</option>
@@ -356,7 +358,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onRefresh, onNavigate 
                 <select
                   value={preferredTime}
                   onChange={e => setPreferredTime(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-sm focus:border-white focus:outline-none"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
                 >
                   <option value="morning">Утро (07:00 – 09:00)</option>
                   <option value="day">День (12:00 – 15:00)</option>

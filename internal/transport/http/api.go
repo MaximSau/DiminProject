@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"pulsefit/internal/models"
+	"pulsefit/internal/service"
 )
 
 // JSONResponse отправляет клиенту форматированный JSON-ответ с заголовками.
@@ -186,7 +187,7 @@ func MapWorkoutDay(d models.PlanDay, sessions []models.SessionEntry) map[string]
 }
 
 // MapDayMeals маппит MealDay в структуру питания для SPA.
-func MapDayMeals(md models.MealDay, eatenMeals map[string]bool, plan *models.Plan) map[string]any {
+func MapDayMeals(md models.MealDay, eatenMeals map[string]bool, plan *models.Plan, cat *service.Catalog) map[string]any {
 	var weekdayName string
 	if md.Index >= 0 && md.Index < len(models.WeekdayNames) {
 		weekdayName = models.WeekdayNames[md.Index]
@@ -216,6 +217,18 @@ func MapDayMeals(md models.MealDay, eatenMeals map[string]bool, plan *models.Pla
 			currentCarbs += m.CarbsG
 		}
 
+		isVegan := false
+		if cat != nil {
+			if catMeal, ok := cat.Meal(m.MealID); ok {
+				for _, tag := range catMeal.Tags {
+					if tag == "vegan" || tag == "веган" || tag == "растительное" {
+						isVegan = true
+						break
+					}
+				}
+			}
+		}
+
 		item := map[string]any{
 			"id":          m.MealID,
 			"type":        m.Slot,
@@ -225,7 +238,7 @@ func MapDayMeals(md models.MealDay, eatenMeals map[string]bool, plan *models.Pla
 			"proteins":    m.ProteinG,
 			"fats":        m.FatG,
 			"carbs":       m.CarbsG,
-			"isVegan":     false,
+			"isVegan":     isVegan,
 			"eaten":       eaten,
 		}
 
@@ -393,7 +406,7 @@ func (h *Handler) HandleAPIDashboard(w http.ResponseWriter, r *http.Request) {
 			todayWorkout = MapWorkoutDay(u.Plan.Days[todayIdx], u.Progress.Sessions)
 		}
 		if todayIdx < len(u.Plan.Meals) {
-			todayMeals = MapDayMeals(u.Plan.Meals[todayIdx], u.Progress.Meals, u.Plan)
+			todayMeals = MapDayMeals(u.Plan.Meals[todayIdx], u.Progress.Meals, u.Plan, h.svc.Catalog())
 		}
 	}
 
@@ -677,7 +690,7 @@ func (h *Handler) HandleAPINutrition(w http.ResponseWriter, r *http.Request) {
 		dayIdx = 0
 	}
 
-	mappedMeals := MapDayMeals(u.Plan.Meals[dayIdx], u.Progress.Meals, u.Plan)
+	mappedMeals := MapDayMeals(u.Plan.Meals[dayIdx], u.Progress.Meals, u.Plan, h.svc.Catalog())
 
 	waterTarget := 2000
 	if u.Profile.WeightKg != nil && *u.Profile.WeightKg > 0 {
@@ -730,6 +743,46 @@ func (h *Handler) HandleAPINutritionToggle(w http.ResponseWriter, r *http.Reques
 	JSONResponse(w, http.StatusOK, map[string]any{
 		"ok":    true,
 		"eaten": req.Eaten,
+	})
+}
+
+// HandleAPINutritionAdd добавляет выбранное блюдо из каталога в рацион дня.
+func (h *Handler) HandleAPINutritionAdd(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		JSONError(w, http.StatusMethodNotAllowed, "метод не поддерживается")
+		return
+	}
+
+	u := h.GetOrCreateUser(w, r)
+	if u == nil {
+		JSONError(w, http.StatusInternalServerError, "сессия не найдена")
+		return
+	}
+
+	var req struct {
+		Day    int    `json:"day"`
+		MealID string `json:"mealId"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		JSONError(w, http.StatusBadRequest, "неверный формат тела запроса")
+		return
+	}
+
+	dayIdx := req.Day - 1
+	if dayIdx < 0 {
+		dayIdx = 0
+	}
+
+	item, err := h.svc.AddMealToDay(u, dayIdx, req.MealID)
+	if err != nil {
+		JSONError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	JSONResponse(w, http.StatusOK, map[string]any{
+		"ok":   true,
+		"item": item,
 	})
 }
 
@@ -868,6 +921,9 @@ func (h *Handler) HandleAPICatalog(w http.ResponseWriter, r *http.Request) {
 	equipment := strings.TrimSpace(r.URL.Query().Get("equipment"))
 	difficulty := strings.TrimSpace(r.URL.Query().Get("difficulty"))
 
+	u := h.GetOrCreateUser(w, r)
+	hasHealth := u != nil && (u.Profile.MedicalBlocked() || len(u.Profile.HealthFlags) > 0)
+
 	exercises := h.svc.Catalog().Exercises
 	filtered := make([]map[string]any, 0, len(exercises))
 
@@ -908,15 +964,23 @@ func (h *Handler) HandleAPICatalog(w http.ResponseWriter, r *http.Request) {
 		}
 
 		isGentle := ex.Level == models.LevelBeginner || ex.Equipment == models.EquipNone
+		isContra := false
+		if hasHealth {
+			isContra = !isGentle || strings.Contains(strings.ToLower(ex.Name), "становая") ||
+				strings.Contains(strings.ToLower(ex.Name), "присед") ||
+				strings.Contains(strings.ToLower(ex.Name), "армейский") ||
+				strings.Contains(strings.ToLower(ex.Name), "берпи")
+		}
 
 		filtered = append(filtered, map[string]any{
-			"id":         ex.ID,
-			"title":      ex.Name,
-			"muscle":     strings.Join(ex.Muscles, ", "),
-			"equipment":  models.EquipLabel(ex.Equipment),
-			"difficulty": models.LevelLabel(ex.Level),
-			"coachTip":   ex.Safety,
-			"isGentle":   isGentle,
+			"id":                ex.ID,
+			"title":             ex.Name,
+			"muscle":            strings.Join(ex.Muscles, ", "),
+			"equipment":         models.EquipLabel(ex.Equipment),
+			"difficulty":        models.LevelLabel(ex.Level),
+			"coachTip":          ex.Safety,
+			"isGentle":          isGentle,
+			"isContraindicated": isContra,
 		})
 	}
 
@@ -944,6 +1008,67 @@ func (h *Handler) HandleAPICatalogExercise(w http.ResponseWriter, r *http.Reques
 			"coachTip":   ex.Safety,
 			"isGentle":   ex.Level == models.LevelBeginner,
 		},
+	})
+}
+
+// HandleAPICatalogMeals возвращает список блюд из каталога.
+func (h *Handler) HandleAPICatalogMeals(w http.ResponseWriter, r *http.Request) {
+	q := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("q")))
+	slot := strings.TrimSpace(r.URL.Query().Get("slot"))
+	veganOnly := r.URL.Query().Get("vegan") == "true"
+
+	meals := h.svc.Catalog().Meals
+	filtered := make([]map[string]any, 0, len(meals))
+
+	for _, m := range meals {
+		if q != "" {
+			nameLower := strings.ToLower(m.Name)
+			matches := strings.Contains(nameLower, q)
+			for _, ing := range m.Ingredients {
+				if strings.Contains(strings.ToLower(ing), q) {
+					matches = true
+					break
+				}
+			}
+			if !matches {
+				continue
+			}
+		}
+
+		if slot != "" && !strings.EqualFold(m.Slot, slot) {
+			continue
+		}
+
+		isVegan := false
+		for _, tag := range m.Tags {
+			if tag == "vegan" || tag == "веган" || tag == "растительное" {
+				isVegan = true
+				break
+			}
+		}
+
+		if veganOnly && !isVegan {
+			continue
+		}
+
+		filtered = append(filtered, map[string]any{
+			"id":          m.ID,
+			"name":        m.Name,
+			"slot":        m.Slot,
+			"calories":    m.Kcal,
+			"proteins":    m.ProteinG,
+			"fats":        m.FatG,
+			"carbs":       m.CarbsG,
+			"portion":     m.Portion,
+			"ingredients": m.Ingredients,
+			"prep":        m.Prep,
+			"tags":        m.Tags,
+			"isVegan":     isVegan,
+		})
+	}
+
+	JSONResponse(w, http.StatusOK, map[string]any{
+		"meals": filtered,
 	})
 }
 
@@ -1066,7 +1191,7 @@ func (h *Handler) HandleAPIPlanExport(w http.ResponseWriter, r *http.Request) {
 
 	meals := make([]map[string]any, 0, len(u.Plan.Meals))
 	for _, m := range u.Plan.Meals {
-		meals = append(meals, MapDayMeals(m, u.Progress.Meals, u.Plan))
+		meals = append(meals, MapDayMeals(m, u.Progress.Meals, u.Plan, h.svc.Catalog()))
 	}
 
 	JSONResponse(w, http.StatusOK, map[string]any{

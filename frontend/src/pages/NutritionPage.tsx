@@ -14,8 +14,10 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  AlertTriangle,
+  Search,
 } from 'lucide-react';
-import { DayMeals, MealItem, UserProfile } from '../types';
+import { DayMeals, MealItem, CatalogMeal, UserProfile } from '../types';
 import { api } from '../api/client';
 import { useToast } from '../context/ToastContext';
 
@@ -27,7 +29,12 @@ interface NutritionPageProps {
 export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefresh }) => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(initialDay || 1);
+
+  // Default to today's ISO day (Monday = 1 ... Sunday = 7)
+  const today = new Date();
+  const todayIso = today.getDay() === 0 ? 7 : today.getDay();
+  const [selectedDay, setSelectedDay] = useState(initialDay || todayIso);
+
   const [dayMeals, setDayMeals] = useState<DayMeals | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [waterIntake, setWaterIntake] = useState(0);
@@ -41,7 +48,21 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
   const [calendarYear, setCalendarYear] = useState(() => new Date().getFullYear());
   const [calendarMonth, setCalendarMonth] = useState(() => new Date().getMonth());
 
-  const today = new Date();
+  // Meal Catalog Modal state
+  const [catalogModalOpen, setCatalogModalOpen] = useState(false);
+  const [catalogMeals, setCatalogMeals] = useState<CatalogMeal[]>([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [catalogSearch, setCatalogSearch] = useState('');
+  const [catalogSlot, setCatalogSlot] = useState('');
+  const [catalogVeganOnly, setCatalogVeganOnly] = useState(false);
+  const [addingCatalogId, setAddingCatalogId] = useState<string | null>(null);
+
+  // Big Red Exclamation Warning state for Vegan user
+  const [veganWarningModal, setVeganWarningModal] = useState<{
+    mealName: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   const monthsRu = [
@@ -127,11 +148,33 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
     }
   };
 
+  const fetchCatalogMeals = async () => {
+    try {
+      setLoadingCatalog(true);
+      const res = await api.getCatalogMeals({
+        q: catalogSearch || undefined,
+        slot: catalogSlot || undefined,
+        vegan: catalogVeganOnly || undefined,
+      });
+      setCatalogMeals(res.meals || []);
+    } catch (e: any) {
+      showToast(e.message || 'Ошибка загрузки каталога блюд', 'error');
+    } finally {
+      setLoadingCatalog(false);
+    }
+  };
+
   useEffect(() => {
     fetchNutrition(selectedDay);
   }, [selectedDay]);
 
-  const handleToggleMeal = async (mealId: string, currentEaten: boolean) => {
+  useEffect(() => {
+    if (catalogModalOpen) {
+      fetchCatalogMeals();
+    }
+  }, [catalogModalOpen, catalogSearch, catalogSlot, catalogVeganOnly]);
+
+  const executeToggleMeal = async (mealId: string, currentEaten: boolean) => {
     try {
       setTogglingId(mealId);
       const nextEaten = !currentEaten;
@@ -157,6 +200,44 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
       showToast(e.message || 'Ошибка изменения статуса блюда', 'error');
     } finally {
       setTogglingId(null);
+    }
+  };
+
+  const handleToggleMeal = (meal: MealItem) => {
+    // If not eaten yet, user is vegan, and the dish is NOT vegan -> show big red exclamation confirmation!
+    if (!meal.eaten && user?.isVegan && !meal.isVegan) {
+      setVeganWarningModal({
+        mealName: meal.name,
+        onConfirm: () => executeToggleMeal(meal.id, meal.eaten),
+      });
+    } else {
+      executeToggleMeal(meal.id, meal.eaten);
+    }
+  };
+
+  const executeAddMeal = async (mealId: string, mealName: string) => {
+    try {
+      setAddingCatalogId(mealId);
+      await api.addMealToDay(selectedDay, mealId);
+      showToast(`«${mealName}» добавлено в рацион на сегодня!`);
+      await fetchNutrition(selectedDay);
+      if (onRefresh) onRefresh();
+    } catch (e: any) {
+      showToast(e.message || 'Ошибка добавления блюда', 'error');
+    } finally {
+      setAddingCatalogId(null);
+    }
+  };
+
+  const handleAddFromCatalog = (m: CatalogMeal) => {
+    if (user?.isVegan && !m.isVegan) {
+      // Big red exclamation confirmation!
+      setVeganWarningModal({
+        mealName: m.name,
+        onConfirm: () => executeAddMeal(m.id, m.name),
+      });
+    } else {
+      executeAddMeal(m.id, m.name);
     }
   };
 
@@ -207,7 +288,7 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {/* Week navigation arrows */}
             <div className="flex items-center bg-[#17171d] rounded-xl border border-white/[0.08] p-1">
               <button
@@ -220,7 +301,6 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
               <button
                 onClick={() => {
                   setWeekOffset(0);
-                  const todayIso = today.getDay() === 0 ? 7 : today.getDay();
                   setSelectedDay(todayIso);
                 }}
                 className="px-2.5 py-1 text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
@@ -236,17 +316,28 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
               </button>
             </div>
 
-            {/* Big Calendar modal trigger */}
+            {/* Calendar modal trigger */}
             <button
               onClick={() => {
                 setCalendarYear(activeDate.getFullYear());
                 setCalendarMonth(activeDate.getMonth());
                 setCalendarModalOpen(true);
               }}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-all active:scale-95 shadow-sm"
+              className="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold bg-[#17171d] hover:bg-[#22222c] text-white border border-white/[0.12] transition-all active:scale-95 shadow-sm"
             >
               <CalendarIcon className="w-4 h-4 text-white" />
               <span>Календарь</span>
+            </button>
+
+            {/* Food Catalog trigger */}
+            <button
+              onClick={() => {
+                setCatalogModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all active:scale-95 shadow-md shadow-white/5"
+            >
+              <Utensils className="w-4 h-4 text-zinc-950" />
+              <span>Каталог блюд</span>
             </button>
           </div>
         </div>
@@ -321,7 +412,7 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
                 </h2>
                 {user?.isVegan && (
                   <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-0.5 rounded-full bg-white/10 text-white border border-white/20 mt-1">
-                    <Leaf className="w-3.5 h-3.5" />
+                    <Leaf className="w-3.5 h-3.5 text-emerald-400" />
                     Веганское меню (100% растительный рацион)
                   </span>
                 )}
@@ -398,14 +489,27 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
 
               return (
                 <div key={sec.key} className="space-y-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="p-2 rounded-xl bg-[#17171d] text-white border border-white/[0.08]">
-                      <Icon className="w-4 h-4" />
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-[#17171d] text-white border border-white/[0.08]">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-white">{sec.title}</h3>
+                        <p className="text-xs text-zinc-400">{sec.desc}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-base font-bold text-white">{sec.title}</h3>
-                      <p className="text-xs text-zinc-400">{sec.desc}</p>
-                    </div>
+
+                    <button
+                      onClick={() => {
+                        setCatalogSlot(sec.key);
+                        setCatalogModalOpen(true);
+                      }}
+                      className="text-xs font-bold text-zinc-300 hover:text-white flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#17171d] hover:bg-[#202028] border border-white/[0.08] transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Выбрать блюдо</span>
+                    </button>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -424,11 +528,15 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
                               <h4 className={`text-sm font-bold text-white ${m.eaten ? 'line-through text-zinc-500' : ''}`}>
                                 {m.name}
                               </h4>
-                              {m.isVegan && (
-                                <span className="p-0.5 rounded bg-white/10 text-white" title="Веган">
-                                  <Leaf className="w-3 h-3" />
+                              {m.isVegan ? (
+                                <span className="p-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" title="Веганское блюдо">
+                                  <Leaf className="w-3 h-3 text-emerald-400" />
                                 </span>
-                              )}
+                              ) : user?.isVegan ? (
+                                <span className="p-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30" title="Не веганское блюдо!">
+                                  <AlertTriangle className="w-3 h-3 text-rose-400" />
+                                </span>
+                              ) : null}
                             </div>
                             <p className="text-xs text-zinc-300 leading-relaxed font-normal">
                               {m.description}
@@ -442,7 +550,7 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
                           </div>
 
                           <button
-                            onClick={() => handleToggleMeal(m.id, m.eaten)}
+                            onClick={() => handleToggleMeal(m)}
                             disabled={togglingId === m.id}
                             className={`p-2 rounded-xl transition-all flex-shrink-0 ${
                               m.eaten
@@ -460,8 +568,17 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
                         </div>
                       ))
                     ) : (
-                      <div className="col-span-2 p-4 rounded-xl bg-[#121216]/60 border border-white/[0.06] text-xs text-zinc-400 text-center">
-                        Блюда не указаны
+                      <div className="col-span-2 p-4 rounded-xl bg-[#121216]/60 border border-white/[0.06] text-xs text-zinc-400 text-center flex items-center justify-center gap-2">
+                        <span>Блюда еще не добавлены.</span>
+                        <button
+                          onClick={() => {
+                            setCatalogSlot(sec.key);
+                            setCatalogModalOpen(true);
+                          }}
+                          className="text-white underline font-bold"
+                        >
+                          Выбрать из каталога
+                        </button>
                       </div>
                     )}
                   </div>
@@ -472,6 +589,186 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
         </div>
       ) : (
         <div className="py-20 text-center text-zinc-300">Данные рациона недоступны</div>
+      )}
+
+      {/* BIG RED EXCLAMATION MARK VEGAN CONFIRMATION MODAL */}
+      {veganWarningModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in">
+          <div className="rounded-3xl p-6 sm:p-8 bg-[#161214] border-2 border-rose-500/70 shadow-2xl max-w-md w-full space-y-5 text-center">
+            {/* Big Red Exclamation Sign */}
+            <div className="w-20 h-20 rounded-full bg-rose-500/20 border-2 border-rose-500 text-rose-500 flex items-center justify-center mx-auto animate-bounce">
+              <AlertTriangle className="w-12 h-12 stroke-[2.5]" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="text-xs font-black uppercase tracking-widest text-rose-400 block">
+                Внимание: Блюдо не является веганским!
+              </span>
+              <h3 className="text-xl font-black text-white">
+                «{veganWarningModal.mealName}»
+              </h3>
+              <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed font-normal">
+                В вашем профиле отмечен <span className="text-emerald-400 font-bold">100% веганский рацион</span>. Данное блюдо содержит продукты животного происхождения (мясо, рыбу, птицу, яйца или лактозу).
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-[#1d1416] border border-rose-500/30 text-xs text-rose-200">
+              Вы уверены, что действительно съели это блюдо и хотите отметить его в рационе?
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setVeganWarningModal(null)}
+                className="w-full sm:w-1/2 py-2.5 rounded-xl text-xs font-bold text-zinc-400 hover:text-white bg-[#1a1a22] border border-white/[0.08] transition-colors"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const action = veganWarningModal.onConfirm;
+                  setVeganWarningModal(null);
+                  action();
+                }}
+                className="w-full sm:w-1/2 py-2.5 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/30 transition-all active:scale-95"
+              >
+                Подтверждаю, съел
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full Food Catalog Modal */}
+      {catalogModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in">
+          <div className="rounded-3xl p-6 bg-[#121216] border border-white/20 shadow-2xl max-w-2xl w-full max-h-[85vh] flex flex-col space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  База блюд PulseFit
+                </span>
+                <h3 className="text-xl font-black text-white mt-0.5">
+                  Каталог сбалансированного питания
+                </h3>
+              </div>
+              <button
+                onClick={() => setCatalogModalOpen(false)}
+                className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Filter row inside modal */}
+            <div className="space-y-2.5">
+              <div className="relative">
+                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <input
+                  type="text"
+                  value={catalogSearch}
+                  onChange={e => setCatalogSearch(e.target.value)}
+                  placeholder="Поиск по названию или ингредиентам..."
+                  className="w-full pl-9 pr-4 py-2 rounded-xl bg-[#17171d] border border-white/[0.10] text-white placeholder-zinc-500 text-xs focus:border-white focus:outline-none"
+                />
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
+                  {[
+                    { id: '', label: 'Все' },
+                    { id: 'breakfast', label: 'Завтрак' },
+                    { id: 'lunch', label: 'Обед' },
+                    { id: 'snack', label: 'Перекус' },
+                    { id: 'dinner', label: 'Ужин' },
+                  ].map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setCatalogSlot(s.id)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all ${
+                        catalogSlot === s.id
+                          ? 'bg-white text-zinc-950 font-black'
+                          : 'bg-[#17171d] text-zinc-300 hover:text-white border border-white/[0.08]'
+                      }`}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setCatalogVeganOnly(!catalogVeganOnly)}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold transition-all border ${
+                    catalogVeganOnly
+                      ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                      : 'bg-[#17171d] text-zinc-400 hover:text-white border-white/[0.08]'
+                  }`}
+                >
+                  <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Веганские</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Dishes list */}
+            <div className="flex-1 overflow-y-auto space-y-2.5 pr-1">
+              {loadingCatalog ? (
+                <div className="py-12 text-center text-zinc-400 text-xs">Загрузка каталога...</div>
+              ) : catalogMeals.length > 0 ? (
+                catalogMeals.map(m => (
+                  <div
+                    key={m.id}
+                    className="p-3.5 rounded-2xl bg-[#17171d] border border-white/[0.08] hover:border-white/[0.18] flex items-center justify-between gap-3 transition-colors"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-white">{m.name}</span>
+                        {m.isVegan ? (
+                          <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                            <Leaf className="w-2.5 h-2.5" />
+                            Веган
+                          </span>
+                        ) : user?.isVegan ? (
+                          <span className="flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                            <AlertTriangle className="w-2.5 h-2.5 text-rose-400" />
+                            Не веган
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="text-xs text-zinc-400">
+                        {m.calories} ккал • Б: {m.proteins}г • Ж: {m.fats}г • У: {m.carbs}г
+                      </div>
+                      <div className="text-[11px] text-zinc-500 truncate max-w-md">
+                        {m.portion}
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleAddFromCatalog(m)}
+                      disabled={addingCatalogId === m.id}
+                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all flex-shrink-0 active:scale-95 disabled:opacity-50"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>{addingCatalogId === m.id ? 'Добавление...' : 'Добавить'}</span>
+                    </button>
+                  </div>
+                ))
+              ) : (
+                <div className="py-12 text-center text-zinc-400 text-xs">Блюд не найдено</div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-white/[0.08] flex justify-end">
+              <button
+                onClick={() => setCatalogModalOpen(false)}
+                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#17171d] hover:bg-[#202028] text-white border border-white/[0.12]"
+              >
+                Закрыть
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Calendar Modal */}
@@ -535,12 +832,10 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
 
             {/* Days grid */}
             <div className="grid grid-cols-7 gap-1 text-center">
-              {/* Empty cells */}
               {Array.from({ length: monthStartOffset }).map((_, i) => (
                 <div key={`empty-${i}`} className="h-11" />
               ))}
 
-              {/* Month days */}
               {Array.from({ length: daysInMonth }).map((_, i) => {
                 const dayNum = i + 1;
                 const dateObj = new Date(calendarYear, calendarMonth, dayNum);
@@ -574,7 +869,6 @@ export const NutritionPage: React.FC<NutritionPageProps> = ({ initialDay, onRefr
               <button
                 onClick={() => {
                   setWeekOffset(0);
-                  const todayIso = today.getDay() === 0 ? 7 : today.getDay();
                   setSelectedDay(todayIso);
                   setCalendarModalOpen(false);
                 }}

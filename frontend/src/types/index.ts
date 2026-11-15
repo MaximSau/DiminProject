@@ -121,9 +121,25 @@ export interface CatalogExercise {
   secondaryMuscles?: string[];
   equipment: string;
   difficulty: string;
-  description: string;
+  description?: string;
   coachTip: string;
   isGentle?: boolean;
+  isContraindicated?: boolean;
+}
+
+export interface CatalogMeal {
+  id: string;
+  name: string;
+  slot: string;
+  calories: number;
+  proteins: number;
+  fats: number;
+  carbs: number;
+  portion: string;
+  ingredients: string[];
+  prep?: string;
+  tags?: string[];
+  isVegan: boolean;
 }
 
 export interface DashboardResponse {

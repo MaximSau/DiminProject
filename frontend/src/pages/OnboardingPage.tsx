@@ -52,50 +52,51 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const numAge = Number(age);
-    const numHeight = Number(height);
-    const numWeight = parseFloat(weight);
-    const numTarget = parseFloat(targetWeight);
+    const parsedAge = parseInt(age, 10);
+    const parsedHeight = parseFloat(height);
+    const parsedWeight = parseFloat(weight);
+    const parsedTarget = parseFloat(targetWeight);
 
-    if (!numAge || numAge < 14 || numAge > 100) {
-      showToast('Пожалуйста, укажите корректный возраст (от 14 до 100 лет)', 'error');
+    if (isNaN(parsedAge) || parsedAge < 10 || parsedAge > 120) {
+      showToast('Укажите корректный возраст (от 10 до 120 лет)', 'error');
       return;
     }
-    if (!numHeight || numHeight < 100 || numHeight > 250) {
-      showToast('Пожалуйста, укажите корректный рост (от 100 до 250 см)', 'error');
+    if (isNaN(parsedHeight) || parsedHeight < 100 || parsedHeight > 250) {
+      showToast('Укажите корректный рост (от 100 до 250 см)', 'error');
       return;
     }
-    if (!numWeight || numWeight < 30 || numWeight > 300) {
-      showToast('Пожалуйста, укажите корректный вес (от 30 до 300 кг)', 'error');
+    if (isNaN(parsedWeight) || parsedWeight < 30 || parsedWeight > 300) {
+      showToast('Укажите корректный вес (от 30 до 300 кг)', 'error');
       return;
     }
-    if (!numTarget || numTarget < 30 || numTarget > 300) {
-      showToast('Пожалуйста, укажите целевой вес (от 30 до 300 кг)', 'error');
+    if (isNaN(parsedTarget) || parsedTarget < 30 || parsedTarget > 300) {
+      showToast('Укажите корректный целевой вес (от 30 до 300 кг)', 'error');
       return;
     }
 
     try {
       setSubmitting(true);
       await api.submitOnboarding({
-        name: name.trim() || 'Атлет',
+        name: name.trim() || undefined,
         gender,
-        age: numAge,
-        height: numHeight,
-        weight: numWeight,
-        targetWeight: numTarget,
+        age: parsedAge,
+        height: parsedHeight,
+        weight: parsedWeight,
+        targetWeight: parsedTarget,
         goal,
         level,
         equipment,
-        daysPerWeek: Number(daysPerWeek),
-        workoutDuration: Number(workoutDuration),
+        daysPerWeek,
+        workoutDuration,
         preferredTime,
         isVegan,
         healthIssues,
       });
-      showToast('Ваша персональная программа сформирована!');
+
+      showToast('Персональный план успешно сгенерирован!');
       onCompleted();
-    } catch (e: any) {
-      showToast(e.message || 'Ошибка генерации программы', 'error');
+    } catch (err: any) {
+      showToast(err.message || 'Ошибка сохранения плана', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -146,6 +147,20 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
 
         {/* Onboarding Form */}
         <form onSubmit={handleSubmit} className="rounded-2xl p-6 sm:p-8 border bg-[#121216] border-white/[0.08] shadow-2xl space-y-6 backdrop-blur-md">
+          {/* Name input */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
+              Ваше имя / Фамилия
+            </label>
+            <input
+              type="text"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              placeholder="Фамилия Имя"
+              className="w-full px-4 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white placeholder-zinc-500 text-sm focus:border-white focus:outline-none"
+            />
+          </div>
+
           {/* Goal selection */}
           <div className="space-y-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-zinc-400">
@@ -186,8 +201,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   type="number"
                   value={age}
                   onChange={e => setAge(cleanNumber(e.target.value))}
-                  placeholder="25"
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none placeholder-zinc-500"
                   required
                 />
               </div>
@@ -197,8 +212,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   type="number"
                   value={height}
                   onChange={e => setHeight(cleanNumber(e.target.value))}
-                  placeholder="178"
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none placeholder-zinc-500"
                   required
                 />
               </div>
@@ -209,8 +224,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   step="0.1"
                   value={weight}
                   onChange={e => setWeight(cleanNumber(e.target.value))}
-                  placeholder="78"
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none placeholder-zinc-500"
                   required
                 />
               </div>
@@ -221,8 +236,8 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   step="0.1"
                   value={targetWeight}
                   onChange={e => setTargetWeight(cleanNumber(e.target.value))}
-                  placeholder="72"
-                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none"
+                  placeholder="0"
+                  className="w-full px-3 py-2 rounded-xl bg-[#17171d] border border-white/[0.12] text-white font-bold text-sm focus:border-white focus:outline-none placeholder-zinc-500"
                   required
                 />
               </div>
@@ -278,69 +293,106 @@ export const OnboardingPage: React.FC<OnboardingPageProps> = ({ onCompleted }) =
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#17171d] border border-white/[0.12] text-white text-xs font-semibold focus:border-white focus:outline-none"
                 >
                   <option value="morning">Утро (07:00 – 09:00)</option>
-                  <option value="day">День (12:00 – 15:00)</option>
+                  <option value="day">День (12:00 – 14:00)</option>
                   <option value="evening">Вечер (18:00 – 21:00)</option>
                 </select>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                  Длительность тренировки
+                </label>
+                <span className="text-xs font-bold text-white">{workoutDuration} минут</span>
+              </div>
+              <input
+                type="range"
+                min="30"
+                max="90"
+                step="5"
+                value={workoutDuration}
+                onChange={e => setWorkoutDuration(parseInt(e.target.value, 10))}
+                className="w-full accent-white h-1.5 bg-[#17171d] rounded-lg cursor-pointer"
+              />
+              <div className="flex justify-between text-[11px] text-zinc-400 mt-1">
+                <span>30 мин</span>
+                <span>45 мин</span>
+                <span>60 мин</span>
+                <span>90 мин</span>
               </div>
             </div>
           </div>
 
           {/* Vegan diet toggle */}
-          <label className="flex items-center gap-3 p-3.5 rounded-xl bg-[#17171d] border border-white/[0.08] cursor-pointer hover:border-zinc-700">
-            <input
-              type="checkbox"
-              checked={isVegan}
-              onChange={e => setIsVegan(e.target.checked)}
-              className="w-4 h-4 rounded text-white bg-zinc-800 border-zinc-700"
-            />
-            <div>
-              <span className="text-xs font-bold text-white flex items-center gap-1.5">
-                <Leaf className="w-3.5 h-3.5 text-zinc-300" />
-                Веганский рацион
-              </span>
-              <span className="text-[11px] text-zinc-400 block">
-                Исключить продукты животного происхождения из меню.
-              </span>
+          <div className="p-4 rounded-xl bg-[#17171d] border border-white/[0.08] flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                <Leaf className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <span className="text-sm font-bold text-white block">Веганский рацион</span>
+                <span className="text-xs text-zinc-400 font-normal">
+                  Только 100% растительная пища без мяса, птицы, рыбы, яиц и лактозы
+                </span>
+              </div>
             </div>
-          </label>
+            <button
+              type="button"
+              onClick={() => setIsVegan(!isVegan)}
+              className={`w-12 h-6 rounded-full transition-colors relative p-0.5 border ${
+                isVegan ? 'bg-white border-white' : 'bg-zinc-800 border-zinc-700'
+              }`}
+            >
+              <div
+                className={`w-5 h-5 rounded-full transition-transform ${
+                  isVegan ? 'translate-x-6 bg-zinc-950' : 'translate-x-0 bg-zinc-400'
+                }`}
+              />
+            </button>
+          </div>
 
-          {/* Health issues */}
-          <div>
-            <label className="block text-xs text-zinc-400 mb-1.5 font-medium">
-              Ограничения по здоровью (включают щадящий режим восстановления)
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {/* Health issues checkboxes */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-1.5">
+              <ShieldAlert className="w-4 h-4 text-amber-400" />
+              <label className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                Медицинские ограничения и здоровье
+              </label>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { id: 'joints', label: 'Суставы/колени' },
-                { id: 'spine', label: 'Спина' },
-                { id: 'cardio', label: 'Сердце/давление' },
+                { id: 'joints', label: 'Боли в коленях / суставах' },
+                { id: 'back', label: 'Проблемы со спиной / позвоночником' },
+                { id: 'hypertension', label: 'Гипертония / давление' },
+                { id: 'injuries', label: 'Недавние травмы' },
               ].map(h => (
                 <button
                   type="button"
                   key={h.id}
                   onClick={() => handleToggleHealth(h.id)}
-                  className={`p-2.5 rounded-xl text-left border text-xs font-bold transition-all ${
+                  className={`p-3 rounded-xl text-xs font-semibold text-left border transition-all flex items-center justify-between ${
                     healthIssues.includes(h.id)
                       ? 'bg-amber-500/15 border-amber-500/40 text-amber-300'
-                      : 'bg-[#17171d] border-white/[0.08] text-zinc-400'
+                      : 'bg-[#17171d] border-white/[0.08] text-zinc-400 hover:text-white'
                   }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span>{h.label}</span>
-                    {healthIssues.includes(h.id) && <CheckCircle2 className="w-3.5 h-3.5 text-amber-400" />}
-                  </div>
+                  <span>{h.label}</span>
+                  {healthIssues.includes(h.id) && (
+                    <CheckCircle2 className="w-4 h-4 text-amber-400" />
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Submit */}
+          {/* Submit CTA */}
           <button
             type="submit"
             disabled={submitting}
-            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-bold bg-white hover:bg-zinc-200 text-zinc-950 transition-all shadow-lg active:scale-95 disabled:opacity-50"
+            className="w-full py-4 rounded-xl text-sm font-black bg-white hover:bg-zinc-200 text-zinc-950 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50"
           >
-            <span>{submitting ? 'Создание программы...' : 'Сформировать программу тренировок'}</span>
+            <span>{submitting ? 'Генерация персональной программы...' : 'Сгенерировать программу тренировок'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </form>

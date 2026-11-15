@@ -4,6 +4,7 @@ import {
   DayMeals,
   WeightEntry,
   CatalogExercise,
+  CatalogMeal,
   DashboardResponse,
   PlanExercise,
 } from '../types';
@@ -51,7 +52,22 @@ export const api = {
   },
 
   // Onboarding
-  async submitOnboarding(data: Record<string, any>): Promise<{ ok: boolean; user: UserProfile; hasMedicalFlags: boolean }> {
+  async submitOnboarding(data: {
+    name?: string;
+    gender: string;
+    age: number;
+    height: number;
+    weight: number;
+    targetWeight: number;
+    goal: string;
+    level: string;
+    equipment: string;
+    daysPerWeek: number;
+    workoutDuration: number;
+    preferredTime: string;
+    isVegan: boolean;
+    healthIssues: string[];
+  }): Promise<{ ok: boolean; user: UserProfile }> {
     return request('/api/onboarding', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -64,24 +80,21 @@ export const api = {
   },
 
   // Workouts
-  async getWorkouts(day?: number, date?: string): Promise<{
-    user: UserProfile;
-    selectedDay: number;
+  async getWorkouts(day?: number): Promise<{
     workout: WorkoutDay;
     allDays: WorkoutDay[];
     completedDates: string[];
+    user: UserProfile;
+    selectedDay: number;
   }> {
-    const params = new URLSearchParams();
-    if (day !== undefined) params.set('day', String(day));
-    if (date) params.set('date', date);
-    const q = params.toString() ? `?${params.toString()}` : '';
-    return request(`/api/workouts${q}`);
+    const qs = day ? `?day=${day}` : '';
+    return request(`/api/workouts${qs}`);
   },
 
-  async completeWorkout(day: number, date?: string, completed = true, feeling = 'good', energy = 8): Promise<{ ok: boolean; message: string }> {
+  async completeWorkout(day: number, date?: string, completed: boolean = true): Promise<{ ok: boolean; completed: boolean; date?: string }> {
     return request('/api/workouts/complete', {
       method: 'POST',
-      body: JSON.stringify({ day, date, completed, feeling, energy }),
+      body: JSON.stringify({ day, date, completed }),
     });
   },
 
@@ -92,30 +105,30 @@ export const api = {
     });
   },
 
-  async rescheduleWorkout(fromDay: number, toDay: number): Promise<{ ok: boolean; message: string }> {
+  async rescheduleWorkout(fromDay: number, toDay: number): Promise<{ ok: boolean; fromDay: number; toDay: number }> {
     return request('/api/workouts/reschedule', {
       method: 'POST',
       body: JSON.stringify({ fromDay, toDay }),
     });
   },
 
-  async saveWorkoutNote(day: number, note: string): Promise<{ ok: boolean; message: string }> {
+  async saveWorkoutNote(day: number, notes: string): Promise<{ ok: boolean }> {
     return request('/api/workouts/note', {
       method: 'POST',
-      body: JSON.stringify({ day, note }),
+      body: JSON.stringify({ day, notes }),
     });
   },
 
   // Nutrition
   async getNutrition(day?: number): Promise<{
-    user: UserProfile;
-    selectedDay: number;
     dayMeals: DayMeals;
+    user: UserProfile;
     waterIntake: number;
     waterTarget: number;
+    selectedDay: number;
   }> {
-    const q = day !== undefined ? `?day=${day}` : '';
-    return request(`/api/nutrition${q}`);
+    const qs = day ? `?day=${day}` : '';
+    return request(`/api/nutrition${qs}`);
   },
 
   async toggleMeal(day: number, mealId: string, eaten: boolean): Promise<{ ok: boolean; eaten: boolean }> {
@@ -125,7 +138,14 @@ export const api = {
     });
   },
 
-  async addWater(delta: number): Promise<{ ok: boolean; current: number; target: number; glasses: number }> {
+  async addMealToDay(day: number, mealId: string): Promise<{ ok: boolean; item: any }> {
+    return request('/api/nutrition/add', {
+      method: 'POST',
+      body: JSON.stringify({ day, mealId }),
+    });
+  },
+
+  async addWater(delta: number = 330): Promise<{ ok: boolean; current: number; delta: number }> {
     return request('/api/water/add', {
       method: 'POST',
       body: JSON.stringify({ delta }),
@@ -150,11 +170,12 @@ export const api = {
   },
 
   // Catalog
-  async getCatalog(params: { q?: string; muscle?: string; equipment?: string; difficulty?: string } = {}): Promise<{
-    exercises: CatalogExercise[];
-    muscles: string[];
-    equipments: string[];
-  }> {
+  async getCatalog(params: {
+    q?: string;
+    muscle?: string;
+    equipment?: string;
+    difficulty?: string;
+  } = {}): Promise<{ exercises: CatalogExercise[] }> {
     const searchParams = new URLSearchParams();
     if (params.q) searchParams.set('q', params.q);
     if (params.muscle) searchParams.set('muscle', params.muscle);
@@ -162,6 +183,19 @@ export const api = {
     if (params.difficulty) searchParams.set('difficulty', params.difficulty);
     const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
     return request(`/api/catalog${qs}`);
+  },
+
+  async getCatalogMeals(params: {
+    q?: string;
+    slot?: string;
+    vegan?: boolean;
+  } = {}): Promise<{ meals: CatalogMeal[] }> {
+    const searchParams = new URLSearchParams();
+    if (params.q) searchParams.set('q', params.q);
+    if (params.slot) searchParams.set('slot', params.slot);
+    if (params.vegan) searchParams.set('vegan', 'true');
+    const qs = searchParams.toString() ? `?${searchParams.toString()}` : '';
+    return request(`/api/catalog/meals${qs}`);
   },
 
   async getExerciseDetail(id: string): Promise<{ exercise: CatalogExercise }> {
@@ -191,6 +225,8 @@ export const api = {
   },
 
   async resetDemo(): Promise<{ ok: boolean }> {
-    return request('/api/demo/reset', { method: 'POST' });
+    const res = await request<{ ok: boolean }>('/api/demo/reset', { method: 'POST' });
+    window.dispatchEvent(new CustomEvent("pulsefit:reset"));
+    return res;
   },
 };

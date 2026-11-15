@@ -27,7 +27,9 @@ interface WorkoutsPageProps {
 export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefresh }) => {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(initialDay || 1);
+  const today = new Date();
+  const todayIso = today.getDay() === 0 ? 7 : today.getDay();
+  const [selectedDay, setSelectedDay] = useState(initialDay || todayIso);
   const [workout, setWorkout] = useState<WorkoutDay | null>(null);
   const [allDays, setAllDays] = useState<WorkoutDay[]>([]);
   const [completedDates, setCompletedDates] = useState<string[]>([]);
@@ -81,7 +83,6 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
   }, [selectedDay]);
 
   // Calendar date math
-  const today = new Date();
   const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
 
   const monthsRu = [
@@ -526,11 +527,11 @@ export const WorkoutsPage: React.FC<WorkoutsPageProps> = ({ initialDay, onRefres
                               {user?.hasHealthIssues && (
                                 isContra ? (
                                   <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/20 text-rose-300 border border-rose-500/40">
-                                    ✕ Противопоказано
+                                    ⚠️ Нельзя выполнять при ограничениях
                                   </span>
                                 ) : (
                                   <span className="flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                                    ✓ Рекомендовано
+                                    ✓ Можно выполнять
                                   </span>
                                 )
                               )}

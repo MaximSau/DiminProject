@@ -583,3 +583,37 @@ func (s *Service) SeedDemoUser(u *models.User) error {
 
 	return s.repo.Save(u)
 }
+
+// AddMealToDay добавляет блюдо из каталога в рацион указанного дня.
+func (s *Service) AddMealToDay(u *models.User, dayIndex int, mealID string) (*models.MealItem, error) {
+	if u == nil {
+		return nil, errors.New("пользователь не найден")
+	}
+	if u.Plan == nil || dayIndex < 0 || dayIndex >= len(u.Plan.Meals) {
+		return nil, fmt.Errorf("день плана питания %d не найден", dayIndex+1)
+	}
+	m, ok := s.catalog.Meal(mealID)
+	if !ok {
+		return nil, fmt.Errorf("блюдо %s не найдено в каталоге", mealID)
+	}
+
+	item := models.MealItem{
+		MealID:      m.ID,
+		Name:        m.Name,
+		Slot:        m.Slot,
+		Kcal:        m.Kcal,
+		ProteinG:    m.ProteinG,
+		FatG:        m.FatG,
+		CarbsG:      m.CarbsG,
+		Portion:     m.Portion,
+		Ingredients: m.Ingredients,
+		Prep:        m.Prep,
+		Demo:        true,
+	}
+
+	u.Plan.Meals[dayIndex].Meals = append(u.Plan.Meals[dayIndex].Meals, item)
+	if err := s.repo.Save(u); err != nil {
+		return nil, err
+	}
+	return &item, nil
+}

@@ -226,6 +226,32 @@ func TestRESTAPIEndpoints(t *testing.T) {
 		t.Errorf("expected exercises array")
 	}
 
+	// 9b. GET /api/catalog/meals
+	resp, err = client.Get(srv.URL + "/api/catalog/meals?slot=breakfast")
+	if err != nil {
+		t.Fatalf("GET /api/catalog/meals failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 for catalog meals, got %d", resp.StatusCode)
+	}
+	var mealsCatData map[string]any
+	_ = json.NewDecoder(resp.Body).Decode(&mealsCatData)
+	resp.Body.Close()
+	if mealsCatData["meals"] == nil {
+		t.Errorf("expected meals array")
+	}
+
+	// 9c. POST /api/nutrition/add
+	addReq, _ := json.Marshal(map[string]any{"day": 1, "mealId": "oatmeal-berries-chia"})
+	resp, err = client.Post(srv.URL+"/api/nutrition/add", "application/json", bytes.NewReader(addReq))
+	if err != nil {
+		t.Fatalf("POST /api/nutrition/add failed: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("expected 200 for nutrition add, got %d", resp.StatusCode)
+	}
+	resp.Body.Close()
+
 	// 10. GET /api/plan/export
 	resp, err = client.Get(srv.URL + "/api/plan/export")
 	if err != nil {
