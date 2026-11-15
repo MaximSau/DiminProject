@@ -71,8 +71,14 @@
         <div class="row">
           <div class="field" style="flex: 1;">
             <label for="weight_kg">Вес (кг)</label>
-            <input type="number" step="0.1" id="weight_kg" name="weight_kg" min="30" max="300" maxlength="5" data-maxlength="5" placeholder="75.5" required>
+            <input type="number" step="0.1" id="weight_kg" name="weight_kg" min="30" max="300" maxlength="5" data-maxlength="5" placeholder="70.0" value="{{if .User.Profile.WeightKg}}{{printf "%.1f" .User.Profile.WeightKg}}{{else}}70.0{{end}}" required>
             <span class="hint">От 30 до 300 кг</span>
+            <div class="stepper-row" style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
+              <button type="button" class="btn-step" onclick="stepWeight(-1.0)">−1.0</button>
+              <button type="button" class="btn-step" onclick="stepWeight(-0.5)">−0.5</button>
+              <button type="button" class="btn-step" onclick="stepWeight(0.5)">+0.5</button>
+              <button type="button" class="btn-step" onclick="stepWeight(1.0)">+1.0</button>
+            </div>
           </div>
           <div class="field" style="flex: 1;">
             <label for="date">Дата</label>
@@ -80,8 +86,8 @@
           </div>
         </div>
         <div class="field">
-          <label for="note">Заметка (необязательно)</label>
-          <input type="text" id="note" name="note" maxlength="150" placeholder="Например: после утренней разминки">
+          <label for="note">Заметка к измерению</label>
+          <input type="text" id="note" name="note" maxlength="150" placeholder="Например: после утренней разминки, перед завтраком">
         </div>
         <button type="submit" class="btn">Сохранить вес</button>
       </form>
@@ -192,5 +198,53 @@
       {{end}}
     </div>
   </div>
+  <!-- ИСТОРИЯ ИЗМЕРЕНИЙ ВЕСА С ЗАМЕТКАМИ -->
+  <div class="card" style="margin-top: 14px;">
+    <div class="card-tag-row">
+      <span class="badge">Журнал измерений веса</span>
+      <span class="small muted">Всего замеров: {{len .User.Progress.Weights}}</span>
+    </div>
+    <h2>История динамики веса и заметки</h2>
+    {{if .User.Progress.Weights}}
+      <div class="history-list">
+        {{range .User.Progress.Weights}}
+          <div class="history-item">
+            <div class="history-item-top">
+              <span class="font-bold" style="font-size: 16px;">{{printf "%.1f" .Kg}} кг</span>
+              <span class="small muted">{{.Date}}</span>
+            </div>
+            {{if .Note}}
+              <div class="weight-note-box" style="margin-top: 6px; padding: 6px 10px; background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                <span class="small" style="color: var(--text);">Заметка: <em>«{{.Note}}»</em></span>
+              </div>
+            {{end}}
+          </div>
+        {{end}}
+      </div>
+    {{else}}
+      <div class="empty muted small">
+        История измерений пока пуста. Зафиксируйте вес в форме выше — все замеры и личные заметки сохраняются здесь!
+      </div>
+    {{end}}
+  </div>
+
+  <script>
+    function stepWeight(delta) {
+      const el = document.getElementById('weight_kg');
+      if (!el) return;
+      let v = parseFloat(el.value);
+      if (isNaN(v)) v = 70.0;
+      v = Math.round((v + delta) * 10) / 10;
+      if (v < 30) v = 30;
+      if (v > 300) v = 300;
+      el.value = v.toFixed(1);
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      const dateEl = document.getElementById('date');
+      if (dateEl && !dateEl.value) {
+        dateEl.value = new Date().toISOString().split('T')[0];
+      }
+    });
+  </script>
 </div>
 {{end}}

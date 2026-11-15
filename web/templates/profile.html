@@ -62,22 +62,30 @@
 
         <form action="/reminders/update" method="POST">
           {{range .User.Reminders}}
-            <div class="reminder-edit-row">
-              <label class="check" style="margin: 0; flex: 1;">
+            <div class="reminder-edit-row" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border);">
+              <label class="check" style="margin: 0; flex: 1; cursor: pointer;">
                 <input type="checkbox" name="enabled_{{.ID}}" value="1" {{if .Enabled}}checked{{end}}>
                 <div>
                   <strong>{{.Title}}</strong>
                   <span class="small muted" style="display: block;">{{.Note}}</span>
                 </div>
               </label>
-              <div style="width: 110px;">
-                <input type="time" name="time_{{.ID}}" value="{{.Time}}" style="padding: 6px 8px; font-size: 14px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <select name="days_{{.ID}}" style="width: 140px; font-size: 13px; padding: 6px 8px;">
+                  <option value="daily" {{if eq .Days "daily"}}selected{{end}}>Каждый день</option>
+                  <option value="workouts" {{if eq .Days "workouts"}}selected{{end}}>В дни тренировок</option>
+                </select>
+                <input type="time" name="time_{{.ID}}" value="{{.Time}}" style="width: 95px; padding: 6px 8px; font-size: 14px;">
               </div>
             </div>
           {{end}}
 
-          <button type="submit" class="btn secondary" style="margin-top: 14px;">
-            Сохранить напоминания
+          <p class="small muted" style="margin-top: 12px;">
+            Польза режима: стабильное время тренировок снижает прокрастинацию и формирует привычку, стакан воды поддерживает гидробаланс, а сон по графику ускоряет выработку соматотропина для восстановления мышц.
+          </p>
+
+          <button type="submit" class="btn secondary" style="margin-top: 10px;">
+            Сохранить настройки режима
           </button>
         </form>
       </div>
@@ -176,18 +184,24 @@
           <div class="field" style="flex: 1;">
             <label for="workouts_per_week">Тренировок в неделю</label>
             <select id="workouts_per_week" name="workouts_per_week">
+              <option value="1" {{if eq .User.Profile.WorkoutsPerWeek 1}}selected{{end}}>1 раз в неделю</option>
               <option value="2" {{if eq .User.Profile.WorkoutsPerWeek 2}}selected{{end}}>2 раза в неделю</option>
               <option value="3" {{if or (eq .User.Profile.WorkoutsPerWeek 3) (eq .User.Profile.WorkoutsPerWeek 0)}}selected{{end}}>3 раза в неделю (рекомендуется)</option>
               <option value="4" {{if eq .User.Profile.WorkoutsPerWeek 4}}selected{{end}}>4 раза в неделю</option>
               <option value="5" {{if eq .User.Profile.WorkoutsPerWeek 5}}selected{{end}}>5 раз в неделю</option>
+              <option value="6" {{if eq .User.Profile.WorkoutsPerWeek 6}}selected{{end}}>6 раз в неделю</option>
+              <option value="7" {{if eq .User.Profile.WorkoutsPerWeek 7}}selected{{end}}>7 раз в неделю (ежедневно)</option>
             </select>
           </div>
           <div class="field" style="flex: 1;">
             <label for="session_minutes">Длительность тренировки (мин)</label>
             <select id="session_minutes" name="session_minutes">
-              <option value="25" {{if eq .User.Profile.SessionMinutes 25}}selected{{end}}>25 минут (быстро)</option>
-              <option value="35" {{if or (eq .User.Profile.SessionMinutes 35) (eq .User.Profile.SessionMinutes 0)}}selected{{end}}>35 минут (оптимально)</option>
-              <option value="50" {{if eq .User.Profile.SessionMinutes 50}}selected{{end}}>50 минут (полная)</option>
+              <option value="20" {{if eq .User.Profile.SessionMinutes 20}}selected{{end}}>20 минут (быстрый экспресс)</option>
+              <option value="30" {{if eq .User.Profile.SessionMinutes 30}}selected{{end}}>30 минут (короткая)</option>
+              <option value="45" {{if or (eq .User.Profile.SessionMinutes 45) (eq .User.Profile.SessionMinutes 0)}}selected{{end}}>45 минут (оптимально)</option>
+              <option value="60" {{if eq .User.Profile.SessionMinutes 60}}selected{{end}}>60 минут (полная)</option>
+              <option value="75" {{if eq .User.Profile.SessionMinutes 75}}selected{{end}}>75 минут (расширенная)</option>
+              <option value="90" {{if eq .User.Profile.SessionMinutes 90}}selected{{end}}>90 минут (максимальная)</option>
             </select>
           </div>
         </div>

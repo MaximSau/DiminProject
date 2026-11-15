@@ -74,53 +74,50 @@
 }
 
 [data-theme="light"] {
-  /* Светлая монохромная тема (Pure White Canvas & Pitch Black) */
-  --bg: #fafafa;
-  --bg-secondary: #f4f4f5;
+  /* Светлая тема (Crisp High-Contrast Modern Tech) */
+  --bg: #f8fafc;
+  --bg-secondary: #f1f5f9;
   --card: #ffffff;
   --card-rgb: 255, 255, 255;
-  --card-hover: #fafafa;
-  --text: #09090b;
-  --text-secondary: #52525b;
-  --muted: #71717a;
+  --card-hover: #f8fafc;
+  --text: #0f172a;
+  --text-secondary: #475569;
+  --muted: #64748b;
 
-  --accent: #09090b;
+  --accent: #0f172a;
   --accent-contrast: #ffffff;
-  --accent-hover: #27272a;
-  --accent-soft: rgba(0, 0, 0, 0.06);
-  --accent-gradient-start: #18181b;
-  --accent-gradient-end: #09090b;
-  --accent-glow: rgba(0, 0, 0, 0.15);
+  --accent-hover: #1e293b;
+  --accent-soft: rgba(15, 23, 42, 0.06);
+  --accent-gradient-start: #1e293b;
+  --accent-gradient-end: #0f172a;
+  --accent-glow: rgba(15, 23, 42, 0.12);
 
-  --border: #e4e4e7;
-  --border-light: #f4f4f5;
-  --border-focus: #3b82f6;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-focus: #0f172a;
 
-  --success: #09090b;
-  --success-soft: rgba(16, 185, 129, 0.14);
+  --success: #16a34a;
+  --success-soft: #f0fdf4;
 
-  --success: #09090b;
-  --success-soft: #f4f4f5;
-
-  --warning-bg: #f4f4f5;
-  --warning-border: #d4d4d8;
-  --warning-text: #09090b;
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
 
   --danger-bg: #fef2f2;
   --danger-border: #fecaca;
   --danger-text: #dc2626;
 
-  --water-accent: #09090b;
-  --water-accent-end: #52525b;
-  --water-soft: #f4f4f5;
-  --water-glow: rgba(0, 0, 0, 0.1);
+  --water-accent: #2563eb;
+  --water-accent-end: #1d4ed8;
+  --water-soft: rgba(37, 99, 235, 0.08);
+  --water-glow: rgba(37, 99, 235, 0.2);
 
-  --gain-accent: #09090b;
-  --gain-soft: #f4f4f5;
+  --gain-accent: #0f172a;
+  --gain-soft: #f1f5f9;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
-  --shadow-hover: 0 12px 28px -4px rgba(0, 0, 0, 0.12), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--border);
+  --shadow-hover: 0 12px 28px -4px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--border-focus);
   --shadow-lg: 0 20px 35px -8px rgba(0, 0, 0, 0.15);
 }
 
@@ -1762,7 +1759,7 @@ form input[type="submit"]:not([class]):active {
 .small { font-size: 13px; }
 .muted { color: var(--muted); }
 .empty { text-align: center; padding: 36px 14px; }
-a.link { color: #ffffff; text-decoration: underline; font-weight: 600; }
+a.link { color: var(--accent); text-decoration: underline; font-weight: 600; }
 a.link:hover { color: #e4e4e7; }
 
 /* =========================================================================
@@ -1865,7 +1862,7 @@ a.link:hover { color: #e4e4e7; }
   align-items: center;
   gap: 6px;
   background: var(--bg-secondary) !important;
-  color: #ffffff !important;
+  color: var(--text) !important;
   border: 1px solid var(--border) !important;
   border-radius: var(--radius-md) !important;
   padding: 10px 18px !important;
@@ -1878,16 +1875,16 @@ a.link:hover { color: #e4e4e7; }
 }
 
 .water-btn svg {
-  color: #ffffff;
+  color: var(--text);
   transition: transform 0.2s ease;
 }
 
 .water-btn:hover {
-  background: #1e1e24 !important;
-  color: #ffffff !important;
-  border-color: #ffffff !important;
+  background: var(--card-hover) !important;
+  color: var(--text) !important;
+  border-color: var(--accent) !important;
   transform: translateY(-2px) !important;
-  box-shadow: 0 4px 14px rgba(255, 255, 255, 0.12) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 .water-btn:hover svg {
@@ -1907,9 +1904,9 @@ a.link:hover { color: #e4e4e7; }
 }
 
 .water-btn-sm:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
+  background: var(--accent-soft) !important;
+  color: var(--text) !important;
+  border-color: var(--accent) !important;
 }
 
 /* Микро-анимация обновления счетчика воды */
@@ -2512,4 +2509,117 @@ a.link:hover { color: #e4e4e7; }
 
 .day-tab.active .status-check.done {
   color: #000000;
+}
+
+/* =========================================================================
+   LIGHT THEME ENHANCEMENTS & COMPONENT STYLING
+   ========================================================================= */
+[data-theme="light"] .badge {
+  background: #f1f5f9;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .badge.normal {
+  background: #0f172a;
+  color: #ffffff;
+  border-color: #0f172a;
+}
+
+[data-theme="light"] .badge.underweight {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .badge.overweight {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+[data-theme="light"] .badge.obese {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+[data-theme="light"] .goal-title {
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .goal-icon-wrap {
+  background: rgba(15, 23, 42, 0.08);
+  color: #0f172a !important;
+}
+
+[data-theme="light"] .play-icon-wrap {
+  background: #0f172a;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .video-link-card:hover {
+  background: #f1f5f9;
+  border-color: #0f172a;
+}
+
+[data-theme="light"] .desktop-nav-link.active {
+  background: #e2e8f0;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .bmi-scale-seg.normal {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+/* Стили для кнопок-шагов веса */
+.stepper-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.btn-step {
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 5px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-step:hover {
+  background: var(--card-hover);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.btn-step:active {
+  transform: scale(0.96);
+}
+
+/* Стилизация водного баланса в стаканах */
+.water-glasses-row {
+  margin-bottom: 4px;
+}
+
+.water-glasses-count {
+  font-size: 18px;
+  color: var(--text);
+}
+
+.water-glasses-count strong {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+[data-theme="light"] .water-glasses-count strong {
+  color: #0f172a;
 }

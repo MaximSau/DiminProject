@@ -136,18 +136,24 @@
           <div class="field">
             <label for="workouts_per_week">Занятий в неделю</label>
             <select id="workouts_per_week" name="workouts_per_week">
-              <option value="2" {{if eq .User.Profile.WorkoutsPerWeek 2}}selected{{end}}>2 тренировки</option>
+              <option value="1" {{if eq .User.Profile.WorkoutsPerWeek 1}}selected{{end}}>1 тренировка в неделю</option>
+              <option value="2" {{if eq .User.Profile.WorkoutsPerWeek 2}}selected{{end}}>2 тренировки в неделю</option>
               <option value="3" {{if or (eq .User.Profile.WorkoutsPerWeek 3) (eq .User.Profile.WorkoutsPerWeek 0)}}selected{{end}}>3 тренировки (рекомендуется)</option>
-              <option value="4" {{if eq .User.Profile.WorkoutsPerWeek 4}}selected{{end}}>4 тренировки</option>
-              <option value="5" {{if eq .User.Profile.WorkoutsPerWeek 5}}selected{{end}}>5 тренировок</option>
+              <option value="4" {{if eq .User.Profile.WorkoutsPerWeek 4}}selected{{end}}>4 тренировки в неделю</option>
+              <option value="5" {{if eq .User.Profile.WorkoutsPerWeek 5}}selected{{end}}>5 тренировок в неделю</option>
+              <option value="6" {{if eq .User.Profile.WorkoutsPerWeek 6}}selected{{end}}>6 тренировок в неделю</option>
+              <option value="7" {{if eq .User.Profile.WorkoutsPerWeek 7}}selected{{end}}>7 тренировок в неделю (ежедневно)</option>
             </select>
           </div>
           <div class="field">
             <label for="session_minutes">Длительность (мин)</label>
             <select id="session_minutes" name="session_minutes">
-              <option value="25" {{if eq .User.Profile.SessionMinutes 25}}selected{{end}}>25 минут (быстро)</option>
-              <option value="35" {{if or (eq .User.Profile.SessionMinutes 35) (eq .User.Profile.SessionMinutes 0)}}selected{{end}}>35 минут (оптимально)</option>
-              <option value="50" {{if eq .User.Profile.SessionMinutes 50}}selected{{end}}>50 минут (полная)</option>
+              <option value="20" {{if eq .User.Profile.SessionMinutes 20}}selected{{end}}>20 минут (быстрый экспресс)</option>
+              <option value="30" {{if eq .User.Profile.SessionMinutes 30}}selected{{end}}>30 минут (короткая)</option>
+              <option value="45" {{if or (eq .User.Profile.SessionMinutes 45) (eq .User.Profile.SessionMinutes 0)}}selected{{end}}>45 минут (оптимально)</option>
+              <option value="60" {{if eq .User.Profile.SessionMinutes 60}}selected{{end}}>60 минут (полная)</option>
+              <option value="75" {{if eq .User.Profile.SessionMinutes 75}}selected{{end}}>75 минут (расширенная)</option>
+              <option value="90" {{if eq .User.Profile.SessionMinutes 90}}selected{{end}}>90 минут (максимальная)</option>
             </select>
           </div>
         </div>

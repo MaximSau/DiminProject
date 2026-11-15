@@ -101,3 +101,119 @@ func TestServiceFullFlow(t *testing.T) {
 		t.Fatalf("DeleteWeight failed: %v", err)
 	}
 }
+
+
+func TestPlanDaysAndGoalAdaptation(t *testing.T) {
+	cat, err := LoadCatalog()
+	if err != nil {
+		t.Fatalf("LoadCatalog failed: %v", err)
+	}
+
+	// 1. Проверяем генерацию от 1 до 7 дней в неделю
+	for daysCount := 1; daysCount <= 7; daysCount++ {
+		p := models.Profile{
+			Goal:            models.GoalLose,
+			WorkoutsPerWeek: daysCount,
+			SessionMinutes:  45,
+			Level:           models.LevelBeginner,
+			Equipment:       models.EquipNone,
+		}
+		plan, err := cat.BuildPlan(p)
+		if err != nil {
+			t.Fatalf("BuildPlan failed for %d days: %v", daysCount, err)
+		}
+		trainingDays := 0
+		for _, d := range plan.Days {
+			if !d.Rest {
+				trainingDays++
+			}
+		}
+		if trainingDays != daysCount {
+			t.Errorf("expected %d training days, got %d", daysCount, trainingDays)
+		}
+	}
+
+	// 2. Проверяем адаптацию GoalLose: кардио-финишер присутствует, повторения 12-15
+	pLose := models.Profile{
+		Goal:            models.GoalLose,
+		WorkoutsPerWeek: 3,
+		SessionMinutes:  45,
+		Level:           models.LevelBeginner,
+		Equipment:       models.EquipNone,
+	}
+	planLose, err := cat.BuildPlan(pLose)
+	if err != nil {
+		t.Fatalf("BuildPlan lose failed: %v", err)
+	}
+	hasCardio := false
+	for _, d := range planLose.Days {
+		if !d.Rest {
+			for _, ex := range d.Exercises {
+				if ex.Kind == "cardio" {
+					hasCardio = true
+				}
+				if ex.Kind == "strength" && ex.Reps != "12–15" {
+					t.Errorf("expected GoalLose strength reps 12–15, got %s", ex.Reps)
+				}
+			}
+		}
+	}
+	if !hasCardio {
+		t.Errorf("expected cardio in GoalLose workout plan")
+	}
+
+	// 3. Проверяем адаптацию GoalGain: отдых 75 сек, повторения 8-10
+	pGain := models.Profile{
+		Goal:            models.GoalGain,
+		WorkoutsPerWeek: 3,
+		SessionMinutes:  45,
+		Level:           models.LevelBeginner,
+		Equipment:       models.EquipNone,
+	}
+	planGain, err := cat.BuildPlan(pGain)
+	if err != nil {
+		t.Fatalf("BuildPlan gain failed: %v", err)
+	}
+	for _, d := range planGain.Days {
+		if !d.Rest {
+			for _, ex := range d.Exercises {
+				if ex.Kind == "strength" {
+					if ex.RestSec != 75 {
+						t.Errorf("expected GoalGain rest 75, got %d", ex.RestSec)
+					}
+					if ex.Reps != "8–10" {
+						t.Errorf("expected GoalGain reps 8–10, got %s", ex.Reps)
+					}
+				}
+			}
+		}
+	}
+
+	// 4. Проверяем фильтрацию веганства
+	pVegan := models.Profile{
+		Goal:            models.GoalLose,
+		WorkoutsPerWeek: 3,
+		SessionMinutes:  45,
+		DietPreferences: []string{"vegan"},
+	}
+	planVegan, err := cat.BuildPlan(pVegan)
+	if err != nil {
+		t.Fatalf("BuildPlan vegan failed: %v", err)
+	}
+	for _, d := range planVegan.Meals {
+		for _, m := range d.Meals {
+			catMeal, ok := cat.Meal(m.MealID)
+			if ok {
+				isVegan := false
+				for _, tag := range catMeal.Tags {
+					if tag == "vegan" {
+						isVegan = true
+					}
+				}
+				if !isVegan {
+					t.Errorf("expected vegan meal, but %s is not vegan", m.Name)
+				}
+			}
+		}
+	}
+}

@@ -90,10 +90,20 @@ func (s *Service) SaveOnboarding(u *models.User, p models.Profile) error {
 		u.Plan = plan
 		u.Profile.PlanVersion = plan.Version
 
-		// Базовые напоминания
+		// Базовые напоминания с учётом предпочитаемого времени тренировок
+		workoutTime := "18:30"
+		switch p.PreferredTime {
+		case models.TimeMorning:
+			workoutTime = "07:30"
+		case models.TimeDay:
+			workoutTime = "13:00"
+		case models.TimeEvening:
+			workoutTime = "18:30"
+		}
+
 		u.Reminders = []models.Reminder{
-			{ID: "rem-workout", Kind: "workout", Title: "Тренировка по плану", Time: "18:30", Days: "workouts", Enabled: true, Note: "Разминка и основная часть"},
-			{ID: "rem-water", Kind: "water", Title: "Стакан чистой воды", Time: "11:00", Days: "daily", Enabled: true, Note: "Поддерживайте водный баланс"},
+			{ID: "rem-workout", Kind: "workout", Title: "Тренировка по плану", Time: workoutTime, Days: "workouts", Enabled: true, Note: "Разминка и основная часть"},
+			{ID: "rem-water", Kind: "water", Title: "Стакан чистой воды (330 мл)", Time: "11:00", Days: "daily", Enabled: true, Note: "Поддерживайте водный баланс"},
 			{ID: "rem-sleep", Kind: "sleep", Title: "Подготовка ко сну", Time: "22:30", Days: "daily", Enabled: true, Note: "Отложите экран за 30 минут"},
 		}
 	}
@@ -114,6 +124,38 @@ func (s *Service) UpdateProfile(u *models.User, p models.Profile) error {
 	p.PlanVersion = u.Profile.PlanVersion
 
 	u.Profile = p
+
+	// Если пользователь уже прошёл онбординг и нет медицинских блоков,
+	// автоматически пересоздаём план, чтобы изменения параметров (дней, цели, оборудования, питания)
+	// сразу вступили в силу без ручного сброса
+	if u.Profile.Onboarded && !u.Profile.MedicalBlocked() {
+		plan, err := s.catalog.BuildPlan(u.Profile)
+		if err == nil {
+			u.Plan = plan
+			u.Profile.PlanVersion = plan.Version
+		} else {
+			slog.Error("ошибка пересоздания плана при обновлении профиля", "error", err, "user_id", u.Profile.ID)
+		}
+	}
+
+	// Синхронизируем время тренировочного напоминания с предпочтительным временем, если оно задано
+	if p.PreferredTime != "" {
+		newTime := "18:30"
+		switch p.PreferredTime {
+		case models.TimeMorning:
+			newTime = "07:30"
+		case models.TimeDay:
+			newTime = "13:00"
+		case models.TimeEvening:
+			newTime = "18:30"
+		}
+		for i := range u.Reminders {
+			if u.Reminders[i].Kind == "workout" {
+				u.Reminders[i].Time = newTime
+			}
+		}
+	}
+
 	return s.repo.Save(u)
 }
 
@@ -255,7 +297,7 @@ func (s *Service) SwapExercise(u *models.User, dayIndex int, currentExerciseID s
 		return nil, errors.New("подходящая замена не найдена в каталоге")
 	}
 
-	newEx := toPlanExercise(candidates[int(time.Now().UnixNano())%len(candidates)])
+	newEx := toPlanExerciseGoal(candidates[int(time.Now().UnixNano())%len(candidates)], u.Profile.Goal)
 	day.Exercises[targetIdx] = newEx
 	day.Minutes = estimateMinutes(day.Exercises)
 	day.Focus = focusFor(day.Exercises)
@@ -418,7 +460,7 @@ func (s *Service) SeedDemoUser(u *models.User) error {
 	u.Profile.Pace = "moderate"
 	u.Profile.Level = models.LevelBeginner
 	u.Profile.WorkoutsPerWeek = 3
-	u.Profile.SessionMinutes = 35
+	u.Profile.SessionMinutes = 45
 	u.Profile.Equipment = models.EquipHome
 	u.Profile.PreferredTime = "evening"
 	u.Profile.ActivityLevel = "medium"
@@ -463,11 +505,11 @@ func (s *Service) SeedDemoUser(u *models.User) error {
 	if u.Progress.Water == nil {
 		u.Progress.Water = make(map[string]int)
 	}
-	u.Progress.Water[now.Format("2006-01-02")] = 1750
+	u.Progress.Water[now.Format("2006-01-02")] = 1650
 
 	u.Reminders = []models.Reminder{
 		{ID: "rem-workout", Kind: "workout", Title: "Тренировка по плану", Time: "18:30", Days: "workouts", Enabled: true, Note: "Разминка и основная часть"},
-		{ID: "rem-water", Kind: "water", Title: "Стакан чистой воды", Time: "11:00", Days: "daily", Enabled: true, Note: "Поддерживайте водный баланс"},
+		{ID: "rem-water", Kind: "water", Title: "Стакан чистой воды (330 мл)", Time: "11:00", Days: "daily", Enabled: true, Note: "Поддерживайте водный баланс"},
 		{ID: "rem-sleep", Kind: "sleep", Title: "Подготовка ко сну", Time: "22:30", Days: "daily", Enabled: true, Note: "Отложите экран за 30 минут"},
 	}
 

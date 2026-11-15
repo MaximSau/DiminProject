@@ -132,6 +132,7 @@
         const data = await resp.json();
         if (data && data.ok) {
           const curEl = document.getElementById('water-current-val');
+          const glassesEl = document.getElementById('water-glasses-val');
           const pctEl = document.getElementById('water-percent-val');
           const barEl = document.getElementById('water-progress-bar');
           if (curEl) {
@@ -139,6 +140,9 @@
             curEl.classList.remove('num-bump');
             void curEl.offsetWidth;
             curEl.classList.add('num-bump');
+          }
+          if (glassesEl && data.glasses !== undefined) {
+            glassesEl.textContent = data.glasses;
           }
           if (pctEl) pctEl.textContent = data.percent + '%';
           if (barEl) {
@@ -150,7 +154,8 @@
           if (window.navigator && window.navigator.vibrate) {
             window.navigator.vibrate(18);
           }
-          showToast('Сохранено', delta > 0 ? '+' + delta + ' мл воды' : delta + ' мл воды');
+          const toastMsg = delta > 0 ? (delta >= 660 ? '+2 стакана (' + delta + ' мл)' : '+1 стакан (' + delta + ' мл)') : (delta + ' мл');
+          showToast('Сохранено', toastMsg);
         }
       } catch (err) {
         console.error('Water update failed', err);

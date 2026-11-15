@@ -93,13 +93,12 @@
         </div>
         <h2>Выпито за сегодня</h2>
         <div class="water-stat-row">
-          <div class="water-numbers">
-            <span class="water-current" id="water-current-val">{{waterToday .User}}</span>
-            <span class="water-divider">/</span>
-            <span class="water-target" id="water-target-val">{{waterTarget .User.Profile}}</span>
-            <span class="water-unit">мл</span>
+          <div class="water-glasses-row">
+            <span class="water-glasses-count"><strong id="water-glasses-val">{{waterGlasses .User}}</strong> из {{waterTargetGlasses .User.Profile}} стаканов</span>
           </div>
-          <span class="small muted">норма по формуле веса</span>
+          <div class="water-numbers">
+            <span class="small muted">(~<span class="water-current" id="water-current-val">{{waterToday .User}}</span> из <span class="water-target" id="water-target-val">{{waterTarget .User.Profile}}</span> мл, 1 стакан = 330 мл)</span>
+          </div>
         </div>
 
         <div class="water-progress-track">
@@ -107,28 +106,28 @@
         </div>
 
         <div class="water-actions-row">
-          <button type="button" class="water-btn" onclick="changeWaterAjax(250, event)">
+          <button type="button" class="water-btn" onclick="changeWaterAjax(330, event)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-            <span>+250 мл</span>
+            <span>+1 стакан (330 мл)</span>
           </button>
-          <button type="button" class="water-btn" onclick="changeWaterAjax(500, event)">
+          <button type="button" class="water-btn" onclick="changeWaterAjax(660, event)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-            <span>+500 мл</span>
+            <span>+2 стакана (660 мл)</span>
           </button>
-          <button type="button" class="water-btn water-btn-sm" onclick="changeWaterAjax(-250, event)" title="Уменьшить на 250 мл">
-            <span>−250 мл</span>
+          <button type="button" class="water-btn water-btn-sm" onclick="changeWaterAjax(-330, event)" title="Уменьшить на 1 стакан (330 мл)">
+            <span>−1 стакан</span>
           </button>
         </div>
       </div>
 
-      <!-- РАЦИОН ДНЯ С AJAX ЧЕКБОКСАМИ -->
+      <!-- РАЦИОН НА ДЕНЬ С AJAX ЧЕКБОКСАМИ -->
       {{with .Extra.TodayMeals}}
         <div class="card" id="meals-section">
           <div class="card-tag-row">
             <span class="badge">Питание на сегодня</span>
             <a href="/nutrition?day={{$.TodayIdx}}" class="link small">Все блюда недели →</a>
           </div>
-          <h2>Рацион дня</h2>
+          <h2>Рацион на день</h2>
           <p class="small muted">Отмечайте приёмы пищи без перезагрузки экрана:</p>
 
           <div class="meal-check-list">

@@ -100,6 +100,16 @@ func (c *Catalog) ExercisesByKind(pool []models.Exercise, kind string) []models.
 	return out
 }
 
+func (c *Catalog) MealsBySlot(slot string) []models.Meal {
+	var out []models.Meal
+	for _, m := range c.Meals {
+		if m.Slot == slot {
+			out = append(out, m)
+		}
+	}
+	return out
+}
+
 func (c *Catalog) SuitableMeals(slots []string, prefs, allergies []string, avoid string) map[string][]models.Meal {
 	wantSlots := map[string]bool{}
 	for _, s := range slots {
@@ -144,25 +154,21 @@ func conflicts(m models.Meal, blocked, avoidWords map[string]bool) bool {
 	return false
 }
 
+// matchesPrefs проверяет соответствие диетическим фильтрам строго (веганство, вегетарианство, лактоза, глютен).
 func matchesPrefs(m models.Meal, allowed map[string]bool) bool {
-	for _, tag := range m.Tags {
-		if allowed[tag] {
-			return true
-		}
+	if allowed["vegan"] && !hasTag(m.Tags, "vegan") {
+		return false
 	}
-	if allowed["lactose-free"] && !hasTag(m.Tags, "lactose") {
-		return true
+	if allowed["vegetarian"] && !hasTag(m.Tags, "vegetarian") && !hasTag(m.Tags, "vegan") {
+		return false
 	}
-	if allowed["gluten-free"] && !hasTag(m.Tags, "gluten") {
-		return true
+	if allowed["lactose-free"] && hasTag(m.Tags, "lactose") {
+		return false
 	}
-	if allowed["vegetarian"] && (hasTag(m.Tags, "vegetarian") || hasTag(m.Tags, "vegan")) {
-		return true
+	if allowed["gluten-free"] && hasTag(m.Tags, "gluten") {
+		return false
 	}
-	if allowed["vegan"] && hasTag(m.Tags, "vegan") {
-		return true
-	}
-	return false
+	return true
 }
 
 func hasTag(tags []string, want string) bool {
@@ -212,11 +218,14 @@ func (c *Catalog) BuildPlan(p models.Profile) (*models.Plan, error) {
 	if p.Goal == "" {
 		p.Goal = models.GoalLose
 	}
-	if p.WorkoutsPerWeek <= 0 {
+	if p.WorkoutsPerWeek < 1 {
 		p.WorkoutsPerWeek = 3
 	}
+	if p.WorkoutsPerWeek > 7 {
+		p.WorkoutsPerWeek = 7
+	}
 	if p.SessionMinutes <= 0 {
-		p.SessionMinutes = 40
+		p.SessionMinutes = 45
 	}
 	if p.Level == "" {
 		p.Level = models.LevelBeginner
@@ -253,10 +262,56 @@ func (c *Catalog) BuildPlan(p models.Profile) (*models.Plan, error) {
 	return plan, nil
 }
 
+// Хелперы категорий мышц для построения сплитов без повторов одних и тех же ног.
+func hasAnyMuscle(ex models.Exercise, needles ...string) bool {
+	for _, m := range ex.Muscles {
+		mLow := strings.ToLower(m)
+		for _, n := range needles {
+			if strings.Contains(mLow, strings.ToLower(n)) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func filterPush(pool []models.Exercise) []models.Exercise {
+	var out []models.Exercise
+	for _, ex := range pool {
+		if hasAnyMuscle(ex, "грудь", "трицепс", "плечи", "дельта") && ex.Kind == "strength" {
+			out = append(out, ex)
+		}
+	}
+	return out
+}
+
+func filterPull(pool []models.Exercise) []models.Exercise {
+	var out []models.Exercise
+	for _, ex := range pool {
+		if hasAnyMuscle(ex, "спина", "широчайшие", "бицепс", "ромбовидные", "трапеции") && ex.Kind == "strength" {
+			out = append(out, ex)
+		}
+	}
+	return out
+}
+
+func filterLegs(pool []models.Exercise) []models.Exercise {
+	var out []models.Exercise
+	for _, ex := range pool {
+		if hasAnyMuscle(ex, "ноги", "квадрицепс", "ягодицы", "икры", "задняя поверхность", "таз") && ex.Kind == "strength" {
+			out = append(out, ex)
+		}
+	}
+	return out
+}
+
 func (c *Catalog) buildWeek(p models.Profile, pool []models.Exercise) []models.PlanDay {
 	count := p.WorkoutsPerWeek
-	if count > 6 {
-		count = 6
+	if count < 1 {
+		count = 1
+	}
+	if count > 7 {
+		count = 7
 	}
 	trainingDays := spreadDays(count)
 	isTraining := map[int]bool{}
@@ -264,84 +319,307 @@ func (c *Catalog) buildWeek(p models.Profile, pool []models.Exercise) []models.P
 		isTraining[d] = true
 	}
 
-	strength := c.ExercisesByKind(pool, "strength")
-	core := c.ExercisesByKind(pool, "core")
-	mobility := c.ExercisesByKind(pool, "mobility")
-	cardio := c.ExercisesByKind(pool, "cardio")
+	pushPool := filterPush(pool)
+	pullPool := filterPull(pool)
+	legsPool := filterLegs(pool)
+	corePool := c.ExercisesByKind(pool, "core")
+	cardioPool := c.ExercisesByKind(pool, "cardio")
+	mobilityPool := c.ExercisesByKind(pool, "mobility")
 
-	perSession := p.SessionMinutes / 9
-	if perSession < 2 {
-		perSession = 2
+	// Если пулы пусты из-за ограничений, fallback на общие strength
+	allStrength := c.ExercisesByKind(pool, "strength")
+	if len(pushPool) == 0 {
+		pushPool = allStrength
 	}
-	if perSession > 5 {
-		perSession = 5
+	if len(pullPool) == 0 {
+		pullPool = allStrength
+	}
+	if len(legsPool) == 0 {
+		legsPool = allStrength
+	}
+
+	// Количество упражнений масштабируется от длительности сессии
+	targetExCount := p.SessionMinutes / 10
+	if targetExCount < 3 {
+		targetExCount = 3
+	}
+	if targetExCount > 9 {
+		targetExCount = 9
 	}
 
 	days := make([]models.PlanDay, 7)
-	strengthCursor := 0
+	trainingSeq := 0
+	pushCursor, pullCursor, legsCursor, coreCursor, cardioCursor := 0, 0, 0, 0, 0
+
 	for i := 0; i < 7; i++ {
 		days[i].Index = i
 		days[i].Title = models.WeekdayNames[i]
+
 		if !isTraining[i] {
 			days[i].Rest = true
 			days[i].Title = models.WeekdayNames[i] + " — отдых"
-			days[i].Notes = "Отдых — часть плана: мышцам нужно восстановление. Подойдёт спокойная прогулка."
+			days[i].Focus = "Восстановление и прогулка"
+			days[i].Notes = daySessionNote(p, "Отдых", true)
 			continue
 		}
 
-		var exs []models.PlanExercise
-		for k := 0; k < perSession && len(strength) > 0; k++ {
-			ex := strength[strengthCursor%len(strength)]
-			strengthCursor++
-			exs = append(exs, toPlanExercise(ex))
+		// Выбираем фокус сплита на этот тренировочный день
+		splitType, focusLabel := determineSplitDay(count, trainingSeq)
+		trainingSeq++
+
+		var sessionExs []models.PlanExercise
+
+		// 1. Разминка / мобильность в начале сессии
+		if len(mobilityPool) > 0 {
+			sessionExs = append(sessionExs, toPlanExerciseGoal(mobilityPool[i%len(mobilityPool)], p.Goal))
 		}
-		if len(core) > 0 {
-			exs = append(exs, toPlanExercise(core[(i)%len(core)]))
-		}
-		if i == 0 || len(exs) == 0 {
-			if len(mobility) > 0 {
-				exs = append([]models.PlanExercise{toPlanExercise(mobility[0])}, exs...)
+
+		// 2. Основная часть в зависимости от типа сплита
+		switch splitType {
+		case "push":
+			// Жимовой день: грудь, плечи, трицепс
+			n := targetExCount - 1
+			if p.Goal == models.GoalLose && len(cardioPool) > 0 {
+				n--
+			}
+			if len(corePool) > 0 {
+				n--
+			}
+			for k := 0; k < n && len(pushPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(pushPool[pushCursor%len(pushPool)], p.Goal))
+				pushCursor++
+			}
+		case "pull":
+			// Тяговый день: спина, бицепс
+			n := targetExCount - 1
+			if p.Goal == models.GoalLose && len(cardioPool) > 0 {
+				n--
+			}
+			if len(corePool) > 0 {
+				n--
+			}
+			for k := 0; k < n && len(pullPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(pullPool[pullCursor%len(pullPool)], p.Goal))
+				pullCursor++
+			}
+		case "legs":
+			// День ног и ягодиц
+			n := targetExCount - 1
+			if p.Goal == models.GoalLose && len(cardioPool) > 0 {
+				n--
+			}
+			if len(corePool) > 0 {
+				n--
+			}
+			for k := 0; k < n && len(legsPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(legsPool[legsCursor%len(legsPool)], p.Goal))
+				legsCursor++
+			}
+		case "upper":
+			// Верх тела: баланс push + pull
+			half := (targetExCount - 2) / 2
+			if half < 1 {
+				half = 1
+			}
+			for k := 0; k < half && len(pushPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(pushPool[pushCursor%len(pushPool)], p.Goal))
+				pushCursor++
+			}
+			for k := 0; k < half && len(pullPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(pullPool[pullCursor%len(pullPool)], p.Goal))
+				pullCursor++
+			}
+		case "lower":
+			// Низ тела + кор
+			n := targetExCount - 2
+			if n < 2 {
+				n = 2
+			}
+			for k := 0; k < n && len(legsPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(legsPool[legsCursor%len(legsPool)], p.Goal))
+				legsCursor++
+			}
+		case "fullbody":
+			// Всё тело сбалансированно
+			if len(pushPool) > 0 {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(pushPool[pushCursor%len(pushPool)], p.Goal))
+				pushCursor++
+			}
+			if len(pullPool) > 0 {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(pullPool[pullCursor%len(pullPool)], p.Goal))
+				pullCursor++
+			}
+			if len(legsPool) > 0 {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(legsPool[legsCursor%len(legsPool)], p.Goal))
+				legsCursor++
+			}
+		case "hiit_core":
+			// Кардио-интенсив и кор
+			for k := 0; k < 2 && len(cardioPool) > 0; k++ {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(cardioPool[cardioCursor%len(cardioPool)], p.Goal))
+				cardioCursor++
+			}
+		default:
+			// Общий день
+			if len(allStrength) > 0 {
+				sessionExs = append(sessionExs, toPlanExerciseGoal(allStrength[pushCursor%len(allStrength)], p.Goal))
+				pushCursor++
 			}
 		}
 
-		days[i].Minutes = estimateMinutes(exs)
-		days[i].Exercises = exs
-		days[i].Focus = focusFor(exs)
-		days[i].Notes = sessionNote(p)
+		// 3. Блок мышц кора и пресса
+		if len(corePool) > 0 && splitType != "hiit_core" {
+			sessionExs = append(sessionExs, toPlanExerciseGoal(corePool[coreCursor%len(corePool)], p.Goal))
+			coreCursor++
+		}
+
+		// 4. Для цели Похудение (GoalLose) обязательно добавляем кардио-финишер
+		if p.Goal == models.GoalLose && len(cardioPool) > 0 && splitType != "hiit_core" {
+			sessionExs = append(sessionExs, toPlanExerciseGoal(cardioPool[cardioCursor%len(cardioPool)], p.Goal))
+			cardioCursor++
+		}
+
+		days[i].Minutes = estimateMinutes(sessionExs)
+		days[i].Exercises = sessionExs
+		days[i].Focus = focusLabel
+		days[i].Notes = daySessionNote(p, focusLabel, false)
 	}
 
-	if len(cardio) > 0 {
-		for i := range days {
-			if days[i].Rest {
-				days[i].Notes += " Можно добавить лёгкое кардио: " + cardio[0].Name + "."
-				break
-			}
-		}
-	}
 	return days
+}
+
+// determineSplitDay распределяет тренировочные фокусы по дням недели.
+func determineSplitDay(totalWorkouts, seq int) (string, string) {
+	switch totalWorkouts {
+	case 1:
+		return "fullbody", "Фулбоди (все группы мышц)"
+	case 2:
+		if seq == 0 {
+			return "upper", "Верх тела (Грудь, Спина, Плечи)"
+		}
+		return "lower", "Низ тела (Ноги, Ягодицы, Кор)"
+	case 3:
+		switch seq % 3 {
+		case 0:
+			return "push", "Push — Жимовой день (Грудь, Плечи, Трицепс)"
+		case 1:
+			return "pull", "Pull — Тяговый день (Спина, Бицепс, Пресс)"
+		default:
+			return "legs", "Legs — День ног и ягодиц"
+		}
+	case 4:
+		switch seq % 4 {
+		case 0:
+			return "push", "Верх тела — Жимовой акцент"
+		case 1:
+			return "lower", "Низ тела — Квадрицепс и кор"
+		case 2:
+			return "pull", "Верх тела — Тяговый акцент (Спина, Бицепс)"
+		default:
+			return "legs", "Низ тела — Ягодицы и бицепс бедра"
+		}
+	case 5:
+		switch seq % 5 {
+		case 0:
+			return "push", "Грудь и Трицепс"
+		case 1:
+			return "pull", "Спина и Бицепс"
+		case 2:
+			return "legs", "Ноги и Ягодицы"
+		case 3:
+			return "upper", "Плечи и Мышцы кора"
+		default:
+			return "hiit_core", "Метаболическое кардио и Пресс"
+		}
+	case 6:
+		switch seq % 6 {
+		case 0:
+			return "push", "Push 1 (Грудь, Плечи, Трицепс)"
+		case 1:
+			return "pull", "Pull 1 (Спина, Бицепс)"
+		case 2:
+			return "legs", "Legs 1 (Ноги, Икры)"
+		case 3:
+			return "push", "Push 2 (Объёмный жимовой)"
+		case 4:
+			return "pull", "Pull 2 (Широчайшие и Кор)"
+		default:
+			return "legs", "Legs 2 (Ягодицы и Задняя поверхность)"
+		}
+	case 7:
+		switch seq % 7 {
+		case 0:
+			return "push", "Push (Грудь, Плечи)"
+		case 1:
+			return "pull", "Pull (Спина, Бицепс)"
+		case 2:
+			return "legs", "Legs (Ноги, Ягодицы)"
+		case 3:
+			return "upper", "Верх тела (Умеренная нагрузка)"
+		case 4:
+			return "lower", "Низ тела и Кор"
+		case 5:
+			return "hiit_core", "HIIT Кардио и Пресс"
+		default:
+			return "fullbody", "Активное восстановление и Мобильность"
+		}
+	default:
+		return "fullbody", "Общая подготовка"
+	}
+}
+
+func daySessionNote(p models.Profile, focus string, isRest bool) string {
+	if isRest {
+		if p.Goal == models.GoalLose {
+			return "День восстановления — мышцы адаптируются, а дефицит калорий сжигает жир. Рекомендуется 30–45 минут лёгкой ходьбы на свежем воздухе и соблюдение водного баланса (330 мл на стакан)."
+		}
+		return "День восстановления — мышечные волокна восстанавливаются и растут в покое. Обеспечьте качественный сон 8 часов и достаточное поступление белка."
+	}
+
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("Фокус: %s. Ориентировочная длительность — %d мин. ", focus, p.SessionMinutes))
+	if p.Goal == models.GoalLose {
+		b.WriteString("Жиросжигающий интервальный темп с коротким отдыхом (30–45 сек) и обязательным кардио-финишером. ")
+	} else if p.Goal == models.GoalGain {
+		b.WriteString("Силовой гипертрофический объём с акцентом на базовые движения и отдых 60–90 сек для максимального восстановления сил. ")
+	}
+
+	switch p.PreferredTime {
+	case models.TimeMorning:
+		b.WriteString("Утренний совет: начните с суставной разминки и выпейте 1 стакан чистой воды (330 мл) перед стартом.")
+	case models.TimeDay:
+		b.WriteString("Дневной совет: пик мышечной силы — держите строгую технику и прогрессируйте в рабочих подходах.")
+	case models.TimeEvening:
+		b.WriteString("Вечерний совет: завершите тренировку за 2.5–3 часа до сна и сделайте плавную растяжку для снижения пульса.")
+	default:
+		b.WriteString("Следите за техникой дыхания и пейте воду небольшими глотками между подходами.")
+	}
+	return b.String()
 }
 
 func spreadDays(n int) []int {
 	switch n {
 	case 1:
-		return []int{2}
+		return []int{2} // Среда
 	case 2:
-		return []int{1, 4}
+		return []int{1, 4} // Вторник, Пятница
 	case 3:
-		return []int{0, 2, 4}
+		return []int{0, 2, 4} // Понедельник, Среда, Пятница
 	case 4:
-		return []int{0, 2, 4, 5}
+		return []int{0, 2, 4, 6} // Понедельник, Среда, Пятница, Воскресенье
 	case 5:
-		return []int{0, 1, 3, 4, 5}
+		return []int{0, 1, 3, 4, 5} // Понедельник, Вторник, Четверг, Пятница, Суббота
 	case 6:
-		return []int{0, 1, 2, 3, 4, 5}
+		return []int{0, 1, 2, 3, 4, 5} // Понедельник — Суббота
+	case 7:
+		return []int{0, 1, 2, 3, 4, 5, 6} // Каждый день
 	default:
 		return []int{0, 2, 4}
 	}
 }
 
-func toPlanExercise(ex models.Exercise) models.PlanExercise {
-	return models.PlanExercise{
+func toPlanExerciseGoal(ex models.Exercise, goal string) models.PlanExercise {
+	pe := models.PlanExercise{
 		ExerciseID:  ex.ID,
 		Name:        ex.Name,
 		Muscles:     ex.Muscles,
@@ -354,6 +632,32 @@ func toPlanExercise(ex models.Exercise) models.PlanExercise {
 		DurationSec: ex.DurationSec,
 		Demo:        true,
 	}
+
+	if goal == models.GoalLose {
+		if pe.Kind == "strength" {
+			pe.Sets = 3
+			pe.Reps = "12–15"
+			pe.RestSec = 40
+		} else if pe.Kind == "cardio" {
+			pe.Sets = 3
+			pe.RestSec = 30
+			if pe.DurationSec == 0 {
+				pe.Reps = "15–20"
+			}
+		} else if pe.Kind == "core" {
+			pe.RestSec = 30
+		}
+	} else if goal == models.GoalGain {
+		if pe.Kind == "strength" {
+			pe.Sets = 4
+			pe.Reps = "8–10"
+			pe.RestSec = 75
+		} else if pe.Kind == "core" {
+			pe.RestSec = 50
+		}
+	}
+
+	return pe
 }
 
 func estimateMinutes(exs []models.PlanExercise) int {
@@ -371,30 +675,6 @@ func estimateMinutes(exs []models.PlanExercise) int {
 	return total
 }
 
-func focusFor(exs []models.PlanExercise) string {
-	seen := map[string]bool{}
-	var parts []string
-	for _, ex := range exs {
-		for _, m := range ex.Muscles {
-			if !seen[m] {
-				seen[m] = true
-				parts = append(parts, m)
-			}
-		}
-	}
-	if len(parts) == 0 {
-		return "Общая подготовка"
-	}
-	if len(parts) > 3 {
-		parts = parts[:3]
-	}
-	return strings.Join(parts, ", ")
-}
-
-func sessionNote(p models.Profile) string {
-	return fmt.Sprintf("Разминка 5 минут, затем упражнения. Отдых между подходами указан у каждого упражнения. Ориентировочная длительность — %d минут.", p.SessionMinutes)
-}
-
 func (c *Catalog) buildMeals(p models.Profile) ([]models.MealDay, *int, *int, *int, *int) {
 	slots := []string{"breakfast", "lunch", "dinner", "snack"}
 	bySlot := c.SuitableMeals(slots, p.DietPreferences, p.Allergies, p.AvoidFoods)
@@ -404,6 +684,10 @@ func (c *Catalog) buildMeals(p models.Profile) ([]models.MealDay, *int, *int, *i
 		days[d].Index = d
 		for si, slot := range slots {
 			list := bySlot[slot]
+			if len(list) == 0 {
+				// Защитный fallback на общее меню слота
+				list = c.MealsBySlot(slot)
+			}
 			if len(list) == 0 {
 				continue
 			}
@@ -434,13 +718,15 @@ func (c *Catalog) buildMeals(p models.Profile) ([]models.MealDay, *int, *int, *i
 
 func planExplanation(p models.Profile) string {
 	var b strings.Builder
-	b.WriteString(fmt.Sprintf("План собран под цель «%s», уровень «%s» и оборудование «%s». ",
-		models.GoalShort(p.Goal), strings.ToLower(models.LevelLabel(p.Level)), strings.ToLower(models.EquipLabel(p.Equipment))))
-	b.WriteString(fmt.Sprintf("Тренировок в неделю: %d, по %d минут. ", p.WorkoutsPerWeek, p.SessionMinutes))
-	b.WriteString("Нагрузка растёт постепенно: сначала техника и регулярность, потом вес и повторения. ")
-	b.WriteString("Дни отдыха — обязательная часть плана, а не пропуск. ")
-	b.WriteString("Это демонстрационный план из встроенного каталога, а не персональная рекомендация ИИ. ")
-	b.WriteString("Рекомендации не являются медицинской консультацией.")
+	b.WriteString(fmt.Sprintf("План собран под цель «%s», уровень «%s» и инвентарь «%s». ",
+		models.GoalLabel(p.Goal), strings.ToLower(models.LevelLabel(p.Level)), strings.ToLower(models.EquipLabel(p.Equipment))))
+	b.WriteString(fmt.Sprintf("Тренировок в неделю: %d, ориентировочно по %d минут. ", p.WorkoutsPerWeek, p.SessionMinutes))
+	if p.Goal == models.GoalLose {
+		b.WriteString("Программа включает жиросжигающий интервальный тренинг, кардио-финишеры и контроль водного баланса. ")
+	} else if p.Goal == models.GoalGain {
+		b.WriteString("Программа сфокусирована на гипертрофии, базовых многосуставных движениях и достаточном времени отдыха между сетами. ")
+	}
+	b.WriteString("Нагрузка дозирована по принципу суперкомпенсации: дни отдыха обязательны для адаптации мышц.")
 	return b.String()
 }
 
@@ -448,30 +734,75 @@ func calcPlanNote(p models.Profile) string {
 	if !p.HasBodyData() {
 		return p.BodyHint() + " " + models.BodyDataNote()
 	}
-	return "Калорийность и БЖУ посчитаны по формуле Миффлина — Сан Жеора с поправкой на активность. " +
-		"Это ориентир, а не точное предписание; " + models.BodyDataNote()
+	return "Калорийность и БЖУ посчитаны по формуле Миффлина — Сан Жеора с поправкой на физическую активность. " +
+		"Это научно выверенный ориентир; " + models.BodyDataNote()
 }
 
 func progressionNote(p models.Profile) string {
 	if p.Level == models.LevelBeginner {
-		return "Первые 2–3 недели — привыкание: делайте упражнения в комфортной амплитуде и не гонитесь за весом. " +
-			"Когда станет легко, добавьте 1–2 повторения или 1 подход. Вес повышайте не чаще раза в неделю и небольшими шагами."
+		return "Первые 2–3 недели — адаптация нейромышечной связи: делайте упражнения в комфортной амплитуде и следите за дыханием. " +
+			"Когда повторения станут даваться легко, увеличьте количество повторов на 2–3 или добавьте небольшой вес."
 	}
-	return "Увеличивайте нагрузку постепенно: +1–2 повторения, затем небольшой шаг по весу. " +
-		"Если техника «плывёт» или появилась боль — вернитесь на шаг назад. Отдых и сон важны не меньше тренировок."
+	return "Увеличивайте нагрузку по принципу прогрессивной перегрузки: сначала повторения в подходе, затем рабочий вес отягощения. " +
+		"Если техника начинает ломаться — вернитесь на шаг назад. Сон и питание определяют 80% успеха."
 }
 
 func buildRoutine(p models.Profile) models.Routine {
-	sleep := "Старайтесь спать 7–9 часов. Ложитесь и вставайте примерно в одно время — так проще восстановиться."
-	water := "Ориентир по воде — 30 мл на кг веса в день, часть с едой и напитками. В жару и на тренировке — больше."
-	if p.WeightKg == nil {
-		water = "Пейте регулярно в течение дня, ориентируйтесь на жажду и цвет мочи. Точный объём зависит от веса и активности."
+	var sleep string
+	switch p.PreferredTime {
+	case models.TimeEvening:
+		sleep = "Старайтесь завершать тренировку за 2.5–3 часа до сна, чтобы уровень кортизола и температура тела снизились к ночи. Спите 7–9 часов в проветренной комнате."
+	default:
+		sleep = "Спите 7–9 часов. Качественный глубокий сон критически важен: в медленной фазе сна вырабатывается соматотропин, восстанавливающий мышечные ткани."
 	}
-	activity := "Добавьте 20–30 минут спокойной ходьбы в дни отдыха — это помогает восстановлению."
+
+	targetMl := p.WaterTargetMl()
+	glasses := (targetMl + 165) / 330
+	if glasses < 1 {
+		glasses = 6
+	}
+	water := fmt.Sprintf("Суточная норма чистой воды: ~%d стаканов (~%d мл, из расчёта 330 мл на стакан). Держите стакан на виду, выпивайте стакан после пробуждения и перед тренировкой.", glasses, targetMl)
+
+	var activity string
+	if p.Goal == models.GoalLose {
+		activity = "Ежедневная внетренировочная активность (NEAT) — ключевой фактор дефицита калорий. Проходите 8 000–10 000 шагов в день и чаще двигайтесь."
+	} else {
+		activity = "При наборе массы избегайте изнуряющего кардио в дни отдыха: 20–30 минут спокойной прогулки улучшат кровоток без расхода мышечного гликогена."
+	}
+
 	recovery := []string{
-		"Старайтесь завершать тренировку за 2–3 часа до сна.",
-		"В дни отдыха не «догоняйте» пропущенное — просто продолжайте план.",
-		"Лёгкая растяжка 5–10 минут после тренировки помогает снизить напряжение.",
+		"Разминка 5 минут перед тренировкой разогревает суставы и синовиальную жидкость, предотвращая травмы.",
+		"Заминка и статическая растяжка 5 минут после тренировки нормализуют тонус мышц и успокаивают дыхание.",
+		"Регулярность важнее разовых рекордов: держите темп плана и не пропускайте дни отдыха.",
 	}
+	switch p.PreferredTime {
+	case models.TimeMorning:
+		recovery = append(recovery, "Утренний график тренировок: выпейте стакан тёплой воды за 20 мин до тренировки, а плотный белковый завтрак запланируйте после занятия.")
+	case models.TimeDay:
+		recovery = append(recovery, "Дневной график тренировок: планируйте приём пищи со сложными углеводами за 1.5–2 часа до физической нагрузки.")
+	case models.TimeEvening:
+		recovery = append(recovery, "Вечерний график тренировок: лёгкий белковый ужин с клетчаткой после тренировки обеспечит аминокислоты для ночного восстановления.")
+	}
+
 	return models.Routine{Sleep: sleep, Water: water, Activity: activity, Recovery: recovery}
+}
+
+func focusFor(exs []models.PlanExercise) string {
+	seen := map[string]bool{}
+	var parts []string
+	for _, ex := range exs {
+		for _, m := range ex.Muscles {
+			if !seen[m] {
+				seen[m] = true
+				parts = append(parts, m)
+			}
+		}
+	}
+	if len(parts) == 0 {
+		return "Общая подготовка"
+	}
+	if len(parts) > 3 {
+		parts = parts[:3]
+	}
+	return strings.Join(parts, ", ")
 }

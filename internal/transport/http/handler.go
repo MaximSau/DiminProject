@@ -150,6 +150,20 @@ func (h *Handler) templateFuncs() template.FuncMap {
 		"waterTarget": func(p models.Profile) int {
 			return p.WaterTargetMl()
 		},
+		"waterGlasses": func(u *models.User) int {
+			if u == nil {
+				return 0
+			}
+			return (u.WaterToday() + 165) / 330
+		},
+		"waterTargetGlasses": func(p models.Profile) int {
+			target := p.WaterTargetMl()
+			g := (target + 165) / 330
+			if g < 1 {
+				return 1
+			}
+			return g
+		},
 		"safeHTML": func(s string) template.HTML {
 			return template.HTML(s)
 		},
@@ -425,7 +439,7 @@ func (h *Handler) HandleOnboarding(w http.ResponseWriter, r *http.Request) {
 	}
 
 	wpw, _ := strconv.Atoi(r.FormValue("workouts_per_week"))
-	if wpw < 1 || wpw > 6 {
+	if wpw < 1 || wpw > 7 {
 		wpw = 3
 	}
 	p.WorkoutsPerWeek = wpw
@@ -962,11 +976,18 @@ func (h *Handler) HandleWaterAdd(w http.ResponseWriter, r *http.Request) {
 		strings.Contains(r.Header.Get("Accept"), "application/json") ||
 		r.FormValue("ajax") == "1" {
 		w.Header().Set("Content-Type", "application/json")
+		glasses := (cur + 165) / 330
+		targetGlasses := (target + 165) / 330
+		if targetGlasses < 1 {
+			targetGlasses = 1
+		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"ok":      true,
-			"current": cur,
-			"target":  target,
-			"percent": pct,
+			"ok":             true,
+			"current":        cur,
+			"target":         target,
+			"percent":        pct,
+			"glasses":        glasses,
+			"target_glasses": targetGlasses,
 		})
 		return
 	}
@@ -1052,11 +1073,11 @@ func (h *Handler) HandleProfile(w http.ResponseWriter, r *http.Request) {
 	p.Sex = r.FormValue("sex")
 	p.Level = r.FormValue("level")
 	wpw, _ := strconv.Atoi(r.FormValue("workouts_per_week"))
-	if wpw >= 1 && wpw <= 6 {
+	if wpw >= 1 && wpw <= 7 {
 		p.WorkoutsPerWeek = wpw
 	}
 	dur, _ := strconv.Atoi(r.FormValue("session_minutes"))
-	if dur > 0 {
+	if dur >= 15 && dur <= 120 {
 		p.SessionMinutes = dur
 	}
 	p.Equipment = r.FormValue("equipment")
