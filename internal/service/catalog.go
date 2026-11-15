@@ -238,6 +238,10 @@ func (c *Catalog) BuildPlan(p models.Profile) (*models.Plan, error) {
 	if len(pool) == 0 {
 		return nil, fmt.Errorf("в каталоге нет упражнений под оборудование %q", p.Equipment)
 	}
+	if p.MedicalBlocked() {
+		p.Level = models.LevelBeginner
+		pool = filterSafeExercises(pool)
+	}
 
 	days := c.buildWeek(p, pool)
 	meals, kcal, protein, fat, carbs := c.buildMeals(p)
@@ -291,6 +295,21 @@ func filterPull(pool []models.Exercise) []models.Exercise {
 		if hasAnyMuscle(ex, "спина", "широчайшие", "бицепс", "ромбовидные", "трапеции") && ex.Kind == "strength" {
 			out = append(out, ex)
 		}
+	}
+	return out
+}
+
+
+func filterSafeExercises(pool []models.Exercise) []models.Exercise {
+	var out []models.Exercise
+	for _, ex := range pool {
+		if ex.ID == "burpee" || ex.ID == "dips-parallel-bars" || ex.ID == "jumping-jacks" || ex.ID == "jump-rope" {
+			continue
+		}
+		out = append(out, ex)
+	}
+	if len(out) == 0 {
+		return pool
 	}
 	return out
 }
@@ -725,6 +744,9 @@ func planExplanation(p models.Profile) string {
 		b.WriteString("Программа включает жиросжигающий интервальный тренинг, кардио-финишеры и контроль водного баланса. ")
 	} else if p.Goal == models.GoalGain {
 		b.WriteString("Программа сфокусирована на гипертрофии, базовых многосуставных движениях и достаточном времени отдыха между сетами. ")
+	}
+	if p.MedicalBlocked() {
+		b.WriteString("Внимание: программа составлена в щадящем восстановительном режиме с учётом указанных ограничений здоровья (исключены ударные и предельные нагрузки). Согласуйте план с врачом и ориентируйтесь на самочувствие. ")
 	}
 	b.WriteString("Нагрузка дозирована по принципу суперкомпенсации: дни отдыха обязательны для адаптации мышц.")
 	return b.String()

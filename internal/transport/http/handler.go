@@ -346,11 +346,11 @@ func (h *Handler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !u.Profile.Onboarded {
+		if u.Profile.MedicalBlocked() {
+			http.Redirect(w, r, "/medical-warning", http.StatusSeeOther)
+			return
+		}
 		http.Redirect(w, r, "/onboarding", http.StatusSeeOther)
-		return
-	}
-	if u.Profile.MedicalBlocked() {
-		http.Redirect(w, r, "/medical-warning", http.StatusSeeOther)
 		return
 	}
 	http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
@@ -1162,11 +1162,6 @@ func (h *Handler) HandlePlanRecreate(w http.ResponseWriter, r *http.Request) {
 	u := h.GetOrCreateUser(w, r)
 	if u == nil {
 		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
-		return
-	}
-
-	if u.Profile.MedicalBlocked() {
-		http.Redirect(w, r, "/medical-warning", http.StatusSeeOther)
 		return
 	}
 

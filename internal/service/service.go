@@ -81,8 +81,7 @@ func (s *Service) SaveOnboarding(u *models.User, p models.Profile) error {
 
 	u.Profile = p
 
-	if !p.MedicalBlocked() {
-		plan, err := s.catalog.BuildPlan(p)
+	plan, err := s.catalog.BuildPlan(p)
 		if err != nil {
 			slog.Error("ошибка генерации плана при онбординге", "error", err, "user_id", u.Profile.ID)
 			return err
@@ -106,7 +105,6 @@ func (s *Service) SaveOnboarding(u *models.User, p models.Profile) error {
 			{ID: "rem-water", Kind: "water", Title: "Стакан чистой воды (330 мл)", Time: "11:00", Days: "daily", Enabled: true, Note: "Поддерживайте водный баланс"},
 			{ID: "rem-sleep", Kind: "sleep", Title: "Подготовка ко сну", Time: "22:30", Days: "daily", Enabled: true, Note: "Отложите экран за 30 минут"},
 		}
-	}
 
 	return s.repo.Save(u)
 }
@@ -163,10 +161,6 @@ func (s *Service) RecreatePlan(u *models.User) error {
 	if u == nil {
 		return errors.New("пользователь не найден")
 	}
-	if u.Profile.MedicalBlocked() {
-		return errors.New("медицинские ограничения блокируют генерацию плана")
-	}
-
 	plan, err := s.catalog.BuildPlan(u.Profile)
 	if err != nil {
 		slog.Error("ошибка создания плана", "error", err, "user_id", u.Profile.ID)
@@ -190,12 +184,10 @@ func (s *Service) ChangeGoal(u *models.User, newGoal string) error {
 		}
 	}
 	u.Profile.Goal = newGoal
-	if !u.Profile.MedicalBlocked() {
-		plan, err := s.catalog.BuildPlan(u.Profile)
-		if err == nil {
-			u.Plan = plan
-			u.Profile.PlanVersion = plan.Version
-		}
+	plan, err := s.catalog.BuildPlan(u.Profile)
+	if err == nil {
+		u.Plan = plan
+		u.Profile.PlanVersion = plan.Version
 	}
 	return s.repo.Save(u)
 }

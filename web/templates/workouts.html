@@ -1,5 +1,14 @@
 {{define "content"}}
 <div class="workouts-page">
+  {{if .User.Profile.MedicalBlocked}}
+    <div class="banner warning" style="margin-bottom: 16px; padding: 14px 18px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <span class="badge" style="background: #f59e0b; color: #000; font-weight: 700;">Щадящий режим</span>
+        <span class="small" style="color: var(--text);">В программе исключены осевые и ударные упражнения. При возникновении дискомфорта прекратите занятие.</span>
+      </div>
+      <a href="/medical-warning" class="link small" style="white-space: nowrap;">Рекомендации врача →</a>
+    </div>
+  {{end}}
   <!-- Вкладки дней недели -->
   <div class="day-tabs">
     {{range $idx, $day := .User.Plan.Days}}

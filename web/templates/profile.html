@@ -37,27 +37,13 @@
         </p>
       </div>
 
-      <!-- БЫСТРАЯ СМЕНА ЦЕЛИ -->
-      <div class="card">
-        <h2>Текущая цель: {{goalLabel .User.Profile.Goal}}</h2>
-        <p class="small muted">Хотите переключить фокус программы?</p>
-        
-        <form action="/plan/change-goal" method="POST" class="row">
-          {{if eq .User.Profile.Goal "lose"}}
-            <input type="hidden" name="goal" value="gain">
-            <button type="submit" class="btn secondary">Переключить на «Набор массы»</button>
-          {{else}}
-            <input type="hidden" name="goal" value="lose">
-            <button type="submit" class="btn secondary">Переключить на «Снижение веса»</button>
-          {{end}}
-        </form>
-      </div>
 
-      <!-- НАСТРОЙКА НАПОМИНАНИЙ -->
+
+      <!-- МОЙ РАСПОРЯДОК ДНЯ -->
       <div class="card" id="reminders">
-        <h2>Режим и напоминания</h2>
+        <h2>Мой распорядок дня</h2>
         <p class="small muted">
-          Настройте время для выработки полезных привычек. Мы уважаем ваши границы и не отправляем спам:
+          Укажите ориентиры времени для ключевых этапов дня, чтобы выстроить стабильный биоритм и сформировать полезные привычки:
         </p>
 
         <form action="/reminders/update" method="POST">
@@ -85,21 +71,12 @@
           </p>
 
           <button type="submit" class="btn secondary" style="margin-top: 10px;">
-            Сохранить настройки режима
+            Сохранить распорядок дня
           </button>
         </form>
       </div>
 
-      <!-- ПЕРЕСОЗДАНИЕ ПЛАНА -->
-      <div class="card">
-        <h2>Пересоздать план</h2>
-        <p class="small muted">
-          Если вы изменили цели, инвентарь или расписание, пересоздайте персональный план:
-        </p>
-        <form action="/plan/recreate" method="POST">
-          <button type="submit" class="btn">Сгенерировать новый план по анкете</button>
-        </form>
-      </div>
+
 
       <!-- ДЕМОНСТРАЦИОННЫЕ ДАННЫЕ И СБРОС -->
       <div class="card">
@@ -267,7 +244,7 @@
           <input type="text" id="health_notes" name="health_notes" maxlength="300" placeholder="Например: боли в пояснице, избегать прыжков" value="{{.User.Profile.HealthNotes}}">
         </div>
 
-        <button type="submit" class="btn">Сохранить изменения анкеты</button>
+        <button type="submit" class="btn">Сохранить профиль и обновить программу анкеты</button>
       </form>
     </div>
   </div>

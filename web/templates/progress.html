@@ -94,138 +94,65 @@
     </div>
   </div>
 
-  <div class="grid-2col" style="margin-top: 14px;">
-    <!-- ЧЕК-ИН САМОЧУВСТВИЯ И ЭНЕРГИИ -->
+    <div class="grid-2col" style="margin-top: 14px;">
+    <!-- ИСТОРИЯ ИЗМЕРЕНИЙ ВЕСА С ЗАМЕТКАМИ -->
     <div class="card">
-      <h2>Ежедневный чек-ин состояния</h2>
-      <p class="small muted">Отмечайте ваши ощущения — это помогает вовремя заметить усталость:</p>
-
-      <form action="/progress/checkin" method="POST">
-        <div class="field">
-          <label for="mood">Настроение и общее самочувствие (1–5):</label>
-          <select id="mood" name="mood">
-            <option value="5">5 из 5 — Прекрасное, вдохновлённое</option>
-            <option value="4" selected>4 из 5 — Хорошее, спокойное</option>
-            <option value="3">3 из 5 — Нейтральное, обычный день</option>
-            <option value="2">2 из 5 — Немного подавлен или устал</option>
-            <option value="1">1 из 5 — Тяжёлый день, нет ресурса</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="energy">Уровень энергии в течение дня (1–5):</label>
-          <select id="energy" name="energy">
-            <option value="5">5 из 5 — Высокий заряд энергии</option>
-            <option value="4" selected>4 из 5 — Достаточно сил на все задачи</option>
-            <option value="3">3 из 5 — Средний уровень</option>
-            <option value="2">2 из 5 — Быстрая утомляемость</option>
-            <option value="1">1 из 5 — Сонливость и упадок сил</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="nutrition">Регулярность питания сегодня (1–5):</label>
-          <select id="nutrition" name="nutrition">
-            <option value="5" selected>5 из 5 — Питался регулярно, без переедания и голода</option>
-            <option value="4">4 из 5 — В целом хорошо, 1 небольшой сдвиг по времени</option>
-            <option value="3">3 из 5 — Пропустил один приём пищи</option>
-            <option value="2">2 из 5 — Хаотичное питание, кусочничал</option>
-            <option value="1">1 из 5 — Весь день забывал поесть</option>
-          </select>
-        </div>
-
-        <div class="field">
-          <label for="sleep">Часов сна прошлой ночью:</label>
-          <input type="number" step="0.5" id="sleep" name="sleep" min="3" max="16" maxlength="4" data-maxlength="4" value="7.5">
-          <span class="hint">От 3 до 16 часов</span>
-        </div>
-
-        <div class="field">
-          <label for="note">Личная заметка:</label>
-          <input type="text" id="note" name="note" maxlength="200" placeholder="Как прошли дела, что порадовало">
-        </div>
-
-        <button type="submit" class="btn secondary">Зафиксировать чек-ин</button>
-      </form>
-    </div>
-
-    <!-- ИСТОРИЯ АКТИВНОСТИ И ЧЕК-ИНОВ -->
-    <div>
-      <div class="card">
-        <h2>История активности</h2>
-        {{if .User.Progress.Sessions}}
-          <div class="history-list">
-            {{range .User.Progress.Sessions}}
-              <div class="history-item">
-                <div class="history-item-top">
-                  <strong>{{.Title}}</strong>
-                  <span class="small muted">{{.Date}}</span>
-                </div>
-                <div class="meta" style="margin: 4px 0;">
-                  <span>Энергия: {{.Energy}}/5</span>
-                  {{if .Feeling}}<span>{{.Feeling}}</span>{{end}}
-                </div>
-              </div>
-            {{end}}
-          </div>
-        {{else}}
-          <div class="empty muted small">
-            Вы ещё не завершили ни одной тренировки из плана. Перейдите в раздел <a href="/workouts" class="link">«Тренировки»</a>, чтобы начать первое занятие!
-          </div>
-        {{end}}
+      <div class="card-tag-row">
+        <span class="badge">Журнал веса</span>
+        <span class="small muted">Всего замеров: {{len .User.Progress.Weights}}</span>
       </div>
-
-      {{if .User.Progress.Checkins}}
-        <div class="card">
-          <h2>Журнал самочувствия</h2>
-          <div class="history-list">
-            {{range .User.Progress.Checkins}}
-              <div class="history-item">
-                <div class="history-item-top">
-                  <span class="small font-bold">{{.Date}}</span>
-                  <span class="small muted">Сон: {{.Sleep}} ч</span>
-                </div>
-                <div class="small meta" style="margin: 4px 0;">
-                  <span>Настроение: {{renderStars .Mood}}</span>
-                  <span>Энергия: {{renderStars .Energy}}</span>
-                  <span>Питание: {{renderStars .Nutrition}}</span>
-                </div>
-                {{if .Note}}<p class="small muted" style="margin: 4px 0 0;">«{{.Note}}»</p>{{end}}
+      <h2>История динамики веса и заметки</h2>
+      {{if .User.Progress.Weights}}
+        <div class="history-list">
+          {{range .User.Progress.Weights}}
+            <div class="history-item">
+              <div class="history-item-top">
+                <span class="font-bold" style="font-size: 16px;">{{printf "%.1f" .Kg}} кг</span>
+                <span class="small muted">{{.Date}}</span>
               </div>
-            {{end}}
-          </div>
+              {{if .Note}}
+                <div class="weight-note-box" style="margin-top: 6px; padding: 6px 10px; background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                  <span class="small" style="color: var(--text);">Заметка: <em>«{{.Note}}»</em></span>
+                </div>
+              {{end}}
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <div class="empty muted small">
+          История измерений пока пуста. Зафиксируйте вес в форме выше — все замеры и личные заметки сохраняются здесь!
         </div>
       {{end}}
     </div>
-  </div>
-  <!-- ИСТОРИЯ ИЗМЕРЕНИЙ ВЕСА С ЗАМЕТКАМИ -->
-  <div class="card" style="margin-top: 14px;">
-    <div class="card-tag-row">
-      <span class="badge">Журнал измерений веса</span>
-      <span class="small muted">Всего замеров: {{len .User.Progress.Weights}}</span>
-    </div>
-    <h2>История динамики веса и заметки</h2>
-    {{if .User.Progress.Weights}}
-      <div class="history-list">
-        {{range .User.Progress.Weights}}
-          <div class="history-item">
-            <div class="history-item-top">
-              <span class="font-bold" style="font-size: 16px;">{{printf "%.1f" .Kg}} кг</span>
-              <span class="small muted">{{.Date}}</span>
-            </div>
-            {{if .Note}}
-              <div class="weight-note-box" style="margin-top: 6px; padding: 6px 10px; background: var(--bg-secondary); border-radius: var(--radius-sm); border: 1px solid var(--border);">
-                <span class="small" style="color: var(--text);">Заметка: <em>«{{.Note}}»</em></span>
+
+    <!-- ИСТОРИЯ АКТИВНОСТИ -->
+    <div class="card">
+      <div class="card-tag-row">
+        <span class="badge">Тренировки</span>
+        <span class="small muted">Выполнено сессий: {{len .User.Progress.Sessions}}</span>
+      </div>
+      <h2>История активности</h2>
+      {{if .User.Progress.Sessions}}
+        <div class="history-list">
+          {{range .User.Progress.Sessions}}
+            <div class="history-item">
+              <div class="history-item-top">
+                <strong>{{.Title}}</strong>
+                <span class="small muted">{{.Date}}</span>
               </div>
-            {{end}}
-          </div>
-        {{end}}
-      </div>
-    {{else}}
-      <div class="empty muted small">
-        История измерений пока пуста. Зафиксируйте вес в форме выше — все замеры и личные заметки сохраняются здесь!
-      </div>
-    {{end}}
+              <div class="meta" style="margin: 4px 0;">
+                <span>Энергия: {{.Energy}}/5</span>
+                {{if .Feeling}}<span>{{.Feeling}}</span>{{end}}
+              </div>
+            </div>
+          {{end}}
+        </div>
+      {{else}}
+        <div class="empty muted small">
+          Вы ещё не завершили ни одной тренировки из плана. Перейдите в раздел <a href="/workouts" class="link">«Тренировки»</a>, чтобы начать первое занятие!
+        </div>
+      {{end}}
+    </div>
   </div>
 
   <script>
