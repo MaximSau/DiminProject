@@ -7,7 +7,6 @@ import { ProgressPage } from './pages/ProgressPage';
 import { CatalogPage } from './pages/CatalogPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { OnboardingPage } from './pages/OnboardingPage';
-import { PlanExportPage } from './pages/PlanExportPage';
 import { DashboardResponse } from './types';
 import { api } from './api/client';
 import { ThemeProvider } from './context/ThemeContext';
@@ -22,7 +21,7 @@ const AppContent: React.FC = () => {
   // Read current tab from URL hash if available (e.g., #workouts)
   const getInitialTab = () => {
     const hash = window.location.hash.replace('#', '');
-    const valid = ['dashboard', 'workouts', 'nutrition', 'progress', 'catalog', 'profile', 'export'];
+    const valid = ['dashboard', 'workouts', 'nutrition', 'progress', 'catalog', 'profile'];
     return valid.includes(hash) ? hash : 'dashboard';
   };
 
@@ -52,7 +51,7 @@ const AppContent: React.FC = () => {
 
     const handleHash = () => {
       const hash = window.location.hash.replace('#', '');
-      const valid = ['dashboard', 'workouts', 'nutrition', 'progress', 'catalog', 'profile', 'export'];
+      const valid = ['dashboard', 'workouts', 'nutrition', 'progress', 'catalog', 'profile'];
       if (valid.includes(hash)) {
         setCurrentTab(hash);
       }
@@ -143,16 +142,12 @@ const AppContent: React.FC = () => {
             onNavigate={handleNavigate}
           />
         )}
-        {currentTab === 'export' && (
-          <PlanExportPage onBack={() => handleNavigate('dashboard')} />
-        )}
       </main>
 
       {/* Footer */}
       <footer className="border-t border-white/[0.08] py-6 text-center text-xs text-zinc-500 print:hidden">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-2">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-center">
           <span>PulseFit Pro © 2026. Профессиональный фитнес-трекер и рацион.</span>
-          <span>Автономная архитектура • SQLite Pure-Go • React + Tailwind SPA</span>
         </div>
       </footer>
     </div>

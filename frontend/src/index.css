@@ -24,6 +24,16 @@
     color: var(--text-main);
   }
 
+  ::selection {
+    background-color: #ffffff !important;
+    color: #09090b !important;
+  }
+
+  ::-moz-selection {
+    background-color: #ffffff !important;
+    color: #09090b !important;
+  }
+
   /* Universal mapping for cards and surfaces */
   .bg-dark-card,
   .app-card {

@@ -9,7 +9,6 @@ import {
   Sparkles,
   Menu,
   X,
-  Printer,
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { api } from '../api/client';
@@ -29,11 +28,11 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
     try {
       setSeeding(true);
       await api.seedDemo();
-      showToast('Демо-сценарий успешно активирован!');
+      showToast('Демонстрационный профиль загружен!');
       if (onRefresh) onRefresh();
       onNavigate('dashboard');
     } catch (e: any) {
-      showToast(e.message || 'Ошибка активации демо', 'error');
+      showToast(e.message || 'Ошибка запуска демо', 'error');
     } finally {
       setSeeding(false);
     }
@@ -49,30 +48,33 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
   ];
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b backdrop-blur-md transition-colors duration-200 bg-[#08080a]/90 border-white/[0.08]">
+    <header className="sticky top-0 z-40 w-full border-b border-white/[0.08] bg-[#08080a]/90 backdrop-blur-md transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        {/* Logo */}
-        <button
+        {/* Brand Logo & Name */}
+        <div
           onClick={() => onNavigate('dashboard')}
-          className="flex items-center gap-3 group text-left focus:outline-none"
+          className="flex items-center gap-3 cursor-pointer group select-none"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-zinc-700 to-zinc-500 p-0.5 shadow-lg shadow-black/40 group-hover:scale-105 transition-transform duration-200">
-            <div className="w-full h-full bg-[#121216] rounded-[10px] flex items-center justify-center">
-              <Activity className="w-5 h-5 text-white" />
-            </div>
+          <div className="w-9 h-9 rounded-xl bg-white/10 text-white border border-white/20 flex items-center justify-center shadow-sm group-hover:scale-105 transition-all duration-200">
+            <Activity className="w-5 h-5 text-white" />
           </div>
           <div>
-            <span className="text-xl font-black tracking-tight text-white">
-              PulseFit
-            </span>
-            <span className="block text-[10px] uppercase tracking-widest font-semibold text-zinc-400 -mt-1">
-              Pro Fitness
+            <div className="flex items-center gap-1.5">
+              <span className="font-black text-lg tracking-tight text-white group-hover:text-zinc-200 transition-colors">
+                PulseFit
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-white/10 text-zinc-300 border border-white/20">
+                PRO
+              </span>
+            </div>
+            <span className="text-[10px] text-zinc-400 block -mt-0.5 font-medium">
+              Персональный тренинг & рацион
             </span>
           </div>
-        </button>
+        </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1.5 lg:gap-2">
+        {/* Desktop Navigation Links */}
+        <nav className="hidden md:flex items-center gap-1">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -80,30 +82,21 @@ export const Navbar: React.FC<NavbarProps> = ({ currentTab, onNavigate, onRefres
               <button
                 key={item.id}
                 onClick={() => onNavigate(item.id)}
-                className={`flex items-center gap-3 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-150 ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all duration-150 ${
                   isActive
-                    ? 'bg-white/10 text-white border border-white/20 shadow-sm font-bold'
-                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
+                    ? 'bg-white text-zinc-950 shadow-md shadow-white/5 font-black scale-[1.02]'
+                    : 'text-zinc-400 hover:text-white hover:bg-zinc-800/60'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-zinc-400 group-hover:text-zinc-200'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-zinc-950' : 'text-zinc-400'}`} />
                 <span>{item.label}</span>
               </button>
             );
           })}
         </nav>
 
-        {/* Right action buttons: Demo, Print, Mobile toggle */}
+        {/* Right action buttons: Demo, Mobile toggle */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {/* Plan export link */}
-          <button
-            onClick={() => onNavigate('export')}
-            title="Экспорт / Печать программы"
-            className="p-2 rounded-xl text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50 transition-colors"
-          >
-            <Printer className="w-4 h-4" />
-          </button>
-
           {/* Demo Button - strictly preserved for project defense */}
           <button
             id="btn-demo-topbar"
