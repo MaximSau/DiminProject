@@ -14,8 +14,8 @@ help:
 	@echo "Доступные команды:"
 	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed -e 's/^/ /'
 
-## run: Быстрый локальный запуск на Go (без Docker)
-run:
+## run: Быстрый локальный запуск на Go (сборка React SPA фронтенда + go run)
+run: build-frontend
 	go run main.go
 
 ## build-frontend: Сборка React TypeScript SPA (Vite + Tailwind) в web/dist

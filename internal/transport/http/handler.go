@@ -339,6 +339,12 @@ func (h *Handler) HandleRoot(w http.ResponseWriter, r *http.Request) {
 		h.Render404(w, r)
 		return
 	}
+	// Если скомпилированный React SPA присутствует в ассетах, отдаем его напрямую как основной интерфейс!
+	if distFile, err := h.assets.Open("dist/index.html"); err == nil {
+		distFile.Close()
+		h.HandleSPA(w, r)
+		return
+	}
 	u := h.GetOrCreateUser(w, r)
 	if u == nil {
 		http.Error(w, "Ошибка сессии", http.StatusInternalServerError)

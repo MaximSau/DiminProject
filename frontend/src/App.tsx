@@ -18,11 +18,14 @@ const AppContent: React.FC = () => {
   const [onboarded, setOnboarded] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardResponse | null>(null);
 
-  // Read current tab from URL hash if available (e.g., #workouts)
+  // Read current tab from pathname or URL hash (e.g., /workouts or #workouts)
   const getInitialTab = () => {
+    const path = window.location.pathname.replace(/^\//, '').split('/')[0];
     const hash = window.location.hash.replace('#', '');
     const valid = ['dashboard', 'workouts', 'nutrition', 'progress', 'catalog', 'profile'];
-    return valid.includes(hash) ? hash : 'dashboard';
+    if (valid.includes(path)) return path;
+    if (valid.includes(hash)) return hash;
+    return 'dashboard';
   };
 
   const [currentTab, setCurrentTab] = useState<string>(getInitialTab);
